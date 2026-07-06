@@ -47,6 +47,7 @@ import * as codexSessionsIpc from "./ipc/codex-sessions";
 import * as mcpIpc from "./ipc/mcp";
 import * as settingsIpc from "./ipc/settings";
 import * as jiraIpc from "./ipc/jira";
+import * as mastraSessionsIpc from "./ipc/mastra-sessions";
 import { onSettingsChanged } from "./ipc/settings";
 
 // --- Performance: Chromium/V8 flags (must be set before app.whenReady()) ---
@@ -338,6 +339,7 @@ codexSessionsIpc.register(getMainWindow);
 mcpIpc.register();
 settingsIpc.register(getMainWindow);
 jiraIpc.register();
+mastraSessionsIpc.register(getMainWindow);
 
 // Listen for analytics settings changes and reinitialize PostHog
 let lastAnalyticsEnabled: boolean | undefined;
