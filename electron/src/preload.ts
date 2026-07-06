@@ -427,4 +427,10 @@ contextBridge.exposeInMainWorld("pilot", {
     list: () => ipcRenderer.invoke("skills:list"),
     manifest: () => ipcRenderer.invoke("skills:manifest"),
   },
+  memory: {
+    init: (projectPath: string) => ipcRenderer.invoke("memory:init", projectPath),
+    read: () => ipcRenderer.invoke("memory:read"),
+    write: (content: string) => ipcRenderer.invoke("memory:write", content),
+    append: (section: string, content: string) => ipcRenderer.invoke("memory:append", section, content),
+  },
 });
