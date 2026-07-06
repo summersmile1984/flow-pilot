@@ -317,7 +317,14 @@ export function useSessionPersistence({
       });
     });
 
-    return () => { unsub(); unsubAcp(); unsubBgPerm(); unsubBgAcpPerm(); unsubBgAcpTurn(); unsubCodex(); unsubCodexApproval(); };
+    // Route Mastra events for non-active sessions to the background store
+    const unsubMastra = (window as any).pilot?.mastra?.onEvent((event: { sessionId?: string; _sessionId?: string }) => {
+      const sid = event._sessionId ?? event.sessionId;
+      if (!sid || sid === activeSessionIdRef.current || visibleSplitSessionIdsRef.current.includes(sid)) return;
+      backgroundStoreRef.current.handleMastraEvent(sid, event);
+    });
+
+    return () => { unsub(); unsubAcp(); unsubBgPerm(); unsubBgAcpPerm(); unsubBgAcpTurn(); unsubCodex(); unsubCodexApproval(); unsubMastra?.(); };
   }, []);
 
   // Debounced auto-save

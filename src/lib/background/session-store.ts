@@ -10,6 +10,7 @@ import type { ACPSessionEvent, ACPPermissionEvent, CodexSessionEvent } from "@/t
 import { handleClaudeEvent } from "./claude-handler";
 import { handleACPEvent as acpHandler, handleACPTurnComplete as acpTurnComplete } from "./acp-handler";
 import { handleCodexEvent as codexHandler } from "./codex-handler";
+import { handleMastraEvent as mastraHandler } from "./mastra-handler";
 
 export interface BackgroundSessionState {
   messages: UIMessage[];
@@ -114,6 +115,12 @@ export class BackgroundSessionStore {
     if (result?.permissionRequest) {
       this.onPermissionRequest?.(sessionId, result.permissionRequest);
     }
+  }
+
+  /** Handle a Mastra AgentController event for a background (non-active) session. */
+  handleMastraEvent(sessionId: string, event: unknown): void {
+    const state = this.getOrCreate(sessionId);
+    mastraHandler(state, event as Parameters<typeof mastraHandler>[1]);
   }
 
   /** Store a pending permission for a background session and fire the callback. */
