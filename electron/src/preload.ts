@@ -422,4 +422,9 @@ contextBridge.exposeInMainWorld("pilot", {
       return () => ipcRenderer.removeListener("mastra:event", handler);
     },
   },
+  skills: {
+    init: (projectPath: string) => ipcRenderer.invoke("skills:init", projectPath),
+    list: () => ipcRenderer.invoke("skills:list"),
+    manifest: () => ipcRenderer.invoke("skills:manifest"),
+  },
 });
