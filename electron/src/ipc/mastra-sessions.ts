@@ -57,6 +57,36 @@ export function register(getMainWindow: () => BrowserWindow | null): void {
     return { success: true, state: currentSession.displayState.get() };
   });
 
+  ipcMain.handle("mastra:start", async (_event, options: { cwd: string }) => {
+    try {
+      const ac = await initMastraService(options.cwd);
+      currentSession = await ac.createSession({
+        id: `mastra-${Date.now()}`,
+        ownerId: "local-user",
+      });
+      log("mastra-ipc", `Session created: ${currentSession.identity.getId()}`);
+      return { sessionId: currentSession.identity.getId() };
+    } catch (err) {
+      log("mastra-ipc", `Start failed: ${err}`);
+      return { error: String(err) };
+    }
+  });
+
+  ipcMain.handle("mastra:send", async (_event, { sessionId, content }: { sessionId: string; content: string }) => {
+    if (!currentSession) return { error: "Mastra not initialized" };
+    try {
+      const unsubscribe = currentSession.subscribe((event) => {
+        safeSend(getMainWindow, "mastra:event", { sessionId, ...event });
+      });
+      await currentSession.sendMessage({ content });
+      unsubscribe();
+      return { ok: true };
+    } catch (err) {
+      log("mastra-ipc", `Send failed: ${err}`);
+      return { error: String(err) };
+    }
+  });
+
   ipcMain.handle("mastra:destroy", async () => {
     currentSession = null;
     await destroyMastraService();

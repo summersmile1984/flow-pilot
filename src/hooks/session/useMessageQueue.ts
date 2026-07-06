@@ -87,7 +87,7 @@ export function useMessageQueue({ refs, setters, engines, activeSessionId }: Use
 
   const updateSessionMessages = useCallback((
     sessionId: string,
-    sessionEngine: "claude" | "acp" | "codex",
+    sessionEngine: "claude" | "acp" | "codex" | "mastra",
     updater: (prev: UIMessage[]) => UIMessage[],
   ) => {
     if (sessionId === activeSessionIdRef.current) {
@@ -95,7 +95,9 @@ export function useMessageQueue({ refs, setters, engines, activeSessionId }: Use
         ? codex.setMessages
         : sessionEngine === "acp"
           ? acp.setMessages
-          : claude.setMessages;
+          : sessionEngine === "mastra"
+            ? claude.setMessages
+            : claude.setMessages;
       targetSetMessages(updater);
       return;
     }
@@ -104,7 +106,7 @@ export function useMessageQueue({ refs, setters, engines, activeSessionId }: Use
 
   const setSessionProcessing = useCallback((
     sessionId: string,
-    sessionEngine: "claude" | "acp" | "codex",
+    sessionEngine: "claude" | "acp" | "codex" | "mastra",
     isProcessing: boolean,
   ) => {
     if (sessionId === activeSessionIdRef.current) {
@@ -112,7 +114,9 @@ export function useMessageQueue({ refs, setters, engines, activeSessionId }: Use
         ? codex.setIsProcessing
         : sessionEngine === "acp"
           ? acp.setIsProcessing
-          : claude.setIsProcessing;
+          : sessionEngine === "mastra"
+            ? claude.setIsProcessing
+            : claude.setIsProcessing;
       targetSetIsProcessing(isProcessing);
       return;
     }
@@ -274,6 +278,10 @@ export function useMessageQueue({ refs, setters, engines, activeSessionId }: Use
           codexEffortRef.current,
           codexCollabMode,
         );
+        if (result?.error) handleSendError("Failed to send queued message.");
+      } else if (sessionEngine === "mastra") {
+        setSessionProcessing(sessionId, sessionEngine, true);
+        const result = await (window as any).pilot.mastra.send(sessionId, next.text);
         if (result?.error) handleSendError("Failed to send queued message.");
       } else {
         setSessionProcessing(sessionId, sessionEngine, true);

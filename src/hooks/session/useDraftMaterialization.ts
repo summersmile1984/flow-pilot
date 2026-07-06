@@ -547,6 +547,30 @@ export function useDraftMaterialization({
         if (result.needsAuth) {
           // Session is alive but waiting for auth — UI will render CodexAuthDialog
         }
+      } else if (draftEngine === "mastra") {
+        // Mastra engine path
+        setSessions(prev => [{
+          id: DRAFT_ID,
+          projectId: project.id,
+          title: "New Chat",
+          createdAt: Date.now(),
+          lastMessageAt: Date.now(),
+          totalCost: 0,
+          effort: options.effort,
+          permissionMode: options.permissionMode,
+          planMode: !!options.planMode,
+          isActive: true,
+          engine: "mastra" as const,
+        }, ...prev.map(s => ({ ...s, isActive: false }))]);
+
+        const result = await (window as any).pilot.mastra.start({ cwd: getProjectCwd(project) });
+        if (result.error) {
+          toast.error("Failed to start Mastra", { description: result.error });
+          setSessions(prev => prev.filter(s => s.id !== DRAFT_ID));
+          materializingRef.current = false;
+          return "";
+        }
+        sessionId = result.sessionId;
       } else {
         // Claude SDK path — reuse pre-started session if available
         const preStarted = preStartedSessionIdRef.current;

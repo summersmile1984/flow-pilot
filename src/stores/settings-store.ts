@@ -13,6 +13,7 @@ export const DEFAULT_ENGINE_MODELS: Record<EngineId, string> = {
   claude: DEFAULT_MODEL,
   acp: "",
   codex: "",
+  mastra: "",
 };
 
 const MIN_RIGHT_PANEL = 200;
@@ -359,6 +360,7 @@ function readLegacyProjectSettings(pid: string): ProjectSettings {
       claude: readLegacyModelForEngine(pid, "claude"),
       acp: readLegacyModelForEngine(pid, "acp"),
       codex: readLegacyModelForEngine(pid, "codex"),
+      mastra: readLegacyModelForEngine(pid, "mastra"),
     },
     gitCwd: localStorage.getItem(`harnss-${pid}-git-cwd`),
     activeTools: readLegacyJson<ToolId[]>(`harnss-${pid}-active-tools`, []).filter((id) => VALID_TOOL_IDS.has(id)),

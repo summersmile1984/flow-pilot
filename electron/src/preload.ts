@@ -412,6 +412,8 @@ contextBridge.exposeInMainWorld("pilot", {
   mastra: {
     init: (projectPath: string) => ipcRenderer.invoke("mastra:init", projectPath),
     sendMessage: (content: string) => ipcRenderer.invoke("mastra:sendMessage", content),
+    start: (options: { cwd: string }) => ipcRenderer.invoke("mastra:start", options),
+    send: (sessionId: string, content: string) => ipcRenderer.invoke("mastra:send", { sessionId, content }),
     abort: () => ipcRenderer.invoke("mastra:abort"),
     switchMode: (modeId: string) => ipcRenderer.invoke("mastra:switchMode", modeId),
     getDisplayState: () => ipcRenderer.invoke("mastra:getDisplayState"),
