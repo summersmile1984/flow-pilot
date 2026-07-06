@@ -1,0 +1,15 @@
+supervisor:
+  model: anthropic/claude-sonnet-4-20250514
+
+agents:
+  claude-code:
+    command: npx
+    args: ["-y", "@agentclientprotocol/claude-agent-acp"]
+    capabilities: ["code-edit", "bash", "git", "reasoning"]
+    strengths: ["complex-refactor", "multi-file-changes"]
+
+  codex:
+    command: codex
+    args: ["--acp"]
+    capabilities: ["code-edit", "bash"]
+    strengths: ["test-generation", "quick-fixes"]

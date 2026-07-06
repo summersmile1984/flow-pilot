@@ -1,8 +1,8 @@
 {
-  "name": "harnss",
-  "version": "0.22.0-beta.2",
-  "productName": "Harnss",
-  "description": "Harness your AI coding agents — one desktop app for Claude Code, Codex, and any ACP agent",
+  "name": "pilot",
+  "version": "0.1.0",
+  "productName": "Pilot",
+  "description": "Pilot your AI coding agents — unified management for Claude Code, Codex, and any ACP agent via Mastra",
   "author": {
     "name": "Dejan Zegarac",
     "email": "dejanzegarac3@gmail.com"
