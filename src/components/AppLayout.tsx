@@ -1,6 +1,6 @@
 import React, { useCallback, useMemo, useRef, useEffect, useLayoutEffect, useState } from "react";
 import { LayoutGroup, motion } from "motion/react";
-import { PanelLeft, Bot } from "lucide-react";
+import { PanelLeft } from "lucide-react";
 import { toast } from "sonner";
 import { Button } from "@/components/ui/button";
 import { useAppOrchestrator } from "@/hooks/useAppOrchestrator";
@@ -36,7 +36,6 @@ import { SettingsView } from "./SettingsView";
 import { CodexAuthDialog } from "./CodexAuthDialog";
 import { ACPAuthDialog } from "./ACPAuthDialog";
 import { JiraBoardPanel } from "./JiraBoardPanel";
-import { MastraChatPanel } from "./MastraChatPanel";
 import { isMac, isWindows } from "@/lib/utils";
 import { SplitHandle } from "./split/SplitHandle";
 import { SplitDropZone } from "./split/SplitDropZone";
@@ -161,8 +160,6 @@ export function AppLayout() {
     images?: Parameters<typeof handleSend>[1];
     displayText?: string;
   } | null>(null);
-  const [showMastra, setShowMastra] = useState(false);
-
 
   // Wrap handleSend to clear grabbed elements after sending
   const wrappedHandleSend = useCallback(
@@ -1584,16 +1581,7 @@ export function AppLayout() {
                     <PanelLeft className="h-4 w-4" />
                   </Button>
                 )}
-                <Button
-                  variant={showMastra ? "default" : "ghost"}
-                  size="icon"
-                  className={`no-drag h-7 w-7 text-muted-foreground/60 hover:text-foreground ${
-                    isIsland ? "relative -top-[5px]" : ""
-                  }`}
-                  onClick={() => setShowMastra(!showMastra)}
-                >
-                  <Bot className="h-4 w-4" />
-                </Button>
+
               </div>
               <WelcomeScreen
                 hasProjects={hasProjects}
@@ -1601,14 +1589,7 @@ export function AppLayout() {
               />
               </>
             )}
-            {showMastra && activeProjectPath && (
-              <div className="absolute inset-0 z-50 bg-background/80 backdrop-blur-sm p-4">
-                <MastraChatPanel
-                  projectPath={activeProjectPath}
-                  onClose={() => setShowMastra(false)}
-                />
-              </div>
-            )}
+
           </motion.div>
 
           {showSinglePaneSplitPreview && singlePanePreviewPosition === 1 && (
