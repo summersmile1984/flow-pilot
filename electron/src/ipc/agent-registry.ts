@@ -7,6 +7,7 @@ import {
   updateCachedConfig,
   checkBinaries,
   getRegistryPlatformKeys,
+  detectLocalAcpAgents,
 } from "../lib/agent-registry";
 import type { InstalledAgent } from "../lib/agent-registry";
 import type { ACPConfigOption } from "@shared/types/acp";
@@ -35,4 +36,7 @@ export function register(): void {
       checkBinaries(agents),
   );
   ipcMain.handle("agents:get-platform-keys", () => getRegistryPlatformKeys());
+
+  // Detect locally installed ACP-compatible tools
+  ipcMain.handle("agents:detect-acp", async () => detectLocalAcpAgents());
 }

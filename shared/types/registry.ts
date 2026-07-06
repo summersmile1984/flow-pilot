@@ -22,6 +22,8 @@ export interface InstalledAgent {
   description?: string;
   /** Cached config options from the last ACP session — shown before session starts */
   cachedConfigOptions?: ACPConfigOption[];
+  /** True for auto-detected ACP agents (not user-created or built-in) */
+  detected?: boolean;
 }
 
 // ── Binary resolution result (shared between electron and renderer) ──

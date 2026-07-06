@@ -28,11 +28,21 @@ const BUILTIN_CODEX: InstalledAgent = {
   icon: "zap",
 };
 
-const BUILTIN_IDS = new Set([BUILTIN_CLAUDE.id, BUILTIN_CODEX.id]);
+const BUILTIN_PILOT: InstalledAgent = {
+  id: "pilot",
+  name: "Pilot (Mastra)",
+  engine: "mastra",
+  builtIn: true,
+  icon: "pilot",
+  description: "Mastra-powered supervisor that routes tasks to the best ACP agent",
+};
+
+const BUILTIN_IDS = new Set([BUILTIN_CLAUDE.id, BUILTIN_CODEX.id, BUILTIN_PILOT.id]);
 
 const agents = new Map<string, InstalledAgent>();
 agents.set(BUILTIN_CLAUDE.id, BUILTIN_CLAUDE);
 agents.set(BUILTIN_CODEX.id, BUILTIN_CODEX);
+agents.set(BUILTIN_PILOT.id, BUILTIN_PILOT);
 
 function getConfigPath(): string {
   return path.join(app.getPath("userData"), "openacpui-data", "agents.json");
@@ -197,4 +207,48 @@ export async function checkBinaries(
     }),
   );
   return results;
+}
+
+// ── Local ACP agent detection ──
+
+interface AcpAgentCandidate {
+  id: string;
+  name: string;
+  command: string;
+  args: string[];
+  icon: string;
+}
+
+const ACP_AGENT_CANDIDATES: AcpAgentCandidate[] = [
+  { id: "claude-code-acp", name: "Claude Code (ACP)", command: "claude", args: ["--acp"], icon: "brain" },
+  { id: "codex-acp", name: "Codex (ACP)", command: "codex", args: ["--acp"], icon: "zap" },
+  { id: "gemini-cli", name: "Gemini CLI", command: "gemini", args: ["--experimental-acp"], icon: "sparkles" },
+  { id: "opencode", name: "OpenCode", command: "opencode", args: ["acp"], icon: "code" },
+  { id: "mimo", name: "MiMo", command: "mimo", args: ["--acp"], icon: "bot" },
+  { id: "goose", name: "Goose", command: "goose", args: ["acp"], icon: "bird" },
+  { id: "cagent", name: "Docker cagent", command: "cagent", args: ["acp", "agent.yml"], icon: "container" },
+  { id: "aider", name: "Aider", command: "aider", args: ["--acp"], icon: "terminal" },
+  { id: "cursor", name: "Cursor", command: "cursor", args: ["--acp"], icon: "mouse-pointer" },
+];
+
+export async function detectLocalAcpAgents(): Promise<InstalledAgent[]> {
+  const detected: InstalledAgent[] = [];
+
+  for (const candidate of ACP_AGENT_CANDIDATES) {
+    const resolved = await resolveWhich(candidate.command);
+    if (resolved) {
+      detected.push({
+        id: candidate.id,
+        name: candidate.name,
+        engine: "acp",
+        builtIn: false,
+        icon: candidate.icon,
+        binary: candidate.command,
+        args: candidate.args,
+        detected: true,
+      });
+    }
+  }
+
+  return detected;
 }
