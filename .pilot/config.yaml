@@ -1,5 +1,5 @@
 supervisor:
-  model: anthropic/claude-sonnet-4-20250514
+  model: deepseek/deepseek-chat
 
 agents:
   claude-code:
@@ -9,7 +9,7 @@ agents:
     strengths: ["complex-refactor", "multi-file-changes"]
 
   codex:
-    command: codex
-    args: ["--acp"]
+    command: npx
+    args: ["-y", "@agentclientprotocol/codex-acp"]
     capabilities: ["code-edit", "bash"]
     strengths: ["test-generation", "quick-fixes"]
