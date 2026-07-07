@@ -42,7 +42,7 @@ export const ToolCall = memo(function ToolCall({
   disableCollapseAnimation = false,
 }: ToolCallProps) {
   const normalizedToolName = (message.toolName ?? "").toLowerCase();
-  const isTask = normalizedToolName === "task" || normalizedToolName === "agent";
+  const isTask = normalizedToolName === "task" || normalizedToolName === "agent" || message.subagentSteps !== undefined;
   const isWideTool = normalizedToolName === "edit" || normalizedToolName === "write" || normalizedToolName === "notebookedit";
   const content = isTask
     ? <TaskTool message={message} />

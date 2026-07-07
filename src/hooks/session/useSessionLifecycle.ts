@@ -1,5 +1,6 @@
-import { useCallback } from "react";
+import { useCallback, useEffect } from "react";
 import type { ImageAttachment, McpServerConfig, Project } from "@/types";
+import { applyMastraEvent, mastraProcessingChange, type MastraEvent } from "../../lib/background/mastra-handler";
 import type { CollaborationMode } from "../../types/codex-protocol/CollaborationMode";
 import { imageAttachmentsToCodexInputs } from "../../lib/engine/codex-adapter";
 import { createSystemMessage, createUserMessage } from "../../lib/message-factory";
@@ -69,6 +70,30 @@ export function useSessionLifecycle({
   resetCodexEffortToModelDefault,
 }: UseSessionLifecycleParams) {
   const { claude, acp, codex } = engines;
+
+  // ── Mastra: consume AgentController events for the active session ──
+  // Mastra sessions render through the claude store (useSessionPane falls back
+  // to it for non-claude/acp/codex engines). Background sessions are handled
+  // in useSessionPersistence.
+  useEffect(() => {
+    const mastra = (window as any).pilot?.mastra;
+    if (!mastra?.onEvent) return;
+    const unsubscribe = mastra.onEvent((raw: unknown) => {
+      const event = raw as MastraEvent;
+      // The supervisor's tools are the user's own local ACP agents, which
+      // enforce their own permissions — approve the outer gate automatically.
+      if (event.type === "tool_approval_required") {
+        void mastra.respondToApproval?.({ decision: "approve", toolCallId: event.toolCallId, sessionId: event.sessionId });
+      }
+      if (!event.sessionId || event.sessionId !== refs.activeSessionIdRef.current) return;
+      claude.setMessages((prev) => applyMastraEvent(prev, event));
+      const processing = mastraProcessingChange(event);
+      if (processing !== null) claude.setIsProcessing(processing);
+    });
+    return () => { unsubscribe?.(); };
+    // setMessages/setIsProcessing are stable useState setters
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, []);
 
   // ── Session cache: LRU payload cache, session list loading, model hydration ──
   const {
@@ -248,6 +273,37 @@ export function useSessionLifecycle({
           return;
         }
 
+        if (draftEngine === "mastra") {
+          trackMessageSent();
+          const sessionId = await materializeDraft(text);
+          if (!sessionId) return;
+          await new Promise((resolve) => setTimeout(resolve, 50));
+
+          claude.setMessages((prev) => [
+            ...prev,
+            createUserMessage(text, images, displayText),
+          ]);
+          claude.setIsProcessing(true);
+
+          try {
+            const result = await (window as any).pilot.mastra.send(sessionId, text);
+            if (result?.error) {
+              claude.setMessages((prev) => [
+                ...prev,
+                createSystemMessage(`Unable to send message: ${result.error}`, true),
+              ]);
+              claude.setIsProcessing(false);
+            }
+          } catch (err) {
+            claude.setMessages((prev) => [
+              ...prev,
+              createSystemMessage(`Unable to send message: ${err instanceof Error ? err.message : String(err)}`, true),
+            ]);
+            claude.setIsProcessing(false);
+          }
+          return;
+        }
+
         // Claude SDK path
         trackMessageSent();
         const sessionId = await materializeDraft(text);
@@ -319,6 +375,37 @@ export function useSessionLifecycle({
         }
         // Codex session dead — attempt revival via thread/resume
         await reviveCodexSession(text, images);
+        return;
+      }
+
+      if (activeSessionEngine === "mastra") {
+        // Mastra sessions: send through Mastra IPC; events render via the
+        // active-session subscription above (claude store). The project cwd is
+        // passed so a dead session (app restarted) can be resumed in-place.
+        const activeSession = refs.sessionsRef.current.find((s) => s.id === activeId);
+        const project = activeSession ? findProject(activeSession.projectId) : null;
+        const cwd = project ? getProjectCwd(project) : undefined;
+        claude.setMessages((prev) => [
+          ...prev,
+          createUserMessage(text, images, displayText),
+        ]);
+        claude.setIsProcessing(true);
+        try {
+          const result = await (window as any).pilot.mastra.send(activeId, text, cwd);
+          if (result?.error) {
+            claude.setMessages((prev) => [
+              ...prev,
+              createSystemMessage(`Unable to send message: ${result.error}`, true),
+            ]);
+            claude.setIsProcessing(false);
+          }
+        } catch (err) {
+          claude.setMessages((prev) => [
+            ...prev,
+            createSystemMessage(`Unable to send message: ${err instanceof Error ? err.message : String(err)}`, true),
+          ]);
+          claude.setIsProcessing(false);
+        }
         return;
       }
 
