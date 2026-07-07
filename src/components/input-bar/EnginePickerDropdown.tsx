@@ -362,9 +362,9 @@ export const EnginePickerDropdown = memo(function EnginePickerDropdown({
     );
   };
 
-  // Split agents into first-party engines (claude, codex) vs ACP agents
+  // Split agents into first-party engines (claude, codex, mastra) vs ACP agents
   const firstPartyAgents = hasMultipleAgents
-    ? agents.filter((a) => a.engine === "claude" || a.engine === "codex")
+    ? agents.filter((a) => a.engine === "claude" || a.engine === "codex" || a.engine === "mastra")
     : [];
   const acpAgents = hasMultipleAgents
     ? agents.filter((a) => a.engine === "acp")

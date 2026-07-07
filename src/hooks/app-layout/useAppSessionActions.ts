@@ -59,10 +59,9 @@ export function useAppSessionActions(input: UseAppSessionActionsInput) {
     const currentEngine = input.manager.activeSession?.engine ?? "claude";
     const currentAgentId = input.manager.activeSession?.agentId;
     const wantedEngine = agent?.engine ?? "claude";
-    const needsNewSession = !input.manager.isDraft && input.manager.activeSession && (
-      currentEngine !== wantedEngine ||
-      (currentEngine === "acp" && wantedEngine === "acp" && currentAgentId !== agent?.id)
-    );
+    const engineChanged = currentEngine !== wantedEngine;
+    const agentChanged = currentEngine === "acp" && wantedEngine === "acp" && currentAgentId !== agent?.id;
+    const needsNewSession = !input.manager.isDraft && input.manager.activeSession && (engineChanged || agentChanged);
 
     if (needsNewSession) {
       const options = buildSessionOptions(

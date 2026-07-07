@@ -5,6 +5,7 @@ import type { EngineId } from "@shared/types/engine";
 export const ENGINE_ICONS: Record<string, string> = {
   claude: "https://cdn.agentclientprotocol.com/registry/v1/latest/claude-acp.svg",
   codex: "https://cdn.agentclientprotocol.com/registry/v1/latest/codex-acp.svg",
+  mastra: "https://cdn.agentclientprotocol.com/registry/v1/latest/claude-acp.svg", // Use Claude icon for now
 };
 
 /** Resolve the icon source for an agent — engine CDN icons override agent-level icons */

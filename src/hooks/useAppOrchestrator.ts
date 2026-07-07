@@ -194,6 +194,16 @@ export function useAppOrchestrator() {
       return;
     }
 
+    if (session.engine === "mastra") {
+      const mastraAgent = (session.agentId
+        ? agents.find((a) => a.id === session.agentId)
+        : undefined) ?? agents.find((a) => a.engine === "mastra");
+      if (mastraAgent && selectedAgent?.id !== mastraAgent.id) {
+        setSelectedAgent(mastraAgent);
+      }
+      return;
+    }
+
     if (selectedAgent !== null) {
       setSelectedAgent(null);
     }

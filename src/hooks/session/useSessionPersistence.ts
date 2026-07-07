@@ -491,13 +491,19 @@ export function useSessionPersistence({
         message.length > 60 ? message.slice(0, 57) + "..." : message;
 
       try {
-        // Pass engine + sessionId so the IPC handler routes to ACP if needed
-        const result = await window.claude.generateTitle(
-          message,
-          projectPath,
-          titleEngine,
-          titleEngine === "acp" ? sessionId : undefined,
-        );
+        // Mastra has no title-generation backend yet — use the fallback title.
+        // The setTimeout yield lets React commit the just-created session first,
+        // so the sessionsRef guard below sees it (other engines yield via IPC).
+        const result = titleEngine === "mastra"
+          ? await new Promise<{ title: string }>((resolve) =>
+              setTimeout(() => resolve({ title: fallbackTitle }), 0),
+            )
+          : await window.claude.generateTitle(
+              message,
+              projectPath,
+              titleEngine,
+              titleEngine === "acp" ? sessionId : undefined,
+            );
 
         // Guard: session may have been deleted or manually renamed while generating
         const current = sessionsRef.current.find((s) => s.id === sessionId);
@@ -541,3 +547,4 @@ export function useSessionPersistence({
     persistSessionWithCodexFallback,
   };
 }
+// watcher-probe-1783414947
