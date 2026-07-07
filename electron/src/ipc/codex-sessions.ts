@@ -32,6 +32,10 @@ import type {
 import type { SkillsListResponse } from "@shared/types/codex-protocol/v2/SkillsListResponse";
 import type { AppsListResponse } from "@shared/types/codex-protocol/v2/AppsListResponse";
 
+// thread/start and thread/resume load every plugin/skill under ~/.codex, which
+// can far exceed the default 30s RPC timeout on plugin-heavy machines.
+const THREAD_START_TIMEOUT_MS = 120_000;
+
 // ── Session state ──
 
 interface CodexSession {
@@ -326,7 +330,7 @@ export function register(getMainWindow: () => BrowserWindow | null): void {
         if (options.personality) threadParams.personality = options.personality;
         // collaborationMode is set per-turn via turn/start, not on thread/start
 
-        const threadResult = await rpc.request<CodexThreadStartResponse>("thread/start", threadParams);
+        const threadResult = await rpc.request<CodexThreadStartResponse>("thread/start", threadParams, THREAD_START_TIMEOUT_MS);
         session.threadId = threadResult.thread.id;
         log("codex",` Thread started: ${session.threadId}`);
 
@@ -382,7 +386,7 @@ export function register(getMainWindow: () => BrowserWindow | null): void {
           if (session.model) threadParams.model = session.model;
           if (session.approvalPolicy) threadParams.approvalPolicy = session.approvalPolicy;
           if (session.sandbox) threadParams.sandbox = session.sandbox;
-          const threadResult = await session.rpc.request<CodexThreadStartResponse>("thread/start", threadParams);
+          const threadResult = await session.rpc.request<CodexThreadStartResponse>("thread/start", threadParams, THREAD_START_TIMEOUT_MS);
           session.threadId = threadResult.thread.id;
           log(
             "codex",
@@ -733,7 +737,7 @@ export function register(getMainWindow: () => BrowserWindow | null): void {
         if (data.approvalPolicy) threadParams.approvalPolicy = data.approvalPolicy;
         if (data.sandbox) threadParams.sandbox = data.sandbox;
 
-        const threadResult = await rpc.request<CodexThreadResumeResponse>("thread/resume", threadParams);
+        const threadResult = await rpc.request<CodexThreadResumeResponse>("thread/resume", threadParams, THREAD_START_TIMEOUT_MS);
         session.threadId = threadResult.thread.id;
         log("codex",` Thread resumed: ${session.threadId}`);
 

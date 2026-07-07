@@ -173,7 +173,8 @@ export async function codexUtilityPrompt(
     if (selectedModel) {
       threadParams.model = selectedModel;
     }
-    const thread = await rpc.request<CodexThreadStartResponse>("thread/start", threadParams);
+    // thread/start loads all ~/.codex plugins/skills — needs more than the 30s default
+    const thread = await rpc.request<CodexThreadStartResponse>("thread/start", threadParams, 120_000);
 
     const turnParams: Record<string, unknown> = {
       threadId: thread.thread.id,
