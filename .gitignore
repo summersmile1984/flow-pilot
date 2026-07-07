@@ -10,3 +10,4 @@ docs/
 frontend/
 cli
 .idea/
+.env

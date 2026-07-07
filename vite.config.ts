@@ -27,6 +27,12 @@ export default defineConfig({
     },
   },
   server: {
-    port: 5173,
+    // Keep in sync with electron main's loadURL (PILOT_DEV_PORT overrides both)
+    port: Number(process.env.PILOT_DEV_PORT) || 5173,
+    // Native file watching (fsevents/kqueue) silently dies on this machine when
+    // fd limits are exhausted — VITE_USE_POLLING=1 opts into polling instead.
+    ...(process.env.VITE_USE_POLLING
+      ? { watch: { usePolling: true, interval: 300 } }
+      : {}),
   },
 });

@@ -60,7 +60,7 @@ app.commandLine.appendSwitch("enable-features", "CanvasOopRasterization"); // of
 
 // --- Liquid Glass command-line switches ---
 if (glassEnabled) {
-  app.commandLine.appendSwitch("remote-debugging-port", "9222");
+  app.commandLine.appendSwitch("remote-debugging-port", "9333");
   app.commandLine.appendSwitch("remote-allow-origins", "*");
 }
 
@@ -194,7 +194,8 @@ function createWindow(): void {
 
   const isDev = !app.isPackaged;
   if (isDev) {
-    mainWindow.loadURL("http://localhost:5173");
+    // PILOT_DEV_PORT lets the dev server run on an alternate port when 5173 is taken
+    mainWindow.loadURL(`http://localhost:${process.env.PILOT_DEV_PORT || "5173"}`);
   } else {
     mainWindow.loadFile(path.join(__dirname, "../../dist/index.html"));
   }
