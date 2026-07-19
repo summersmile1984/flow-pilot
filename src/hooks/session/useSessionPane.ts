@@ -76,7 +76,9 @@ export function useSessionPane({
 }: UseSessionPaneOptions): SessionPaneState {
   const isACP = activeEngine === "acp";
   const isCodex = activeEngine === "codex";
-  const isClaude = activeEngine === "claude";
+  // Mastra sessions render through the claude hook (see the engine fallback
+  // below), so they receive the loaded initial state the same way claude does.
+  const isClaude = activeEngine === "claude" || activeEngine === "mastra";
 
   // ── Engine hooks (always called — Rules of Hooks) ──
   const claude = useClaude({

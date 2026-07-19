@@ -78,7 +78,11 @@ export function useSessionManager(
   const isACP = activeEngine === "acp";
   const isCodex = activeEngine === "codex";
 
-  const claudeSessionId = (activeEngine === "claude" && activeSessionId !== DRAFT_ID) ? activeSessionId : null;
+  // Mastra sessions render through the claude hook (useSessionPane fallback),
+  // so they must pass their session id too — useEngineBase only applies
+  // initialMessages when sessionId changes, and a permanently-null id means
+  // loaded history never reaches the screen.
+  const claudeSessionId = ((activeEngine === "claude" || activeEngine === "mastra") && activeSessionId !== DRAFT_ID) ? activeSessionId : null;
   const acpSessionId = activeEngine === "acp"
     ? (activeSessionId !== DRAFT_ID ? activeSessionId : draftAcpSessionId)
     : null;
@@ -194,7 +198,7 @@ export function useSessionManager(
   }, []);
 
   const getProjectCwd = useCallback((project: Project) => {
-    const selected = localStorage.getItem(`harnss-${project.id}-git-cwd`)?.trim();
+    const selected = localStorage.getItem(`pilot-${project.id}-git-cwd`)?.trim();
     return selected || project.path;
   }, []);
 
@@ -331,6 +335,8 @@ export function useSessionManager(
     restartActiveSessionInCurrentWorktree,
     fullRevertSession,
     send,
+    pendingMastraApproval,
+    handleMastraApproval,
   } = useSessionLifecycle({
     refs,
     setters,
@@ -608,6 +614,8 @@ export function useSessionManager(
     },
     pendingPermission: engine.pendingPermission,
     respondPermission: engine.respondPermission,
+    pendingMastraApproval,
+    handleMastraApproval,
     contextUsage: engine.contextUsage,
     isCompacting: "isCompacting" in engine ? !!engine.isCompacting : false,
     compact: engine.compact,
