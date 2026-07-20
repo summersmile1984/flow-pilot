@@ -52,4 +52,26 @@ describe("settings store", () => {
     expect(secondProjects["project-1"]?.activeTools).toBe(firstActiveTools);
     expect(secondProjects["project-1"]?.activeTools).toEqual(["tasks"]);
   });
+
+  it("defaults mastraMode to supervisor", async () => {
+    const { useSettingsStore } = await import("./settings-store");
+    expect(useSettingsStore.getState().mastraMode).toBe("supervisor");
+  });
+
+  it("defaults mastraAgentId to claude-code", async () => {
+    const { useSettingsStore } = await import("./settings-store");
+    expect(useSettingsStore.getState().mastraAgentId).toBe("claude-code");
+  });
+
+  it("updates mastraMode via setMastraMode", async () => {
+    const { useSettingsStore } = await import("./settings-store");
+    useSettingsStore.getState().setMastraMode("direct");
+    expect(useSettingsStore.getState().mastraMode).toBe("direct");
+  });
+
+  it("updates mastraAgentId via setMastraAgentId", async () => {
+    const { useSettingsStore } = await import("./settings-store");
+    useSettingsStore.getState().setMastraAgentId("codex");
+    expect(useSettingsStore.getState().mastraAgentId).toBe("codex");
+  });
 });

@@ -11,3 +11,6 @@ frontend/
 cli
 .idea/
 .env
+playwright-report/
+test-results/
+test-screenshots/
