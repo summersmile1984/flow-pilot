@@ -112,7 +112,7 @@ interface GlobalSettingsState {
   coloredToolIcons: boolean;
   /** Mastra agent mode: supervisor (default), direct, or acp-supervisor */
   mastraMode: string;
-  /** For direct/acp-supervisor modes: which ACP agent to use (claude-code or codex) */
+  /** For direct/acp-supervisor modes: which ACP agent to use (e.g. opencode or codex) */
   mastraAgentId: string;
 }
 
@@ -325,7 +325,7 @@ function readLegacyGlobalSettings(): GlobalSettingsState {
     showToolIcons: readLegacyBool("pilot-show-tool-icons", true),
     coloredToolIcons: readLegacyBool("pilot-colored-tool-icons", false),
     mastraMode: localStorage.getItem("pilot-mastra-mode") || "supervisor",
-    mastraAgentId: localStorage.getItem("pilot-mastra-agent-id") || "claude-code",
+    mastraAgentId: localStorage.getItem("pilot-mastra-agent-id") || "opencode",
   };
 }
 
@@ -442,7 +442,7 @@ export const useSettingsStore = create<SettingsStore>()(
       showToolIcons: true,
       coloredToolIcons: false,
       mastraMode: "supervisor",
-      mastraAgentId: "claude-code",
+      mastraAgentId: "opencode",
 
       projects: {},
 

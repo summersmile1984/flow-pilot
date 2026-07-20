@@ -2,11 +2,11 @@ supervisor:
   model: deepseek/deepseek-chat
 
 agents:
-  claude-code:
-    command: npx
-    args: ["-y", "@agentclientprotocol/claude-agent-acp"]
+  opencode:
+    command: opencode
+    args: ["acp"]
     capabilities: ["code-edit", "bash", "git", "reasoning"]
-    strengths: ["complex-refactor", "multi-file-changes"]
+    strengths: ["complex-refactor", "multi-file-changes", "general-coding"]
 
   codex:
     command: npx

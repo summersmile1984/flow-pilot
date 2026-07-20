@@ -6,7 +6,7 @@ import { app } from 'electron';
 import { log } from './logger';
 
 // ── ACP session persistence ──
-// claude-code/codex keep their own conversation context inside their ACP
+// ACP agents (opencode/codex) keep their own conversation context inside their
 // session. Persisting the session id lets the next app launch resume it via
 // ACP `session/load`, so the agents remember prior work across restarts.
 

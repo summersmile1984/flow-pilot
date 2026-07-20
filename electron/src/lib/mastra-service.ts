@@ -48,7 +48,21 @@ function readProjectMemory(projectPath: string): string {
   }
 }
 
-let agentController: AgentController | null = null;
+// One AgentController per (project, mode, agent) combination — the primary
+// agent is baked in at construction, so chats running different modes need
+// different controllers. A single cached instance silently served whichever
+// mode initialized first.
+const controllers = new Map<string, AgentController>();
+
+function controllerKey(options: InitOptions): string {
+  const mode = options.mode || 'supervisor';
+  const agentPart = mode === 'direct'
+    ? options.directAgentId || 'opencode'
+    : mode === 'acp-supervisor'
+      ? options.supervisorAgentId || 'opencode'
+      : '-';
+  return `${options.projectPath}::${mode}::${agentPart}`;
+}
 
 // Model API keys live in <app root>/.env (gitignored). The GUI-launched app
 // doesn't inherit shell env vars, so load them ourselves.
@@ -72,12 +86,14 @@ export interface InitOptions {
 }
 
 export async function initMastraService(projectPathOrOptions: string | InitOptions, modelOverride?: string): Promise<AgentController> {
-  if (agentController) return agentController;
-
   // Support both old signature (projectPath, modelOverride) and new options object
   const options: InitOptions = typeof projectPathOrOptions === 'string'
     ? { projectPath: projectPathOrOptions, modelOverride }
     : projectPathOrOptions;
+
+  const key = controllerKey(options);
+  const cached = controllers.get(key);
+  if (cached) return cached;
 
   loadEnvFile();
 
@@ -124,14 +140,14 @@ export async function initMastraService(projectPathOrOptions: string | InitOptio
   // Create the primary agent based on mode
   let primaryAgent: Agent;
   const agents = config.agents || {
-    'claude-code': { command: 'npx', args: ['-y', '@agentclientprotocol/claude-agent-acp'] },
+    'opencode': { command: 'opencode', args: ['acp'] },
     'codex': { command: 'npx', args: ['-y', '@agentclientprotocol/codex-acp'] },
   };
 
   switch (mode) {
     case 'direct': {
       // Mode 2: Direct ACP - passthrough to single agent
-      const agentId = options.directAgentId || 'claude-code';
+      const agentId = options.directAgentId || 'opencode';
       const agentConfig = agents[agentId];
       if (!agentConfig) throw new Error(`Agent ${agentId} not found in config`);
       primaryAgent = createPassthroughAgent({
@@ -146,7 +162,7 @@ export async function initMastraService(projectPathOrOptions: string | InitOptio
 
     case 'acp-supervisor': {
       // Mode 3: ACP Supervisor - ACP agent makes decisions via proxy
-      const supervisorId = options.supervisorAgentId || 'claude-code';
+      const supervisorId = options.supervisorAgentId || 'opencode';
       const supervisorConfig = agents[supervisorId];
       if (!supervisorConfig) throw new Error(`Agent ${supervisorId} not found in config`);
       const subAgents = { ...agents };
@@ -173,8 +189,8 @@ export async function initMastraService(projectPathOrOptions: string | InitOptio
     }
   }
 
-  agentController = new AgentController({
-    id: 'pilot-controller',
+  const agentController = new AgentController({
+    id: `pilot-controller-${mode}`,
     agent: primaryAgent,
     storage,
     memory,
@@ -201,7 +217,8 @@ export async function initMastraService(projectPathOrOptions: string | InitOptio
   });
 
   await agentController.init();
-  log('mastra-service', `Mastra service initialized in ${mode} mode`);
+  controllers.set(key, agentController);
+  log('mastra-service', `Mastra service initialized in ${mode} mode (${key})`);
   return agentController;
 }
 
@@ -211,13 +228,18 @@ export function getPilotConfig(projectPath: string): PilotConfig {
 }
 
 export function getAgentController(): AgentController | null {
-  return agentController;
+  const first = controllers.values().next();
+  return first.done ? null : first.value;
 }
 
 export async function destroyMastraService(): Promise<void> {
-  if (agentController) {
-    await agentController.destroy();
-    agentController = null;
-    log('mastra-service', 'Mastra service destroyed');
+  for (const [key, controller] of controllers) {
+    try {
+      await controller.destroy();
+    } catch (err) {
+      log('mastra-service', `Failed to destroy controller ${key}: ${err}`);
+    }
   }
+  controllers.clear();
+  log('mastra-service', 'Mastra service destroyed');
 }

@@ -77,7 +77,12 @@ export function createPassthroughAgent(options: {
     id: `passthrough-${options.acpId}`,
     name: options.acpId,
     description: `Direct ${options.acpId} agent`,
-    instructions: `You are a passthrough agent. Forward ALL user messages to the \`${toolName}\` tool exactly as received. Do not add any commentary, analysis, or modification. Just call the tool with the user's message and return the result.`,
+    instructions: `You are a transparent relay with NO identity, NO knowledge, and NO opinions of your own.
+
+STRICT PROTOCOL — no exceptions:
+1. For EVERY user message, your first and only action is to call the \`${toolName}\` tool with the user's message passed through verbatim as the task.
+2. NEVER answer from your own knowledge, even for trivial or identity questions ("who are you", greetings, one-word replies) — the ${options.acpId} agent must answer them, not you.
+3. After the tool returns, output the tool's result as-is. No commentary, no reformatting, no additions.`,
     model: options.model || 'deepseek/deepseek-chat',
     tools: {
       [toolName]: acpTool,

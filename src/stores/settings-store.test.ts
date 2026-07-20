@@ -58,9 +58,9 @@ describe("settings store", () => {
     expect(useSettingsStore.getState().mastraMode).toBe("supervisor");
   });
 
-  it("defaults mastraAgentId to claude-code", async () => {
+  it("defaults mastraAgentId to opencode", async () => {
     const { useSettingsStore } = await import("./settings-store");
-    expect(useSettingsStore.getState().mastraAgentId).toBe("claude-code");
+    expect(useSettingsStore.getState().mastraAgentId).toBe("opencode");
   });
 
   it("updates mastraMode via setMastraMode", async () => {

@@ -170,7 +170,7 @@ export interface Settings {
   /** Mastra agent mode: supervisor (default), direct, or acp-supervisor */
   mastraMode: string;
   setMastraMode: (mode: string) => void;
-  /** For direct/acp-supervisor modes: which ACP agent to use (claude-code or codex) */
+  /** For direct/acp-supervisor modes: which ACP agent to use (e.g. opencode or codex) */
   mastraAgentId: string;
   setMastraAgentId: (agentId: string) => void;
 }
@@ -477,7 +477,7 @@ export function useSettings(projectId: string | null, engine: EngineId = "claude
   }, []);
 
   const [mastraAgentId, setMastraAgentIdRaw] = useState(() =>
-    localStorage.getItem("pilot-mastra-agent-id") || "claude-code",
+    localStorage.getItem("pilot-mastra-agent-id") || "opencode",
   );
   const setMastraAgentId = useCallback((agentId: string) => {
     setMastraAgentIdRaw(agentId);

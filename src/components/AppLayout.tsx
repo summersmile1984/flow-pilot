@@ -1003,9 +1003,9 @@ export function AppLayout() {
   // Mastra mode options
   const mastraModeOptions = useMemo(() => [
     { id: "supervisor", label: "Supervisor", description: "Mastra routes tasks to best ACP agent" },
-    { id: "direct-claude-code", label: "Direct (Claude Code)", description: "Direct chat with Claude Code", agentId: "claude-code" },
+    { id: "direct-opencode", label: "Direct (OpenCode)", description: "Direct chat with OpenCode", agentId: "opencode" },
     { id: "direct-codex", label: "Direct (Codex)", description: "Direct chat with Codex", agentId: "codex" },
-    { id: "acp-supervisor-claude-code", label: "ACP Supervisor (Claude)", description: "Claude Code makes routing decisions", agentId: "claude-code" },
+    { id: "acp-supervisor-opencode", label: "ACP Supervisor (OpenCode)", description: "OpenCode makes routing decisions", agentId: "opencode" },
     { id: "acp-supervisor-codex", label: "ACP Supervisor (Codex)", description: "Codex makes routing decisions", agentId: "codex" },
   ], []);
 
