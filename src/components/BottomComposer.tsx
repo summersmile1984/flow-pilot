@@ -2,8 +2,9 @@ import { useCallback, type ComponentProps } from "react";
 import { InputBar } from "./input-bar";
 import { PermissionPrompt } from "./PermissionPrompt";
 import { MastraApprovalPanel } from "./MastraApprovalPanel";
+import { MastraQuestionPanel } from "./MastraQuestionPanel";
 import { WorktreeBar } from "./WorktreeBar";
-import type { MastraApprovalRequest } from "@/hooks/session/useSessionLifecycle";
+import type { MastraApprovalRequest, MastraQuestionRequest } from "@/hooks/session/useSessionLifecycle";
 
 type InputBarProps = ComponentProps<typeof InputBar>;
 type PermissionPromptProps = ComponentProps<typeof PermissionPrompt>;
@@ -14,6 +15,8 @@ interface BottomComposerProps extends InputBarProps {
   pendingMastraApproval?: MastraApprovalRequest | null;
   onMastraApprove?: (toolCallId: string) => void;
   onMastraDecline?: (toolCallId: string) => void;
+  pendingMastraQuestion?: MastraQuestionRequest | null;
+  onMastraQuestionAnswer?: (toolCallId: string, answer: string | string[]) => void;
   selectedWorktreePath?: string | null;
   onSelectWorktree?: (path: string) => void;
   isEmptySession?: boolean;
@@ -25,6 +28,8 @@ export function BottomComposer({
   pendingMastraApproval,
   onMastraApprove,
   onMastraDecline,
+  pendingMastraQuestion,
+  onMastraQuestionAnswer,
   selectedWorktreePath,
   onSelectWorktree,
   isEmptySession,
@@ -32,7 +37,8 @@ export function BottomComposer({
 }: BottomComposerProps) {
   const hasPendingPermission = !!pendingPermission;
   const hasPendingMastraApproval = !!pendingMastraApproval;
-  const hasAnyPending = hasPendingPermission || hasPendingMastraApproval;
+  const hasPendingMastraQuestion = !!pendingMastraQuestion;
+  const hasAnyPending = hasPendingPermission || hasPendingMastraApproval || hasPendingMastraQuestion;
 
   // Wrap InputBar's onSend for WorktreeBar's simpler (text-only) signature
   const handleWorktreeSend = useCallback(
@@ -64,6 +70,13 @@ export function BottomComposer({
           request={pendingMastraApproval}
           onApprove={onMastraApprove}
           onDecline={onMastraDecline}
+        />
+      ) : null}
+      {pendingMastraQuestion && onMastraQuestionAnswer ? (
+        <MastraQuestionPanel
+          key={pendingMastraQuestion.toolCallId}
+          request={pendingMastraQuestion}
+          onAnswer={onMastraQuestionAnswer}
         />
       ) : null}
       <div

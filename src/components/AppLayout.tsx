@@ -1607,6 +1607,8 @@ export function AppLayout() {
                   pendingMastraApproval={manager.pendingMastraApproval}
                   onMastraApprove={(toolCallId) => manager.handleMastraApproval("approve", toolCallId)}
                   onMastraDecline={(toolCallId) => manager.handleMastraApproval("decline", toolCallId)}
+                  pendingMastraQuestion={manager.pendingMastraQuestion}
+                  onMastraQuestionAnswer={manager.handleMastraQuestionAnswer}
                   onSend={wrappedHandleSend}
                   onClear={handleComposerClear}
                   onStop={handleStop}

@@ -8,6 +8,10 @@ import type { Session } from "@mastra/core/agent-controller";
 // sessions matching the same owner/resource, so each chat passes a unique
 // resourceId to force a fresh session (and thread) per conversation.
 const sessions = new Map<string, Session>();
+// Session-level event forwarding lives for the whole session (not per send):
+// suspended runs (ask_user) resume outside any sendMessage call, and their
+// follow-up stream events must still reach the renderer.
+const subscriptions = new Map<string, () => void>();
 let currentSession: Session | null = null;
 let currentMode: AgentMode = 'supervisor';
 let currentDirectAgentId: string | undefined;
@@ -70,7 +74,20 @@ export function register(getMainWindow: () => BrowserWindow | null): void {
       resourceId: sessionId,
       ownerId: "local-user",
     });
-    sessions.set(session.identity.getId(), session);
+    const realId = session.identity.getId();
+    sessions.set(realId, session);
+    const unsubscribe = session.subscribe((event) => {
+      if (event.type === "error") log("mastra-ipc", event);
+      safeSend(getMainWindow, "mastra:event", { sessionId: realId, ...event });
+    });
+    subscriptions.set(realId, unsubscribe);
+    // Asking the user a question needs no permission gate — the question panel
+    // IS the user interaction. Without this the approval prompt fires first.
+    try {
+      await session.permissions.setForTool({ toolName: "ask_user", policy: "allow" });
+    } catch (err) {
+      log("mastra-ipc", `ask_user allow policy failed: ${err}`);
+    }
     currentSession = session;
 
     // Store mode for future sessions
@@ -148,21 +165,35 @@ export function register(getMainWindow: () => BrowserWindow | null): void {
       return { error: "Mastra not initialized" };
     }
     try {
-      let eventCount = 0;
-      const unsubscribe = session.subscribe((event) => {
-        eventCount++;
-        if (event.type === "error") log("mastra-ipc", event);
-        safeSend(getMainWindow, "mastra:event", { sessionId, ...event });
-      });
       await session.sendMessage({ content });
-      log("mastra-ipc", `sendMessage done. Events received: ${eventCount}`);
-      unsubscribe();
+      log("mastra-ipc", "sendMessage done");
       return { ok: true };
     } catch (err) {
       log("mastra-ipc", `Send failed: ${err}`);
       return { error: String(err) };
     }
   });
+
+  /**
+   * Resume a tool parked via the native suspension primitive (ask_user, …).
+   * `resumeData` is the user's answer: a string for free-text/single-select,
+   * a string[] for multi-select.
+   */
+  ipcMain.handle(
+    "mastra:respondToSuspension",
+    async (_event, { resumeData, toolCallId, sessionId }: { resumeData: unknown; toolCallId?: string; sessionId?: string }) => {
+      const session = getSession(sessionId);
+      if (!session) return { success: false, error: "Mastra not initialized" };
+      try {
+        log("mastra-ipc", `Suspension response for ${toolCallId ?? "sole pending"}: ${JSON.stringify(resumeData).slice(0, 120)}`);
+        await session.respondToToolSuspension({ resumeData, toolCallId });
+        return { success: true };
+      } catch (err) {
+        log("mastra-ipc", `respondToSuspension failed: ${err}`);
+        return { success: false, error: String(err) };
+      }
+    },
+  );
 
   ipcMain.handle(
     "mastra:respondToApproval",
@@ -228,6 +259,8 @@ export function register(getMainWindow: () => BrowserWindow | null): void {
 
   ipcMain.handle("mastra:destroy", async () => {
     currentSession = null;
+    for (const unsubscribe of subscriptions.values()) unsubscribe();
+    subscriptions.clear();
     sessions.clear();
     currentMode = 'supervisor';
     currentDirectAgentId = undefined;
@@ -241,6 +274,8 @@ export function register(getMainWindow: () => BrowserWindow | null): void {
     try {
       // Destroy current service and reinitialize with new model, preserving current mode
       currentSession = null;
+      for (const unsubscribe of subscriptions.values()) unsubscribe();
+      subscriptions.clear();
       sessions.clear();
       await destroyMastraService();
       // Reinitialize with model override, keeping the current mode

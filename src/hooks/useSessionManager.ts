@@ -337,6 +337,8 @@ export function useSessionManager(
     send,
     pendingMastraApproval,
     handleMastraApproval,
+    pendingMastraQuestion,
+    handleMastraQuestionAnswer,
   } = useSessionLifecycle({
     refs,
     setters,
@@ -616,6 +618,8 @@ export function useSessionManager(
     respondPermission: engine.respondPermission,
     pendingMastraApproval,
     handleMastraApproval,
+    pendingMastraQuestion,
+    handleMastraQuestionAnswer,
     contextUsage: engine.contextUsage,
     isCompacting: "isCompacting" in engine ? !!engine.isCompacting : false,
     compact: engine.compact,

@@ -449,6 +449,11 @@ declare global {
           toolCallId?: string;
           sessionId?: string;
         }) => Promise<{ success: boolean; error?: string }>;
+        respondToSuspension: (options: {
+          resumeData: unknown;
+          toolCallId?: string;
+          sessionId?: string;
+        }) => Promise<{ success: boolean; error?: string }>;
         setToolPolicy: (options: {
           toolName: string;
           policy: "allow" | "ask" | "deny";

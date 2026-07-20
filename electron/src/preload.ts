@@ -428,6 +428,8 @@ contextBridge.exposeInMainWorld("pilot", {
     getDisplayState: () => ipcRenderer.invoke("mastra:getDisplayState"),
     respondToApproval: (options: { decision: "approve" | "decline"; toolCallId?: string; sessionId?: string }) =>
       ipcRenderer.invoke("mastra:respondToApproval", options),
+    respondToSuspension: (options: { resumeData: unknown; toolCallId?: string; sessionId?: string }) =>
+      ipcRenderer.invoke("mastra:respondToSuspension", options),
     setToolPolicy: (options: { toolName: string; policy: "allow" | "ask" | "deny"; sessionId?: string }) =>
       ipcRenderer.invoke("mastra:setToolPolicy", options),
     setPermissionMode: (options: { mode: "default" | "bypassPermissions"; sessionId?: string }) =>

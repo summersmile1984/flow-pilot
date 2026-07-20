@@ -44,7 +44,8 @@ ${agentList}
 Guidelines:
 - Choose the best agent based on task requirements and agent strengths
 - Write clear, self-contained prompts — subagents do not see this conversation
-- You can delegate to multiple subagents in parallel for independent subtasks${
+- You can delegate to multiple subagents in parallel for independent subtasks
+- When you need the user to clarify requirements or pick between options, call the \`ask_user\` tool (question + options, single_select or multi_select) instead of writing the choices as plain text, then wait for the answer before proceeding${
       options.projectMemory ? `\n\n## Project memory (.pilot/memory/project.md)\n${options.projectMemory}` : ''
     }`,
     model: options.model,

@@ -20,6 +20,15 @@ export interface MastraApprovalRequest {
   sessionId?: string;
 }
 
+/** An `ask_user` tool suspension awaiting the user's answer. */
+export interface MastraQuestionRequest {
+  toolCallId: string;
+  sessionId?: string;
+  question: string;
+  options?: Array<{ label: string; description?: string }>;
+  selectionMode?: "single_select" | "multi_select";
+}
+
 interface UseSessionLifecycleParams {
   refs: SharedSessionRefs;
   setters: SharedSessionSetters;
@@ -89,6 +98,23 @@ export function useSessionLifecycle({
     setPendingMastraApproval(null);
   }, []);
 
+  // ── Mastra ask_user question state ──
+  const [pendingMastraQuestion, setPendingMastraQuestion] = useState<MastraQuestionRequest | null>(null);
+
+  const handleMastraQuestionAnswer = useCallback((toolCallId: string, answer: string | string[]) => {
+    // Side effect stays OUT of the setState updater — React StrictMode invokes
+    // updaters twice, which double-sent the resume.
+    const mastra = window.pilot?.mastra;
+    if (mastra?.respondToSuspension) {
+      void mastra.respondToSuspension({
+        resumeData: answer,
+        toolCallId,
+        sessionId: pendingMastraQuestion?.sessionId,
+      });
+    }
+    setPendingMastraQuestion(null);
+  }, [pendingMastraQuestion?.sessionId]);
+
   // ── Mastra: consume AgentController events for the active session ──
   // Mastra sessions render through the claude store (useSessionPane falls back
   // to it for non-claude/acp/codex engines). Background sessions are handled
@@ -105,6 +131,22 @@ export function useSessionLifecycle({
           toolName: event.toolName,
           input: event.args,
           sessionId: event.sessionId,
+        });
+        return;
+      }
+      // ask_user parks the run via tool suspension — surface it as a question panel
+      if (event.type === "tool_suspended" && event.toolCallId && event.toolName === "ask_user") {
+        const payload = (event.suspendPayload ?? event.args ?? {}) as {
+          question?: string;
+          options?: Array<{ label: string; description?: string }>;
+          selectionMode?: "single_select" | "multi_select";
+        };
+        setPendingMastraQuestion({
+          toolCallId: event.toolCallId,
+          sessionId: event.sessionId,
+          question: payload.question ?? "The agent has a question for you.",
+          options: payload.options,
+          selectionMode: payload.selectionMode,
         });
         return;
       }
@@ -489,5 +531,8 @@ export function useSessionLifecycle({
     // Mastra approval
     pendingMastraApproval,
     handleMastraApproval,
+    // Mastra ask_user question
+    pendingMastraQuestion,
+    handleMastraQuestionAnswer,
   };
 }

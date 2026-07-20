@@ -58,6 +58,8 @@ export interface MastraEvent {
   isError?: boolean;
   error?: unknown;
   modeId?: string;
+  /** Present on `tool_suspended` (ask_user question payload, …). */
+  suspendPayload?: unknown;
 }
 
 function stringifyResult(value: unknown): string {
