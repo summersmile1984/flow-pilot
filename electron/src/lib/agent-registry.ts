@@ -37,11 +37,25 @@ const BUILTIN_PILOT: InstalledAgent = {
   description: "Mastra-powered supervisor that routes tasks to the best ACP agent",
 };
 
-const BUILTIN_IDS = new Set([BUILTIN_CLAUDE.id, BUILTIN_CODEX.id, BUILTIN_PILOT.id]);
+// OpenCode ships as a built-in direct agent over the generic ACP engine — the
+// same protocol Pilot's subagents use, but here as a plain one-on-one chat.
+const BUILTIN_OPENCODE: InstalledAgent = {
+  id: "opencode",
+  name: "OpenCode",
+  engine: "acp",
+  binary: "opencode",
+  args: ["acp"],
+  builtIn: true,
+  icon: "code",
+  description: "OpenCode CLI connected over ACP",
+};
+
+const BUILTIN_IDS = new Set([BUILTIN_CLAUDE.id, BUILTIN_CODEX.id, BUILTIN_PILOT.id, BUILTIN_OPENCODE.id]);
 
 const agents = new Map<string, InstalledAgent>();
 agents.set(BUILTIN_CLAUDE.id, BUILTIN_CLAUDE);
 agents.set(BUILTIN_CODEX.id, BUILTIN_CODEX);
+agents.set(BUILTIN_OPENCODE.id, BUILTIN_OPENCODE);
 agents.set(BUILTIN_PILOT.id, BUILTIN_PILOT);
 
 function getConfigPath(): string {

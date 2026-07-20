@@ -324,7 +324,10 @@ function readLegacyGlobalSettings(): GlobalSettingsState {
     coloredSidebarIcons: readLegacyBool("pilot-colored-sidebar-icons", true),
     showToolIcons: readLegacyBool("pilot-show-tool-icons", true),
     coloredToolIcons: readLegacyBool("pilot-colored-tool-icons", false),
-    mastraMode: localStorage.getItem("pilot-mastra-mode") || "supervisor",
+    mastraMode: (() => {
+      const legacy = localStorage.getItem("pilot-mastra-mode") || "supervisor";
+      return legacy === "direct" ? "supervisor" : legacy;
+    })(),
     mastraAgentId: localStorage.getItem("pilot-mastra-agent-id") || "opencode",
   };
 }
@@ -650,6 +653,9 @@ export const useSettingsStore = create<SettingsStore>()(
           ...incoming,
           // Ensure projects is always an object, never undefined
           projects: incoming.projects ?? current.projects,
+          // Pilot's "direct" mode is no longer offered for new chats (solo
+          // agents live in the Direct group now) — retire stale settings
+          mastraMode: incoming.mastraMode === "direct" ? "supervisor" : (incoming.mastraMode ?? current.mastraMode),
         };
       },
     },

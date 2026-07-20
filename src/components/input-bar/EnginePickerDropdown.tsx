@@ -50,6 +50,8 @@ export interface MastraModeOption {
   group?: "auto" | "single" | "lead";
   description: string;
   agentId?: string;
+  /** Kept for badge/resume of old chats but not offered in the menu. */
+  hidden?: boolean;
 }
 
 export interface EnginePickerDropdownProps {
@@ -298,7 +300,7 @@ export const EnginePickerDropdown = memo(function EnginePickerDropdown({
             </DropdownMenuItem>
           )}
           {!mastraModeLoading && (["auto", "single", "lead"] as const).map((group) => {
-            const groupOptions = mastraModeOptions.filter((o) => (o.group ?? "auto") === group);
+            const groupOptions = mastraModeOptions.filter((o) => !o.hidden && (o.group ?? "auto") === group);
             if (groupOptions.length === 0) return null;
             const groupTitle = group === "single" ? "One agent only" : group === "lead" ? "One agent leads the others" : null;
             return (
@@ -400,9 +402,10 @@ export const EnginePickerDropdown = memo(function EnginePickerDropdown({
   };
 
   const ENGINE_SUBTITLES: Record<string, string> = {
-    claude: "Anthropic CLI on this machine",
-    codex: "OpenAI CLI on this machine",
-    mastra: "Orchestrates OpenCode & Codex via ACP",
+    claude: "Anthropic CLI · native Agent SDK",
+    codex: "OpenAI CLI · native app-server",
+    acp: "Local CLI · connected via ACP",
+    mastra: "DeepSeek routes work to OpenCode & Codex",
   };
 
   const renderAgent = (agent: InstalledAgent, isCrossEngine: boolean) => {
@@ -455,15 +458,13 @@ export const EnginePickerDropdown = memo(function EnginePickerDropdown({
     );
   };
 
-  // Split agents: single-agent CLI engines / the Pilot orchestrator / ACP agents
-  const directEngines = hasMultipleAgents
-    ? agents.filter((a) => a.engine === "claude" || a.engine === "codex")
+  // Layer 1 is a two-way split: Direct (one agent per chat, whatever protocol
+  // it speaks — Agent SDK, app-server, or ACP) vs Pilot (multi-agent).
+  const directAgents = hasMultipleAgents
+    ? agents.filter((a) => a.engine !== "mastra")
     : [];
   const orchestrators = hasMultipleAgents
     ? agents.filter((a) => a.engine === "mastra")
-    : [];
-  const acpAgents = hasMultipleAgents
-    ? agents.filter((a) => a.engine === "acp")
     : [];
 
   return (
@@ -481,33 +482,22 @@ export const EnginePickerDropdown = memo(function EnginePickerDropdown({
       <DropdownMenuContent align="start" className="w-64">
         {hasMultipleAgents ? (
           <>
-            {directEngines.length > 0 && (
+            {directAgents.length > 0 && (
               <DropdownMenuGroup>
                 <DropdownMenuLabel className="text-[10px] font-medium text-muted-foreground">
-                  Single agent
+                  Direct — chat with one agent
                 </DropdownMenuLabel>
-                {directEngines.map((a) => renderAgent(a, willOpenNewChat(a)))}
+                {directAgents.map((a) => renderAgent(a, willOpenNewChat(a)))}
               </DropdownMenuGroup>
             )}
             {orchestrators.length > 0 && (
               <>
-                {directEngines.length > 0 && <DropdownMenuSeparator />}
+                {directAgents.length > 0 && <DropdownMenuSeparator />}
                 <DropdownMenuGroup>
                   <DropdownMenuLabel className="text-[10px] font-medium text-muted-foreground">
-                    Multi-agent
+                    Pilot — multi-agent
                   </DropdownMenuLabel>
                   {orchestrators.map((a) => renderAgent(a, willOpenNewChat(a)))}
-                </DropdownMenuGroup>
-              </>
-            )}
-            {acpAgents.length > 0 && (
-              <>
-                {(directEngines.length > 0 || orchestrators.length > 0) && <DropdownMenuSeparator />}
-                <DropdownMenuGroup>
-                  <DropdownMenuLabel className="text-[10px] font-medium text-muted-foreground">
-                    ACP Agents
-                  </DropdownMenuLabel>
-                  {acpAgents.map((a) => renderAgent(a, willOpenNewChat(a)))}
                 </DropdownMenuGroup>
               </>
             )}

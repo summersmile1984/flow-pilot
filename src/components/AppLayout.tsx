@@ -1003,8 +1003,11 @@ export function AppLayout() {
   // Mastra mode options
   const mastraModeOptions = useMemo(() => [
     { id: "supervisor", group: "auto" as const, label: "Auto routing", short: "Auto", description: "DeepSeek picks the best agent for each task" },
-    { id: "direct-opencode", group: "single" as const, label: "OpenCode only", short: "OpenCode", description: "Every message goes straight to OpenCode", agentId: "opencode" },
-    { id: "direct-codex", group: "single" as const, label: "Codex only", short: "Codex", description: "Every message goes straight to Codex", agentId: "codex" },
+    // Hidden from the menu: solo chats now live in the Direct group (OpenCode
+    // via ACP, Codex native). Kept so old direct-mode chats still show their
+    // badge and resume with the right controller.
+    { id: "direct-opencode", group: "single" as const, hidden: true, label: "OpenCode only", short: "OpenCode", description: "Every message goes straight to OpenCode", agentId: "opencode" },
+    { id: "direct-codex", group: "single" as const, hidden: true, label: "Codex only", short: "Codex", description: "Every message goes straight to Codex", agentId: "codex" },
     { id: "acp-supervisor-opencode", group: "lead" as const, label: "OpenCode leads", short: "OpenCode Lead", description: "OpenCode plans the work and can pull in Codex", agentId: "opencode" },
     { id: "acp-supervisor-codex", group: "lead" as const, label: "Codex leads", short: "Codex Lead", description: "Codex plans the work and can pull in OpenCode", agentId: "codex" },
   ], []);
