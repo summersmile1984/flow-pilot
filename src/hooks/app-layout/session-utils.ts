@@ -10,9 +10,11 @@ export function buildSessionOptions(
   thinking: boolean,
   getClaudeEffortForModel: (model: string | undefined) => ClaudeEffort | undefined,
   agent: InstalledAgent | null,
+  mastraMode?: string,
+  mastraAgentId?: string,
 ): StartOptions {
   const model = getModelForEngine(engine) || undefined;
-  return {
+  const options: StartOptions = {
     model,
     permissionMode,
     planMode,
@@ -22,6 +24,16 @@ export function buildSessionOptions(
     agentId: agent?.id ?? "claude-code",
     cachedConfigOptions: agent?.cachedConfigOptions,
   };
+
+  // Add Mastra-specific options when engine is mastra
+  if (engine === "mastra" && mastraMode) {
+    options.mastraMode = mastraMode as StartOptions["mastraMode"];
+    if (mastraAgentId) {
+      options.mastraAgentId = mastraAgentId;
+    }
+  }
+
+  return options;
 }
 
 export function getSyncedPlanMode(

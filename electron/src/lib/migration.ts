@@ -1,12 +1,12 @@
 /**
- * One-time data migration from "OpenACP UI" to "Harnss".
+ * One-time data migration from "OpenACP UI" to "Pilot".
  *
  * When productName changed, Electron's app.getPath("userData") moved from
- * `~/Library/Application Support/OpenACP UI/` to `~/Library/Application Support/Harnss/`.
+ * `~/Library/Application Support/OpenACP UI/` to `~/Library/Application Support/Pilot/`.
  * This module copies all user data (sessions, settings, agents, OAuth tokens, binaries)
  * from the old location so existing users don't lose anything after updating.
  *
- * Runs once on first launch — writes a `.harnss-migrated` flag to prevent re-runs.
+ * Runs once on first launch — writes a `.pilot-migrated` flag to prevent re-runs.
  * Old data is NOT deleted (user can clean up manually).
  */
 
@@ -53,7 +53,7 @@ function cleanOldUpdaterCache(): void {
 
 export function migrateFromOpenAcpUi(): void {
   const newUserData = app.getPath("userData");
-  const flagPath = path.join(newUserData, ".harnss-migrated");
+  const flagPath = path.join(newUserData, ".pilot-migrated");
 
   // Already migrated — skip
   if (fs.existsSync(flagPath)) return;

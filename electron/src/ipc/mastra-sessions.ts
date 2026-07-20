@@ -1,5 +1,5 @@
 import { BrowserWindow, ipcMain } from "electron";
-import { initMastraService, destroyMastraService } from "../lib/mastra-service";
+import { initMastraService, destroyMastraService, getPilotConfig, type AgentMode } from "../lib/mastra-service";
 import { log } from "../lib/logger";
 import { safeSend } from "../lib/safe-send";
 import type { Session } from "@mastra/core/agent-controller";
@@ -9,6 +9,9 @@ import type { Session } from "@mastra/core/agent-controller";
 // resourceId to force a fresh session (and thread) per conversation.
 const sessions = new Map<string, Session>();
 let currentSession: Session | null = null;
+let currentMode: AgentMode = 'supervisor';
+let currentDirectAgentId: string | undefined;
+let currentSupervisorAgentId: string | undefined;
 
 function getSession(sessionId?: string): Session | null {
   if (sessionId) return sessions.get(sessionId) ?? null;
@@ -71,10 +74,27 @@ export function register(getMainWindow: () => BrowserWindow | null): void {
    * LibSQL resumes the persisted thread for a known resourceId, so reopened
    * chats keep their history across app restarts.
    */
-  async function ensureSession(sessionId: string, cwd: string): Promise<Session> {
+  async function ensureSession(
+    sessionId: string,
+    cwd: string,
+    mode?: AgentMode,
+    directAgentId?: string,
+    supervisorAgentId?: string,
+  ): Promise<Session> {
     const existing = sessions.get(sessionId);
     if (existing) return existing;
-    const ac = await initMastraService(cwd);
+
+    // Use provided mode or fall back to current mode
+    const effectiveMode = mode || currentMode;
+    const effectiveDirectAgentId = directAgentId || currentDirectAgentId;
+    const effectiveSupervisorAgentId = supervisorAgentId || currentSupervisorAgentId;
+
+    const ac = await initMastraService({
+      projectPath: cwd,
+      mode: effectiveMode,
+      directAgentId: effectiveDirectAgentId,
+      supervisorAgentId: effectiveSupervisorAgentId,
+    });
     const session = await ac.createSession({
       id: sessionId,
       resourceId: sessionId,
@@ -82,24 +102,43 @@ export function register(getMainWindow: () => BrowserWindow | null): void {
     });
     sessions.set(session.identity.getId(), session);
     currentSession = session;
-    // Run sessions in yolo mode (no tool-approval gates) until the UI grows
-    // a real approval panel. The approve-resume path is also unusable for
-    // ACP subagent delegations: resume hands resumeData to the delegation
-    // tool, which calls AcpAgent.resumeStream() — unsupported, instant fail.
-    // The ACP subagents still enforce their own internal permissions.
-    try {
-      await (session.state as { set: (u: Record<string, unknown>) => Promise<void> }).set({ yolo: true });
-    } catch (err) {
-      log("mastra-ipc", `Failed to enable yolo mode: ${err}`);
+
+    // Store mode for future sessions
+    if (mode) {
+      currentMode = mode;
+      currentDirectAgentId = directAgentId;
+      currentSupervisorAgentId = supervisorAgentId;
     }
+
     return session;
   }
 
-  ipcMain.handle("mastra:start", async (_event, options: { cwd: string }) => {
-    log("mastra-ipc", `mastra:start called with cwd=${options.cwd}`);
+  /** Enable yolo mode on an existing session (auto-approve all tool calls). */
+  async function enableYoloMode(session: Session): Promise<void> {
+    try {
+      await (session.state as { set: (u: Record<string, unknown>) => Promise<void> }).set({ yolo: true });
+      log("mastra-ipc", "Yolo mode enabled");
+    } catch (err) {
+      log("mastra-ipc", `Failed to enable yolo mode: ${err}`);
+    }
+  }
+
+  ipcMain.handle("mastra:start", async (_event, options: {
+    cwd: string;
+    mode?: AgentMode;
+    directAgentId?: string;
+    supervisorAgentId?: string;
+  }) => {
+    log("mastra-ipc", `mastra:start called with cwd=${options.cwd}, mode=${options.mode || 'supervisor'}`);
     try {
       const requestedId = `mastra-${Date.now()}-${Math.random().toString(36).slice(2, 8)}`;
-      const session = await ensureSession(requestedId, options.cwd);
+      const session = await ensureSession(
+        requestedId,
+        options.cwd,
+        options.mode,
+        options.directAgentId,
+        options.supervisorAgentId,
+      );
       const sessionId = session.identity.getId();
       log("mastra-ipc", `Session created: ${sessionId} (requested ${requestedId})`);
       return { sessionId };
@@ -175,10 +214,83 @@ export function register(getMainWindow: () => BrowserWindow | null): void {
     },
   );
 
+  /**
+   * Set the permission mode for a Mastra session.
+   * - "default": ask for approval on each tool call
+   * - "bypassPermissions": auto-approve all tool calls (yolo mode)
+   */
+  ipcMain.handle(
+    "mastra:setPermissionMode",
+    async (_event, { mode, sessionId }: { mode: "default" | "bypassPermissions"; sessionId?: string }) => {
+      const session = getSession(sessionId);
+      if (!session) return { success: false, error: "Mastra not initialized" };
+      try {
+        if (mode === "bypassPermissions") {
+          await enableYoloMode(session);
+        } else {
+          // Disable yolo mode
+          try {
+            await (session.state as { set: (u: Record<string, unknown>) => Promise<void> }).set({ yolo: false });
+            log("mastra-ipc", "Yolo mode disabled");
+          } catch {
+            // Ignore if state doesn't support yolo toggle
+          }
+        }
+        return { success: true };
+      } catch (err) {
+        log("mastra-ipc", `setPermissionMode failed: ${err}`);
+        return { success: false, error: String(err) };
+      }
+    },
+  );
+
   ipcMain.handle("mastra:destroy", async () => {
     currentSession = null;
     sessions.clear();
+    currentMode = 'supervisor';
+    currentDirectAgentId = undefined;
+    currentSupervisorAgentId = undefined;
     await destroyMastraService();
     return { success: true };
+  });
+
+  ipcMain.handle("mastra:setModel", async (_event, { model, cwd }: { model: string; cwd: string }) => {
+    log("mastra-ipc", `mastra:setModel called with model=${model}, cwd=${cwd}`);
+    try {
+      // Destroy current service and reinitialize with new model, preserving current mode
+      currentSession = null;
+      sessions.clear();
+      await destroyMastraService();
+      // Reinitialize with model override, keeping the current mode
+      await initMastraService({
+        projectPath: cwd,
+        mode: currentMode,
+        modelOverride: model,
+        directAgentId: currentDirectAgentId,
+        supervisorAgentId: currentSupervisorAgentId,
+      });
+      log("mastra-ipc", `Model changed to: ${model} (mode: ${currentMode})`);
+      return { success: true };
+    } catch (err) {
+      log("mastra-ipc", `setModel failed: ${err}`);
+      return { success: false, error: String(err) };
+    }
+  });
+
+  ipcMain.handle("mastra:getConfig", async (_event, cwd: string) => {
+    try {
+      const config = getPilotConfig(cwd);
+      return { success: true, config };
+    } catch (err) {
+      return { success: false, error: String(err) };
+    }
+  });
+
+  ipcMain.handle("mastra:getCurrentMode", async () => {
+    return {
+      mode: currentMode,
+      directAgentId: currentDirectAgentId,
+      supervisorAgentId: currentSupervisorAgentId,
+    };
   });
 }

@@ -281,7 +281,7 @@ export function useMessageQueue({ refs, setters, engines, activeSessionId }: Use
         if (result?.error) handleSendError("Failed to send queued message.");
       } else if (sessionEngine === "mastra") {
         setSessionProcessing(sessionId, sessionEngine, true);
-        const result = await (window as any).pilot.mastra.send(sessionId, next.text);
+        const result = await window.pilot.mastra.send(sessionId, next.text);
         if (result?.error) handleSendError("Failed to send queued message.");
       } else {
         setSessionProcessing(sessionId, sessionEngine, true);

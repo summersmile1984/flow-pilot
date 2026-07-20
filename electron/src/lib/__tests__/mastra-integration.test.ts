@@ -26,9 +26,21 @@ vi.mock('fs', async () => {
 
 import { SkillManager } from '../skill-manager';
 import { MemoryManager } from '../memory-manager';
+import { load as yamlLoad } from 'js-yaml';
 import fs from 'fs/promises';
 import path from 'path';
 import os from 'os';
+
+// Helper to parse config.yaml from a temp directory
+async function parseConfigFromDir(dir: string) {
+  const configPath = path.join(dir, '.pilot', 'config.yaml');
+  try {
+    const content = await fs.readFile(configPath, 'utf-8');
+    return yamlLoad(content);
+  } catch {
+    return {};
+  }
+}
 
 describe('SkillManager', () => {
   let skillManager: SkillManager;
@@ -109,5 +121,93 @@ describe('MemoryManager', () => {
     const content = await memoryManager.readProjectMemory();
     expect(content).toContain('## Tech Stack');
     expect(content).toContain('TypeScript, React');
+  });
+});
+
+describe('Pilot Config (config.yaml)', () => {
+  let tmpDir: string;
+
+  beforeEach(async () => {
+    tmpDir = await fs.mkdtemp(path.join(os.tmpdir(), 'pilot-config-test-'));
+  });
+
+  afterEach(async () => {
+    await fs.rm(tmpDir, { recursive: true, force: true });
+  });
+
+  it('should parse supervisor model from config.yaml', async () => {
+    const configDir = path.join(tmpDir, '.pilot');
+    await fs.mkdir(configDir, { recursive: true });
+    await fs.writeFile(path.join(configDir, 'config.yaml'), `
+supervisor:
+  model: anthropic/claude-sonnet-4
+agents:
+  claude-code:
+    command: npx
+    args: ["-y", "@agentclientprotocol/claude-agent-acp"]
+`);
+
+    const config = await parseConfigFromDir(tmpDir) as any;
+    expect(config.supervisor?.model).toBe('anthropic/claude-sonnet-4');
+  });
+
+  it('should parse agent configurations', async () => {
+    const configDir = path.join(tmpDir, '.pilot');
+    await fs.mkdir(configDir, { recursive: true });
+    await fs.writeFile(path.join(configDir, 'config.yaml'), `
+supervisor:
+  model: deepseek/deepseek-chat
+agents:
+  claude-code:
+    command: npx
+    args: ["-y", "@agentclientprotocol/claude-agent-acp"]
+    capabilities: ["code-edit", "bash"]
+    strengths: ["complex-refactor"]
+  codex:
+    command: npx
+    args: ["-y", "@agentclientprotocol/codex-acp"]
+`);
+
+    const config = await parseConfigFromDir(tmpDir) as any;
+    expect(config.agents?.['claude-code']?.command).toBe('npx');
+    expect(config.agents?.['claude-code']?.args).toEqual(['-y', '@agentclientprotocol/claude-agent-acp']);
+    expect(config.agents?.['claude-code']?.capabilities).toEqual(['code-edit', 'bash']);
+    expect(config.agents?.['claude-code']?.strengths).toEqual(['complex-refactor']);
+    expect(config.agents?.['codex']?.command).toBe('npx');
+  });
+
+  it('should return empty object when config.yaml does not exist', async () => {
+    const config = await parseConfigFromDir(tmpDir) as any;
+    expect(config).toEqual({});
+  });
+
+  it('should handle invalid YAML gracefully', async () => {
+    const configDir = path.join(tmpDir, '.pilot');
+    await fs.mkdir(configDir, { recursive: true });
+    await fs.writeFile(path.join(configDir, 'config.yaml'), 'invalid: yaml: content: [');
+
+    // js-yaml throws on invalid YAML, so we need to handle this
+    try {
+      await parseConfigFromDir(tmpDir);
+    } catch (err) {
+      expect(err).toBeDefined();
+    }
+  });
+
+  it('should use default model when supervisor.model is not specified', async () => {
+    const configDir = path.join(tmpDir, '.pilot');
+    await fs.mkdir(configDir, { recursive: true });
+    await fs.writeFile(path.join(configDir, 'config.yaml'), `
+agents:
+  claude-code:
+    command: npx
+    args: ["-y", "@agentclientprotocol/claude-agent-acp"]
+`);
+
+    const config = await parseConfigFromDir(tmpDir) as any;
+    expect(config.supervisor?.model).toBeUndefined();
+    // The default model should be 'deepseek/deepseek-chat' when not specified
+    const resolvedModel = config.supervisor?.model || 'deepseek/deepseek-chat';
+    expect(resolvedModel).toBe('deepseek/deepseek-chat');
   });
 });

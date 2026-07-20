@@ -1,5 +1,5 @@
 import { useState, useEffect, useMemo, useRef, useCallback, memo, type DragEvent } from "react";
-import { Bug, PanelLeft, Plus, Paintbrush } from "lucide-react";
+import { PanelLeft, Plus, Paintbrush } from "lucide-react";
 import { isMac } from "@/lib/utils";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -674,17 +674,7 @@ export const AppSidebar = memo(function AppSidebar({
           <PreReleaseBanner onOpenSettings={onOpenSettings} />
 
           <div className="flex items-center justify-center gap-1.5 px-3 py-1.5 text-[11px] text-sidebar-foreground/40">
-            <span>Harnss is in early beta</span>
-            <span className="text-sidebar-foreground/20">·</span>
-            <a
-              href="https://github.com/OpenSource03/harnss/issues"
-              target="_blank"
-              rel="noopener noreferrer"
-              className="inline-flex items-center gap-1 text-sidebar-foreground/50 transition-colors hover:text-sidebar-foreground/80"
-            >
-              <Bug className="h-3 w-3" />
-              <span>Report a bug</span>
-            </a>
+            <span>Pilot is in early beta</span>
           </div>
         </div>
         </SidebarActionsProvider>

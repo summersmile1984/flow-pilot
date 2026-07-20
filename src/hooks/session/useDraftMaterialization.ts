@@ -563,9 +563,22 @@ export function useDraftMaterialization({
           engine: "mastra" as const,
         }, ...prev.map(s => ({ ...s, isActive: false }))]);
 
-        const result = await (window as any).pilot.mastra.start({ cwd: getProjectCwd(project) });
-        if (result.error) {
-          toast.error("Failed to start Mastra", { description: result.error });
+        // Build start options with mastra mode
+        const mastraStartOptions: Parameters<typeof window.pilot.mastra.start>[0] = { cwd: getProjectCwd(project) };
+        if (options.mastraMode) {
+          mastraStartOptions.mode = options.mastraMode;
+        }
+        if (options.mastraAgentId) {
+          if (options.mastraMode === 'direct') {
+            mastraStartOptions.directAgentId = options.mastraAgentId;
+          } else if (options.mastraMode === 'acp-supervisor') {
+            mastraStartOptions.supervisorAgentId = options.mastraAgentId;
+          }
+        }
+
+        const result = await window.pilot.mastra.start(mastraStartOptions);
+        if (result.error || !result.sessionId) {
+          toast.error("Failed to start Mastra", { description: result.error ?? "No session id returned" });
           setSessions(prev => prev.filter(s => s.id !== DRAFT_ID));
           materializingRef.current = false;
           return "";

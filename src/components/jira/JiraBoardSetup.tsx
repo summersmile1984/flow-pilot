@@ -240,7 +240,7 @@ export const JiraBoardSetup = React.memo(function JiraBoardSetup({
                   ))}
                 </DropdownMenuContent>
               </DropdownMenu>
-              <p className="text-xs text-muted-foreground">This board will be bound to the current Harnss project.</p>
+              <p className="text-xs text-muted-foreground">This board will be bound to the current Pilot project.</p>
             </div>
           )}
 

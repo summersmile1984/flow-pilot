@@ -19,11 +19,17 @@ interface PreloadGlobals {
 
 import type { ThemeOption as ThemeSource, MacBackgroundEffect } from "@shared/types/settings";
 
-function readStoredThemeSource(storage: PreloadStorage | undefined): ThemeSource {
-  const stored = storage?.getItem("harnss-theme");
-  return stored === "light" || stored === "dark" || stored === "system"
-    ? stored
-    : "dark";
+function safeGetLocalStorage(key: string): string | null {
+  try {
+    // In sandboxed preload, accessing localStorage may throw
+    const ls = (globalThis as any).localStorage;
+    if (ls && typeof ls.getItem === 'function') {
+      return ls.getItem(key);
+    }
+  } catch {
+    // localStorage not available
+  }
+  return null;
 }
 
 // Early setup wrapped in try/catch so contextBridge.exposeInMainWorld always runs
@@ -31,22 +37,25 @@ function readStoredThemeSource(storage: PreloadStorage | undefined): ThemeSource
 try {
   const globals = globalThis as typeof globalThis & PreloadGlobals;
   const root = globals.document?.documentElement;
-  const themeSource = readStoredThemeSource(globals.localStorage);
+
+  // Read theme from localStorage (safe wrapper)
+  const storedTheme = safeGetLocalStorage("pilot-theme");
+  const themeSource: ThemeSource = (storedTheme === "light" || storedTheme === "dark" || storedTheme === "system")
+    ? storedTheme
+    : "dark";
 
   // Apply platform + glass classes as early as possible (before React mounts).
-  // On Windows, glass support does not mean the user has transparency enabled.
   root?.classList.add(`platform-${process.platform}`);
   ipcRenderer.send("app:set-theme-source", themeSource);
-  const transparencyEnabled = (globals.localStorage?.getItem("harnss-transparency") ?? null) !== "false";
+
+  const transparencyEnabled = safeGetLocalStorage("pilot-transparency") !== "false";
   const canUseTransparentWindow = process.platform === "darwin" || process.platform === "win32";
   if (canUseTransparentWindow && transparencyEnabled) {
     root?.classList.add("glass-enabled");
   }
 
   // Push stored theme to main process early so glass appearance is correct
-  // before React mounts. Default to "dark" to match useSettings, which falls
-  // back to "dark" when harnss-theme is unset — avoids a system→dark flash.
-  const storedTheme = globals.localStorage?.getItem("harnss-theme");
+  // before React mounts. Default to "dark" to match useSettings.
   if (storedTheme === "light" || storedTheme === "dark" || storedTheme === "system") {
     ipcRenderer.send("glass:set-theme", storedTheme);
   } else {
@@ -412,7 +421,8 @@ contextBridge.exposeInMainWorld("pilot", {
   mastra: {
     init: (projectPath: string) => ipcRenderer.invoke("mastra:init", projectPath),
     sendMessage: (content: string) => ipcRenderer.invoke("mastra:sendMessage", content),
-    start: (options: { cwd: string }) => ipcRenderer.invoke("mastra:start", options),
+    start: (options: { cwd: string; mode?: 'supervisor' | 'direct' | 'acp-supervisor'; directAgentId?: string; supervisorAgentId?: string }) =>
+      ipcRenderer.invoke("mastra:start", options),
     send: (sessionId: string, content: string, cwd?: string) => ipcRenderer.invoke("mastra:send", { sessionId, content, cwd }),
     abort: () => ipcRenderer.invoke("mastra:abort"),
     switchMode: (modeId: string) => ipcRenderer.invoke("mastra:switchMode", modeId),
@@ -421,7 +431,12 @@ contextBridge.exposeInMainWorld("pilot", {
       ipcRenderer.invoke("mastra:respondToApproval", options),
     setToolPolicy: (options: { toolName: string; policy: "allow" | "ask" | "deny"; sessionId?: string }) =>
       ipcRenderer.invoke("mastra:setToolPolicy", options),
+    setPermissionMode: (options: { mode: "default" | "bypassPermissions"; sessionId?: string }) =>
+      ipcRenderer.invoke("mastra:setPermissionMode", options),
     destroy: () => ipcRenderer.invoke("mastra:destroy"),
+    setModel: (options: { model: string; cwd: string }) => ipcRenderer.invoke("mastra:setModel", options),
+    getConfig: (cwd: string) => ipcRenderer.invoke("mastra:getConfig", cwd),
+    getCurrentMode: () => ipcRenderer.invoke("mastra:getCurrentMode"),
     onEvent: (callback: (event: unknown) => void) => {
       const handler = (_event: IpcRendererEvent, data: unknown) => callback(data);
       ipcRenderer.on("mastra:event", handler);
@@ -432,6 +447,12 @@ contextBridge.exposeInMainWorld("pilot", {
     init: (projectPath: string) => ipcRenderer.invoke("skills:init", projectPath),
     list: () => ipcRenderer.invoke("skills:list"),
     manifest: () => ipcRenderer.invoke("skills:manifest"),
+    create: (options: { name: string; content: string; scope: 'project' | 'global' }) =>
+      ipcRenderer.invoke("skills:create", options),
+    delete: (skillPath: string) => ipcRenderer.invoke("skills:delete", skillPath),
+    update: (options: { skillPath: string; content: string }) =>
+      ipcRenderer.invoke("skills:update", options),
+    read: (skillPath: string) => ipcRenderer.invoke("skills:read", skillPath),
   },
   memory: {
     init: (projectPath: string) => ipcRenderer.invoke("memory:init", projectPath),

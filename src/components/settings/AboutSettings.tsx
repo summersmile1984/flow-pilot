@@ -1,5 +1,5 @@
 import { memo, useState, useEffect } from "react";
-import { ExternalLink, Github, Scale, Heart } from "lucide-react";
+import { Heart } from "lucide-react";
 import { ScrollArea } from "@/components/ui/scroll-area";
 import { SettingsHeader } from "@/components/settings/shared";
 
@@ -27,40 +27,6 @@ function HarnssLogo({ className }: { className?: string }) {
   );
 }
 
-// ── Link row component ──
-
-function AboutLink({
-  icon: Icon,
-  label,
-  href,
-  description,
-}: {
-  icon: typeof ExternalLink;
-  label: string;
-  href: string;
-  description: string;
-}) {
-  const handleClick = () => {
-    window.open(href, "_blank");
-  };
-
-  return (
-    <button
-      onClick={handleClick}
-      className="group flex w-full items-center gap-3 rounded-lg px-3 py-2.5 text-start transition-colors hover:bg-foreground/[0.04] active:bg-foreground/[0.06]"
-    >
-      <div className="flex h-8 w-8 shrink-0 items-center justify-center rounded-md bg-foreground/[0.05] transition-colors group-hover:bg-foreground/[0.08]">
-        <Icon className="h-4 w-4 text-muted-foreground transition-colors group-hover:text-foreground/80" />
-      </div>
-      <div className="min-w-0 flex-1">
-        <p className="text-sm font-medium text-foreground">{label}</p>
-        <p className="text-xs text-muted-foreground">{description}</p>
-      </div>
-      <ExternalLink className="h-3.5 w-3.5 shrink-0 text-muted-foreground/50 transition-colors group-hover:text-muted-foreground" />
-    </button>
-  );
-}
-
 // ── Component ──
 
 export const AboutSettings = memo(function AboutSettings() {
@@ -81,7 +47,7 @@ export const AboutSettings = memo(function AboutSettings() {
             <HarnssLogo className="h-12 w-12 shrink-0 text-foreground" />
             <div className="min-w-0">
               <h3 className="text-lg font-semibold tracking-tight text-foreground">
-                Harnss
+                Pilot
               </h3>
               <p className="mt-0.5 text-[13px] leading-relaxed text-muted-foreground">
                 Open-source desktop client for AI coding agents.
@@ -93,28 +59,6 @@ export const AboutSettings = memo(function AboutSettings() {
                   v{version}
                 </span>
               )}
-            </div>
-          </div>
-
-          {/* ── Links section ── */}
-          <div className="mt-6 border-t border-foreground/[0.06] pt-4">
-            <span className="text-[11px] font-medium uppercase tracking-wide text-muted-foreground">
-              Links
-            </span>
-
-            <div className="-mx-3 mt-2 flex flex-col gap-0.5">
-              <AboutLink
-                icon={Github}
-                label="GitHub Repository"
-                href="https://github.com/OpenSource03/harnss"
-                description="Source code, issues &amp; releases"
-              />
-              <AboutLink
-                icon={Scale}
-                label="MIT License"
-                href="https://github.com/OpenSource03/harnss/blob/main/LICENSE"
-                description="Free and open-source software"
-              />
             </div>
           </div>
 
@@ -132,7 +76,7 @@ export const AboutSettings = memo(function AboutSettings() {
                 </span>
               </div>
               <p className="mt-1.5 text-xs leading-relaxed text-muted-foreground">
-                Harnss is open-source under the MIT License. Contributions, bug reports,
+                Pilot is open-source under the MIT License. Contributions, bug reports,
                 and feature requests are welcome on GitHub.
               </p>
             </div>

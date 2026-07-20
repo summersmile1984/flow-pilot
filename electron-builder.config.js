@@ -64,8 +64,8 @@ async function afterPackHook(context) {
 
 /** @type {import('electron-builder').Configuration} */
 module.exports = {
-  appId: "com.harnss.app",
-  productName: "Harnss",
+  appId: "com.pilot.app",
+  productName: "Pilot",
 
   directories: {
     output: "release/${version}",
@@ -112,7 +112,7 @@ module.exports = {
     entitlements: "build/entitlements.mac.plist",
     entitlementsInherit: "build/entitlements.mac.plist",
     extendInfo: {
-      NSMicrophoneUsageDescription: "Harnss uses the microphone for voice dictation to transcribe speech into text.",
+      NSMicrophoneUsageDescription: "Pilot uses the microphone for voice dictation to transcribe speech into text.",
     },
   },
 
@@ -176,7 +176,7 @@ module.exports = {
   publish: {
     provider: "github",
     owner: "OpenSource03",
-    repo: "harnss",
+    repo: "pilot",
     releaseType: "release",
   },
 

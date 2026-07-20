@@ -51,6 +51,8 @@ export function useSettingsCompat(projectId: string | null, engine: EngineId = "
       acpPermissionBehavior: s.acpPermissionBehavior,
       thinking: s.thinking,
       claudeEffort: s.claudeEffort,
+      mastraMode: s.mastraMode,
+      mastraAgentId: s.mastraAgentId,
       autoGroupTools: s.autoGroupTools,
       avoidGroupingEdits: s.avoidGroupingEdits,
       autoExpandTools: s.autoExpandTools,
@@ -74,6 +76,8 @@ export function useSettingsCompat(projectId: string | null, engine: EngineId = "
   const setAcpPermissionBehavior = useSettingsStore((s) => s.setAcpPermissionBehavior);
   const setThinking = useSettingsStore((s) => s.setThinking);
   const setClaudeEffort = useSettingsStore((s) => s.setClaudeEffort);
+  const setMastraMode = useSettingsStore((s) => s.setMastraMode);
+  const setMastraAgentId = useSettingsStore((s) => s.setMastraAgentId);
   const setAutoGroupTools = useSettingsStore((s) => s.setAutoGroupTools);
   const setAvoidGroupingEdits = useSettingsStore((s) => s.setAvoidGroupingEdits);
   const setAutoExpandTools = useSettingsStore((s) => s.setAutoExpandTools);
@@ -266,6 +270,10 @@ export function useSettingsCompat(projectId: string | null, engine: EngineId = "
     setThinking,
     claudeEffort: globalState.claudeEffort,
     setClaudeEffort,
+    mastraMode: globalState.mastraMode,
+    setMastraMode,
+    mastraAgentId: globalState.mastraAgentId,
+    setMastraAgentId,
     autoGroupTools: globalState.autoGroupTools,
     setAutoGroupTools,
     avoidGroupingEdits: globalState.avoidGroupingEdits,

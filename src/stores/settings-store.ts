@@ -42,7 +42,7 @@ const VALID_TOOL_IDS = new Set<ToolId>([
 
 const IS_MAC_PLATFORM = typeof navigator !== "undefined" && /mac/i.test(navigator.platform);
 
-const STORE_KEY = "harnss-settings-store";
+const STORE_KEY = "pilot-settings-store";
 
 // ── Shared helpers (also used by compat hook) ──
 
@@ -110,6 +110,10 @@ interface GlobalSettingsState {
   coloredSidebarIcons: boolean;
   showToolIcons: boolean;
   coloredToolIcons: boolean;
+  /** Mastra agent mode: supervisor (default), direct, or acp-supervisor */
+  mastraMode: string;
+  /** For direct/acp-supervisor modes: which ACP agent to use (claude-code or codex) */
+  mastraAgentId: string;
 }
 
 /** Actions (setters) — excluded from persistence via partialize */
@@ -133,6 +137,8 @@ interface SettingsActions {
   setColoredSidebarIcons: (on: boolean) => void;
   setShowToolIcons: (on: boolean) => void;
   setColoredToolIcons: (on: boolean) => void;
+  setMastraMode: (mode: string) => void;
+  setMastraAgentId: (agentId: string) => void;
 
   // Per-project setters (all take projectId as first arg)
   setModelForEngine: (projectId: string, engine: EngineId, model: string) => void;
@@ -200,7 +206,7 @@ function updateProject(
 // ── Legacy localStorage migration ──
 
 /**
- * One-time migration: read all existing harnss-* localStorage keys into the
+ * One-time migration: read all existing pilot-* localStorage keys into the
  * Zustand store shape. This runs only when the store key doesn't exist yet.
  */
 function migrateFromLegacyLocalStorage(): { global: GlobalSettingsState; projects: Record<string, ProjectSettings> } {
@@ -210,10 +216,10 @@ function migrateFromLegacyLocalStorage(): { global: GlobalSettingsState; project
   const projectIds = new Set<string>();
   for (let i = 0; i < localStorage.length; i++) {
     const key = localStorage.key(i);
-    if (!key?.startsWith("harnss-") || key === STORE_KEY) continue;
+    if (!key?.startsWith("pilot-") || key === STORE_KEY) continue;
 
     // Global keys don't have a second segment that looks like a project ID.
-    // Per-project keys follow the pattern: harnss-{projectId}-{setting}
+    // Per-project keys follow the pattern: pilot-{projectId}-{setting}
     // We detect project keys by checking for known per-project suffixes.
     const perProjectSuffixes = [
       "-model-claude", "-model-acp", "-model-codex", "-model",
@@ -226,7 +232,7 @@ function migrateFromLegacyLocalStorage(): { global: GlobalSettingsState; project
 
     for (const suffix of perProjectSuffixes) {
       if (key.endsWith(suffix)) {
-        const pid = key.slice("harnss-".length, key.length - suffix.length);
+        const pid = key.slice("pilot-".length, key.length - suffix.length);
         if (pid.length > 0) projectIds.add(pid);
         break;
       }
@@ -267,25 +273,25 @@ function readLegacyJson<T>(key: string, fallback: T): T {
 }
 
 function readLegacyGlobalSettings(): GlobalSettingsState {
-  const themeRaw = localStorage.getItem("harnss-theme");
+  const themeRaw = localStorage.getItem("pilot-theme");
   const theme: ThemeOption = (themeRaw === "light" || themeRaw === "dark" || themeRaw === "system") ? themeRaw : "dark";
 
   // Plan mode with legacy migration
   let planMode = DEFAULT_PLAN_MODE;
-  const storedPlanMode = localStorage.getItem("harnss-plan-mode");
+  const storedPlanMode = localStorage.getItem("pilot-plan-mode");
   if (storedPlanMode !== null) {
     planMode = storedPlanMode === "true";
   } else {
-    const legacyPermission = localStorage.getItem("harnss-permission-mode");
+    const legacyPermission = localStorage.getItem("pilot-permission-mode");
     if (legacyPermission === "plan") planMode = true;
   }
 
   // Permission mode with legacy migration
-  const storedPermission = localStorage.getItem("harnss-permission-mode");
+  const storedPermission = localStorage.getItem("pilot-permission-mode");
   const permissionMode = (!storedPermission || storedPermission === "plan") ? DEFAULT_PERMISSION_MODE : storedPermission;
 
   // ACP permission behavior
-  const storedAcpBehavior = localStorage.getItem("harnss-acp-permission-behavior");
+  const storedAcpBehavior = localStorage.getItem("pilot-acp-permission-behavior");
   const validAcpBehaviors: AcpPermissionBehavior[] = ["ask", "auto_accept", "allow_all"];
   const acpPermissionBehavior: AcpPermissionBehavior =
     storedAcpBehavior && validAcpBehaviors.includes(storedAcpBehavior as AcpPermissionBehavior)
@@ -293,7 +299,7 @@ function readLegacyGlobalSettings(): GlobalSettingsState {
       : "ask";
 
   // Claude effort
-  const storedEffort = localStorage.getItem("harnss-claude-effort");
+  const storedEffort = localStorage.getItem("pilot-claude-effort");
   const claudeEffort: ClaudeEffort =
     (storedEffort === "low" || storedEffort === "medium" || storedEffort === "high" || storedEffort === "max")
       ? storedEffort
@@ -301,23 +307,25 @@ function readLegacyGlobalSettings(): GlobalSettingsState {
 
   return {
     theme,
-    islandLayout: readLegacyBool("harnss-island-layout", true),
-    islandShine: readLegacyBool("harnss-island-shine", true),
+    islandLayout: readLegacyBool("pilot-island-layout", true),
+    islandShine: readLegacyBool("pilot-island-shine", true),
     macNativeBackgroundEffect: "liquid-glass",
-    transparency: readLegacyBool("harnss-transparency", true),
+    transparency: readLegacyBool("pilot-transparency", true),
     planMode,
     permissionMode,
     acpPermissionBehavior,
-    thinking: readLegacyBool("harnss-thinking", true),
+    thinking: readLegacyBool("pilot-thinking", true),
     claudeEffort,
-    autoGroupTools: readLegacyBool("harnss-auto-group-tools", true),
-    avoidGroupingEdits: readLegacyBool("harnss-avoid-grouping-edits", false),
-    autoExpandTools: readLegacyBool("harnss-auto-expand-tools", false),
-    expandEditToolCallsByDefault: readLegacyBool("harnss-expand-edit-tool-calls-by-default", true),
-    transparentToolPicker: readLegacyBool("harnss-transparent-tool-picker", false),
-    coloredSidebarIcons: readLegacyBool("harnss-colored-sidebar-icons", true),
-    showToolIcons: readLegacyBool("harnss-show-tool-icons", true),
-    coloredToolIcons: readLegacyBool("harnss-colored-tool-icons", false),
+    autoGroupTools: readLegacyBool("pilot-auto-group-tools", true),
+    avoidGroupingEdits: readLegacyBool("pilot-avoid-grouping-edits", false),
+    autoExpandTools: readLegacyBool("pilot-auto-expand-tools", false),
+    expandEditToolCallsByDefault: readLegacyBool("pilot-expand-edit-tool-calls-by-default", true),
+    transparentToolPicker: readLegacyBool("pilot-transparent-tool-picker", false),
+    coloredSidebarIcons: readLegacyBool("pilot-colored-sidebar-icons", true),
+    showToolIcons: readLegacyBool("pilot-show-tool-icons", true),
+    coloredToolIcons: readLegacyBool("pilot-colored-tool-icons", false),
+    mastraMode: localStorage.getItem("pilot-mastra-mode") || "supervisor",
+    mastraAgentId: localStorage.getItem("pilot-mastra-agent-id") || "claude-code",
   };
 }
 
@@ -327,10 +335,10 @@ function isCodexLikeModel(model: string): boolean {
 }
 
 function readLegacyModelForEngine(pid: string, engine: EngineId): string {
-  const byEngine = localStorage.getItem(`harnss-${pid}-model-${engine}`);
+  const byEngine = localStorage.getItem(`pilot-${pid}-model-${engine}`);
   if (byEngine && byEngine.trim().length > 0) return byEngine.trim();
 
-  const legacy = localStorage.getItem(`harnss-${pid}-model`);
+  const legacy = localStorage.getItem(`pilot-${pid}-model`);
   if (!legacy || legacy.trim().length === 0) return DEFAULT_ENGINE_MODELS[engine];
   const legacyValue = legacy.trim();
 
@@ -344,7 +352,7 @@ function readLegacyModelForEngine(pid: string, engine: EngineId): string {
 }
 
 function readLegacyToolOrder(pid: string): ToolId[] {
-  const stored = readLegacyJson<ToolId[]>(`harnss-${pid}-tool-order`, []).filter((id) => VALID_TOOL_IDS.has(id));
+  const stored = readLegacyJson<ToolId[]>(`pilot-${pid}-tool-order`, []).filter((id) => VALID_TOOL_IDS.has(id));
   if (stored.length === 0) return [...DEFAULT_TOOL_ORDER];
   const set = new Set(stored);
   const result = [...stored];
@@ -362,17 +370,17 @@ function readLegacyProjectSettings(pid: string): ProjectSettings {
       codex: readLegacyModelForEngine(pid, "codex"),
       mastra: readLegacyModelForEngine(pid, "mastra"),
     },
-    gitCwd: localStorage.getItem(`harnss-${pid}-git-cwd`),
-    activeTools: readLegacyJson<ToolId[]>(`harnss-${pid}-active-tools`, []).filter((id) => VALID_TOOL_IDS.has(id)),
+    gitCwd: localStorage.getItem(`pilot-${pid}-git-cwd`),
+    activeTools: readLegacyJson<ToolId[]>(`pilot-${pid}-active-tools`, []).filter((id) => VALID_TOOL_IDS.has(id)),
     toolOrder: readLegacyToolOrder(pid),
-    rightPanelWidth: readLegacyNumber(`harnss-${pid}-right-panel-width`, DEFAULT_RIGHT_PANEL, MIN_RIGHT_PANEL, MAX_RIGHT_PANEL),
-    rightSplitRatio: readLegacyNumber(`harnss-${pid}-right-split`, DEFAULT_SPLIT, MIN_SPLIT, MAX_SPLIT),
-    collapsedRepos: readLegacyJson<string[]>(`harnss-${pid}-collapsed-repos`, []),
-    suppressedPanels: readLegacyJson<ToolId[]>(`harnss-${pid}-suppressed-panels`, []),
-    bottomTools: readLegacyJson<ToolId[]>(`harnss-${pid}-bottom-tools`, []).filter((id) => VALID_TOOL_IDS.has(id)),
-    bottomToolsHeight: readLegacyNumber(`harnss-${pid}-bottom-tools-height`, DEFAULT_BOTTOM_HEIGHT, MIN_BOTTOM_HEIGHT, MAX_BOTTOM_HEIGHT),
-    bottomToolsSplitRatios: readLegacyJson<number[]>(`harnss-${pid}-bottom-tools-split-ratios`, []),
-    organizeByChatBranch: readLegacyBool(`harnss-${pid}-organize-by-branch`, false),
+    rightPanelWidth: readLegacyNumber(`pilot-${pid}-right-panel-width`, DEFAULT_RIGHT_PANEL, MIN_RIGHT_PANEL, MAX_RIGHT_PANEL),
+    rightSplitRatio: readLegacyNumber(`pilot-${pid}-right-split`, DEFAULT_SPLIT, MIN_SPLIT, MAX_SPLIT),
+    collapsedRepos: readLegacyJson<string[]>(`pilot-${pid}-collapsed-repos`, []),
+    suppressedPanels: readLegacyJson<ToolId[]>(`pilot-${pid}-suppressed-panels`, []),
+    bottomTools: readLegacyJson<ToolId[]>(`pilot-${pid}-bottom-tools`, []).filter((id) => VALID_TOOL_IDS.has(id)),
+    bottomToolsHeight: readLegacyNumber(`pilot-${pid}-bottom-tools-height`, DEFAULT_BOTTOM_HEIGHT, MIN_BOTTOM_HEIGHT, MAX_BOTTOM_HEIGHT),
+    bottomToolsSplitRatios: readLegacyJson<number[]>(`pilot-${pid}-bottom-tools-split-ratios`, []),
+    organizeByChatBranch: readLegacyBool(`pilot-${pid}-organize-by-branch`, false),
   };
 }
 
@@ -433,6 +441,8 @@ export const useSettingsStore = create<SettingsStore>()(
       coloredSidebarIcons: true,
       showToolIcons: true,
       coloredToolIcons: false,
+      mastraMode: "supervisor",
+      mastraAgentId: "claude-code",
 
       projects: {},
 
@@ -492,6 +502,10 @@ export const useSettingsStore = create<SettingsStore>()(
       setShowToolIcons: (on) => set({ showToolIcons: on }),
 
       setColoredToolIcons: (on) => set({ coloredToolIcons: on }),
+
+      setMastraMode: (mode) => set({ mastraMode: mode }),
+
+      setMastraAgentId: (agentId) => set({ mastraAgentId: agentId }),
 
       // ── Per-project setters ──
 
@@ -622,6 +636,8 @@ export const useSettingsStore = create<SettingsStore>()(
         coloredSidebarIcons: state.coloredSidebarIcons,
         showToolIcons: state.showToolIcons,
         coloredToolIcons: state.coloredToolIcons,
+        mastraMode: state.mastraMode,
+        mastraAgentId: state.mastraAgentId,
         // Per-project
         projects: state.projects,
       }),

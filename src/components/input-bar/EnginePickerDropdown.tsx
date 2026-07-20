@@ -41,13 +41,26 @@ interface ModelItem {
   description: string;
 }
 
+export interface MastraModeOption {
+  id: string;
+  label: string;
+  description: string;
+  agentId?: string;
+}
+
 export interface EnginePickerDropdownProps {
   isProcessing: boolean;
   isACPAgent: boolean;
   isCodexAgent: boolean;
+  isMastraAgent: boolean;
   selectedAgent: InstalledAgent | null;
   agents: InstalledAgent[];
   onAgentChange: (agent: InstalledAgent | null) => void;
+  // Mastra mode
+  mastraModeOptions?: MastraModeOption[];
+  selectedMastraMode?: string;
+  onMastraModeChange?: (mode: string, agentId?: string) => void;
+  mastraModeLoading?: boolean;
   // Model state
   selectedModelId: string;
   selectedModelLabel: string;
@@ -80,9 +93,14 @@ export const EnginePickerDropdown = memo(function EnginePickerDropdown({
   isProcessing,
   isACPAgent,
   isCodexAgent,
+  isMastraAgent,
   selectedAgent,
   agents,
   onAgentChange,
+  mastraModeOptions,
+  selectedMastraMode,
+  onMastraModeChange,
+  mastraModeLoading,
   selectedModelId,
   selectedModelLabel,
   modelList,
@@ -259,6 +277,43 @@ export const EnginePickerDropdown = memo(function EnginePickerDropdown({
         <DropdownMenuItem disabled className="text-xs text-muted-foreground">
           Could not load options for this agent
         </DropdownMenuItem>
+      )}
+
+      {/* Mastra mode options */}
+      {isMastraAgent && mastraModeOptions && mastraModeOptions.length > 0 && onMastraModeChange && (
+        <>
+          <DropdownMenuSeparator />
+          <div className="px-2 py-1 text-[10px] font-medium text-muted-foreground">
+            Agent Mode
+          </div>
+          {mastraModeLoading && (
+            <DropdownMenuItem disabled className="text-xs text-muted-foreground">
+              <Loader2 className="h-3 w-3 animate-spin" />
+              Switching mode...
+            </DropdownMenuItem>
+          )}
+          {!mastraModeLoading && mastraModeOptions.map((opt) => (
+            <DropdownMenuItem
+              key={opt.id}
+              onClick={() => onMastraModeChange(opt.id, opt.agentId)}
+              className={opt.id === selectedMastraMode ? "bg-accent" : ""}
+            >
+              <div>
+                <div className="flex items-center gap-2">
+                  <span>{opt.label}</span>
+                  {opt.id === selectedMastraMode && (
+                    <span className="text-[10px] text-muted-foreground">
+                      Current
+                    </span>
+                  )}
+                </div>
+                <div className="text-[10px] text-muted-foreground">
+                  {opt.description}
+                </div>
+              </div>
+            </DropdownMenuItem>
+          ))}
+        </>
       )}
     </>
   );

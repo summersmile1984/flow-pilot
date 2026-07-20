@@ -16,6 +16,10 @@ export interface StartOptions {
   agentId?: string;
   /** Cached config options from previous sessions */
   cachedConfigOptions?: ACPConfigOption[];
+  /** Mastra agent mode: supervisor (default), direct, or acp-supervisor */
+  mastraMode?: 'supervisor' | 'direct' | 'acp-supervisor';
+  /** For direct/acp-supervisor modes: which ACP agent to use */
+  mastraAgentId?: string;
 }
 
 export interface CodexModelSummary {

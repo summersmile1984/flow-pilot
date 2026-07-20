@@ -1,4 +1,4 @@
-import { useCallback, useEffect } from "react";
+import { useCallback, useEffect, useState } from "react";
 import type { ImageAttachment, McpServerConfig, Project } from "@/types";
 import { applyMastraEvent, mastraProcessingChange, type MastraEvent } from "../../lib/background/mastra-handler";
 import type { CollaborationMode } from "../../types/codex-protocol/CollaborationMode";
@@ -12,6 +12,13 @@ import { useSessionCache } from "./useSessionCache";
 import { useSessionCrud } from "./useSessionCrud";
 import { useSessionSettings } from "./useSessionSettings";
 import { useSessionRestart } from "./useSessionRestart";
+
+export interface MastraApprovalRequest {
+  toolCallId: string;
+  toolName?: string;
+  input?: unknown;
+  sessionId?: string;
+}
 
 interface UseSessionLifecycleParams {
   refs: SharedSessionRefs;
@@ -71,19 +78,35 @@ export function useSessionLifecycle({
 }: UseSessionLifecycleParams) {
   const { claude, acp, codex } = engines;
 
+  // ── Mastra approval state ──
+  const [pendingMastraApproval, setPendingMastraApproval] = useState<MastraApprovalRequest | null>(null);
+
+  const handleMastraApproval = useCallback((decision: "approve" | "decline", toolCallId: string) => {
+    const mastra = window.pilot?.mastra;
+    if (mastra?.respondToApproval) {
+      void mastra.respondToApproval({ decision, toolCallId });
+    }
+    setPendingMastraApproval(null);
+  }, []);
+
   // ── Mastra: consume AgentController events for the active session ──
   // Mastra sessions render through the claude store (useSessionPane falls back
   // to it for non-claude/acp/codex engines). Background sessions are handled
   // in useSessionPersistence.
   useEffect(() => {
-    const mastra = (window as any).pilot?.mastra;
+    const mastra = window.pilot?.mastra;
     if (!mastra?.onEvent) return;
     const unsubscribe = mastra.onEvent((raw: unknown) => {
       const event = raw as MastraEvent;
-      // The supervisor's tools are the user's own local ACP agents, which
-      // enforce their own permissions — approve the outer gate automatically.
-      if (event.type === "tool_approval_required") {
-        void mastra.respondToApproval?.({ decision: "approve", toolCallId: event.toolCallId, sessionId: event.sessionId });
+      // Store approval requests for UI rendering instead of auto-approving
+      if (event.type === "tool_approval_required" && event.toolCallId) {
+        setPendingMastraApproval({
+          toolCallId: event.toolCallId,
+          toolName: event.toolName,
+          input: event.args,
+          sessionId: event.sessionId,
+        });
+        return;
       }
       if (!event.sessionId || event.sessionId !== refs.activeSessionIdRef.current) return;
       claude.setMessages((prev) => applyMastraEvent(prev, event));
@@ -286,7 +309,7 @@ export function useSessionLifecycle({
           claude.setIsProcessing(true);
 
           try {
-            const result = await (window as any).pilot.mastra.send(sessionId, text);
+            const result = await window.pilot.mastra.send(sessionId, text);
             if (result?.error) {
               claude.setMessages((prev) => [
                 ...prev,
@@ -391,7 +414,7 @@ export function useSessionLifecycle({
         ]);
         claude.setIsProcessing(true);
         try {
-          const result = await (window as any).pilot.mastra.send(activeId, text, cwd);
+          const result = await window.pilot.mastra.send(activeId, text, cwd);
           if (result?.error) {
             claude.setMessages((prev) => [
               ...prev,
@@ -460,5 +483,8 @@ export function useSessionLifecycle({
     restartActiveSessionInCurrentWorktree,
     fullRevertSession,
     send,
+    // Mastra approval
+    pendingMastraApproval,
+    handleMastraApproval,
   };
 }

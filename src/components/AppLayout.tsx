@@ -1000,6 +1000,47 @@ export function AppLayout() {
     !!manager.acpAuthSessionId &&
     manager.acpAuthRequired;
 
+  // Mastra mode options
+  const mastraModeOptions = useMemo(() => [
+    { id: "supervisor", label: "Supervisor", description: "Mastra routes tasks to best ACP agent" },
+    { id: "direct-claude-code", label: "Direct (Claude Code)", description: "Direct chat with Claude Code", agentId: "claude-code" },
+    { id: "direct-codex", label: "Direct (Codex)", description: "Direct chat with Codex", agentId: "codex" },
+    { id: "acp-supervisor-claude-code", label: "ACP Supervisor (Claude)", description: "Claude Code makes routing decisions", agentId: "claude-code" },
+    { id: "acp-supervisor-codex", label: "ACP Supervisor (Codex)", description: "Codex makes routing decisions", agentId: "codex" },
+  ], []);
+
+  const selectedMastraMode = useMemo(() => {
+    if (settings.mastraMode === "direct") return `direct-${settings.mastraAgentId}`;
+    if (settings.mastraMode === "acp-supervisor") return `acp-supervisor-${settings.mastraAgentId}`;
+    return "supervisor";
+  }, [settings.mastraMode, settings.mastraAgentId]);
+
+  const handleMastraModeChange = useCallback((mode: string, _agentId?: string) => {
+    let newMode = mode;
+    let newAgentId = _agentId;
+
+    if (mode.startsWith("direct-")) {
+      newMode = "direct";
+      newAgentId = mode.replace("direct-", "");
+    } else if (mode.startsWith("acp-supervisor-")) {
+      newMode = "acp-supervisor";
+      newAgentId = mode.replace("acp-supervisor-", "");
+    }
+
+    settings.setMastraMode(newMode);
+    if (newAgentId) settings.setMastraAgentId(newAgentId);
+
+    // Show toast notification
+    const modeLabels: Record<string, string> = {
+      supervisor: "Supervisor",
+      direct: `Direct (${newAgentId === "codex" ? "Codex" : "Claude Code"})`,
+      "acp-supervisor": `ACP Supervisor (${newAgentId === "codex" ? "Codex" : "Claude"})`,
+    };
+    toast.success("Agent mode changed", {
+      description: `Switched to ${modeLabels[newMode] || newMode}. New sessions will use this mode.`,
+    });
+  }, [settings.setMastraMode, settings.setMastraAgentId]);
+
   return (
     <ThemeProvider value={resolvedTheme}>
     <AgentProvider value={agentContextValue}>
@@ -1517,6 +1558,9 @@ export function AppLayout() {
                 <BottomComposer
                   pendingPermission={manager.pendingPermission}
                   onRespondPermission={manager.respondPermission}
+                  pendingMastraApproval={manager.pendingMastraApproval}
+                  onMastraApprove={(toolCallId) => manager.handleMastraApproval("approve", toolCallId)}
+                  onMastraDecline={(toolCallId) => manager.handleMastraApproval("decline", toolCallId)}
                   onSend={wrappedHandleSend}
                   onClear={handleComposerClear}
                   onStop={handleStop}
@@ -1537,6 +1581,9 @@ export function AppLayout() {
                   agents={agents}
                   selectedAgent={activePaneCtrl?.selectedPaneAgent ?? selectedAgent}
                   onAgentChange={activePaneCtrl?.handlePaneAgentChange ?? handleAgentChange}
+                  mastraModeOptions={mastraModeOptions}
+                  selectedMastraMode={selectedMastraMode}
+                  onMastraModeChange={handleMastraModeChange}
                   slashCommands={activePaneCtrl?.paneSlashCommands ?? manager.slashCommands}
                   acpConfigOptions={activePaneCtrl?.paneAcpConfigOptions ?? manager.acpConfigOptions}
                   acpConfigOptionsLoading={activePaneCtrl?.paneAcpConfigOptionsLoading ?? manager.acpConfigOptionsLoading}

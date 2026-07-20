@@ -157,14 +157,9 @@ export function initAutoUpdater(
           await manualMacInstall();
         } catch (err) {
           reportError("UPDATER_ERR", err, { context: "manual-mac-install" });
-          // Last resort: open the GitHub release page for manual download
-          const releaseUrl = lastDownloadedVersion
-            ? `https://github.com/OpenSource03/harnss/releases/tag/v${lastDownloadedVersion}`
-            : "https://github.com/OpenSource03/harnss/releases/latest";
-          shell.openExternal(releaseUrl);
           const win = getMainWindow();
           win?.webContents.send("updater:install-error", {
-            message: "Automatic install failed. The download page has been opened — please install manually.",
+            message: "Automatic install failed. Please install the update manually.",
           });
         }
         return;
@@ -235,12 +230,12 @@ export function initAutoUpdater(
  */
 /** @internal Exported for testing. */
 export function findUpdateZip(): string | null {
-  // electron-updater stores downloads in ~/Library/Caches/harnss-updater/pending/
+  // electron-updater stores downloads in ~/Library/Caches/pilot-updater/pending/
   // app.getPath("appData") = ~/Library/Application Support, so go up one to ~/Library/
-  const cacheDir = path.join(path.dirname(app.getPath("appData")), "Caches", "harnss-updater", "pending");
+  const cacheDir = path.join(path.dirname(app.getPath("appData")), "Caches", "pilot-updater", "pending");
   if (!fs.existsSync(cacheDir)) return null;
 
-  // Try exact match first (e.g. Harnss-0.6.1-arm64-mac.zip)
+  // Try exact match first (e.g. Pilot-0.6.1-arm64-mac.zip)
   if (lastDownloadedVersion) {
     const entries = fs.readdirSync(cacheDir);
     const match = entries.find(
@@ -275,7 +270,7 @@ async function manualMacInstall(): Promise<void> {
   log("UPDATER", `Manual install: using ZIP at ${zipPath}`);
 
   // Resolve the current .app bundle path from the running executable
-  // e.g. /Applications/Harnss.app/Contents/MacOS/Harnss → /Applications/Harnss.app
+  // e.g. /Applications/Pilot.app/Contents/MacOS/Pilot → /Applications/Pilot.app
   const exePath = app.getPath("exe");
   const appBundleMatch = exePath.match(/^(.+?\.app)\//);
   if (!appBundleMatch) throw new Error(`Cannot determine .app bundle from exe path: ${exePath}`);
@@ -289,7 +284,7 @@ async function manualMacInstall(): Promise<void> {
     throw new Error(`No write permission to ${appParentDir} — install the app to a writable location`);
   }
 
-  const tmpDir = path.join(app.getPath("temp"), `harnss-update-${Date.now()}`);
+  const tmpDir = path.join(app.getPath("temp"), `pilot-update-${Date.now()}`);
   const backupPath = `${appBundlePath}.old`;
 
   try {

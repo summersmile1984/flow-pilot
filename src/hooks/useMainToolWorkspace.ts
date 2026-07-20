@@ -171,7 +171,7 @@ interface MigrationInput {
 }
 
 function makeStorageKey(projectId: string | null): string {
-  return `harnss-${projectId ?? "__none__"}-main-tool-workspace-v1`;
+  return `pilot-${projectId ?? "__none__"}-main-tool-workspace-v1`;
 }
 
 function readAndConvertState(projectId: string | null, migration: MigrationInput): ToolIslandsState {

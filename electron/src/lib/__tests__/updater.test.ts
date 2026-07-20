@@ -31,7 +31,7 @@ const {
     getPath: vi.fn((name: string) => {
       const paths: Record<string, string> = {
         appData: "/mock/Library/Application Support",
-        exe: "/Applications/Harnss.app/Contents/MacOS/Harnss",
+        exe: "/Applications/Pilot.app/Contents/MacOS/Pilot",
         temp: "/tmp",
       };
       return paths[name] ?? "/mock";
@@ -255,7 +255,7 @@ describe("getErrorMessage", () => {
 });
 
 describe("findUpdateZip", () => {
-  const cacheDir = "/mock/Library/Caches/harnss-updater/pending";
+  const cacheDir = "/mock/Library/Caches/pilot-updater/pending";
 
   it("returns null when cache directory does not exist", () => {
     (fs.existsSync as Mock).mockReturnValue(false);
@@ -269,12 +269,12 @@ describe("findUpdateZip", () => {
 
     (fs.existsSync as Mock).mockReturnValue(true);
     (fs.readdirSync as Mock).mockReturnValue([
-      "Harnss-0.12.1-arm64-mac.zip",
+      "Pilot-0.12.1-arm64-mac.zip",
       "Harnss-0.11.0-arm64-mac.zip",
     ]);
 
     const result = findUpdateZip();
-    expect(result).toBe(`${cacheDir}/Harnss-0.12.1-arm64-mac.zip`);
+    expect(result).toBe(`${cacheDir}/Pilot-0.12.1-arm64-mac.zip`);
   });
 
   it("falls back to newest ZIP when no version match", () => {
@@ -294,7 +294,7 @@ describe("findUpdateZip", () => {
   it("ignores temp-prefixed files in fallback", () => {
     (fs.existsSync as Mock).mockReturnValue(true);
     (fs.readdirSync as Mock).mockReturnValue([
-      "temp-Harnss-0.12.1-arm64-mac.zip",
+      "temp-Pilot-0.12.1-arm64-mac.zip",
       "Harnss-0.11.0-arm64-mac.zip",
     ]);
     (fs.statSync as Mock).mockReturnValue({ mtimeMs: 1000 });
@@ -619,9 +619,9 @@ describe("initAutoUpdater", () => {
       (fs.existsSync as Mock).mockReturnValue(true);
       (fs.readdirSync as Mock)
         // First call: findUpdateZip cache dir
-        .mockReturnValueOnce(["Harnss-0.12.1-arm64-mac.zip"])
+        .mockReturnValueOnce(["Pilot-0.12.1-arm64-mac.zip"])
         // Second call: extracted tmpDir contents
-        .mockReturnValueOnce(["Harnss.app"]);
+        .mockReturnValueOnce(["Pilot.app"]);
       (fs.statSync as Mock).mockReturnValue({ mtimeMs: 1000 });
 
       // Simulate download to set lastDownloadedVersion
@@ -644,26 +644,26 @@ describe("initAutoUpdater", () => {
 
       await getHandler("updater:install")();
 
-      expect(shell.openExternal).toHaveBeenCalledWith(
-        "https://github.com/OpenSource03/harnss/releases/tag/v0.12.1",
-      );
       expect(mockWebContents.send).toHaveBeenCalledWith(
         "updater:install-error",
         expect.objectContaining({
-          message: expect.stringContaining("install manually"),
+          message: expect.stringContaining("manually"),
         }),
       );
     });
 
-    it("uses latest release URL when lastDownloadedVersion is null", async () => {
+    it("shows error message when lastDownloadedVersion is null", async () => {
       mockAutoUpdater.squirrelDownloadedUpdate = false;
       (fs.existsSync as Mock).mockReturnValue(false);
       // Don't emit update-downloaded — lastDownloadedVersion stays null
 
       await getHandler("updater:install")();
 
-      expect(shell.openExternal).toHaveBeenCalledWith(
-        "https://github.com/OpenSource03/harnss/releases/latest",
+      expect(mockWebContents.send).toHaveBeenCalledWith(
+        "updater:install-error",
+        expect.objectContaining({
+          message: expect.stringContaining("manually"),
+        }),
       );
     });
   });
@@ -685,8 +685,8 @@ describe("initAutoUpdater", () => {
         return false;
       });
       (fs.readdirSync as Mock)
-        .mockReturnValueOnce(["Harnss-0.12.1-arm64-mac.zip"]) // findUpdateZip
-        .mockReturnValueOnce(["Harnss.app"]); // extracted dir
+        .mockReturnValueOnce(["Pilot-0.12.1-arm64-mac.zip"]) // findUpdateZip
+        .mockReturnValueOnce(["Pilot.app"]); // extracted dir
       (fs.statSync as Mock).mockReturnValue({ mtimeMs: 1000 });
       (fs.mkdirSync as Mock).mockImplementation(() => calls.push("mkdirSync"));
       (fs.renameSync as Mock).mockImplementation(() => calls.push("renameSync"));
@@ -713,8 +713,8 @@ describe("initAutoUpdater", () => {
         return false;
       });
       (fs.readdirSync as Mock)
-        .mockReturnValueOnce(["Harnss-0.12.1-arm64-mac.zip"])
-        .mockReturnValueOnce(["Harnss.app"]);
+        .mockReturnValueOnce(["Pilot-0.12.1-arm64-mac.zip"])
+        .mockReturnValueOnce(["Pilot.app"]);
       (fs.statSync as Mock).mockReturnValue({ mtimeMs: 1000 });
 
       // Make the second ditto call (copy) fail
@@ -742,8 +742,13 @@ describe("initAutoUpdater", () => {
 
       // Should have rolled back (renameSync called to restore backup)
       expect(fs.renameSync).toHaveBeenCalled();
-      // Should have opened the release page as last resort
-      expect(shell.openExternal).toHaveBeenCalled();
+      // Should have sent install-error event
+      expect(mockWebContents.send).toHaveBeenCalledWith(
+        "updater:install-error",
+        expect.objectContaining({
+          message: expect.stringContaining("manually"),
+        }),
+      );
     });
 
     it("cleans up tmpDir on any failure", async () => {
@@ -752,8 +757,13 @@ describe("initAutoUpdater", () => {
       mockAutoUpdater.emit("update-downloaded", { version: "0.12.1" });
       await getHandler("updater:install")();
 
-      // The error is caught, and GitHub release page is opened
-      expect(shell.openExternal).toHaveBeenCalled();
+      // The error is caught, and install-error event is sent
+      expect(mockWebContents.send).toHaveBeenCalledWith(
+        "updater:install-error",
+        expect.objectContaining({
+          message: expect.stringContaining("manually"),
+        }),
+      );
     });
 
     it("continues when xattr stripping fails (non-fatal)", async () => {
@@ -763,8 +773,8 @@ describe("initAutoUpdater", () => {
         return false;
       });
       (fs.readdirSync as Mock)
-        .mockReturnValueOnce(["Harnss-0.12.1-arm64-mac.zip"])
-        .mockReturnValueOnce(["Harnss.app"]);
+        .mockReturnValueOnce(["Pilot-0.12.1-arm64-mac.zip"])
+        .mockReturnValueOnce(["Pilot.app"]);
       (fs.statSync as Mock).mockReturnValue({ mtimeMs: 1000 });
 
       // Make xattr fail but ditto succeed
@@ -792,12 +802,12 @@ describe("initAutoUpdater", () => {
 
     it("throws when exe path does not match .app pattern", async () => {
       (fs.existsSync as Mock).mockReturnValue(true);
-      (fs.readdirSync as Mock).mockReturnValueOnce(["Harnss-0.12.1-arm64-mac.zip"]);
+      (fs.readdirSync as Mock).mockReturnValueOnce(["Pilot-0.12.1-arm64-mac.zip"]);
       (fs.statSync as Mock).mockReturnValue({ mtimeMs: 1000 });
 
       // Return an exe path without .app bundle pattern
       mockApp.getPath.mockImplementation((name: string) => {
-        if (name === "exe") return "/usr/local/bin/harnss";
+        if (name === "exe") return "/usr/local/bin/pilot";
         if (name === "appData") return "/mock/Library/Application Support";
         if (name === "temp") return "/tmp";
         return "/mock";
@@ -806,14 +816,19 @@ describe("initAutoUpdater", () => {
       mockAutoUpdater.emit("update-downloaded", { version: "0.12.1" });
       await getHandler("updater:install")();
 
-      // Should fall through to error handler → open release page
-      expect(shell.openExternal).toHaveBeenCalled();
+      // Should fall through to error handler
+      expect(mockWebContents.send).toHaveBeenCalledWith(
+        "updater:install-error",
+        expect.objectContaining({
+          message: expect.stringContaining("manually"),
+        }),
+      );
 
       // Restore normal exe path for other tests
       mockApp.getPath.mockImplementation((name: string) => {
         const paths: Record<string, string> = {
           appData: "/mock/Library/Application Support",
-          exe: "/Applications/Harnss.app/Contents/MacOS/Harnss",
+          exe: "/Applications/Pilot.app/Contents/MacOS/Pilot",
           temp: "/tmp",
         };
         return paths[name] ?? "/mock";
@@ -825,7 +840,7 @@ describe("initAutoUpdater", () => {
         if (p.includes("pending")) return true;
         return false;
       });
-      (fs.readdirSync as Mock).mockReturnValueOnce(["Harnss-0.12.1-arm64-mac.zip"]);
+      (fs.readdirSync as Mock).mockReturnValueOnce(["Pilot-0.12.1-arm64-mac.zip"]);
       (fs.statSync as Mock).mockReturnValue({ mtimeMs: 1000 });
       (fs.accessSync as Mock).mockImplementation(() => {
         throw new Error("EACCES");
@@ -834,11 +849,10 @@ describe("initAutoUpdater", () => {
       mockAutoUpdater.emit("update-downloaded", { version: "0.12.1" });
       await getHandler("updater:install")();
 
-      expect(shell.openExternal).toHaveBeenCalled();
       expect(mockWebContents.send).toHaveBeenCalledWith(
         "updater:install-error",
         expect.objectContaining({
-          message: expect.stringContaining("install manually"),
+          message: expect.stringContaining("manually"),
         }),
       );
     });

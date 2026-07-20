@@ -23,6 +23,7 @@ import { McpSettings } from "@/components/settings/McpSettings";
 import { AdvancedSettings } from "@/components/settings/AdvancedSettings";
 import { EngineSettings } from "@/components/settings/EngineSettings";
 import { PlaceholderSection } from "@/components/settings/PlaceholderSection";
+import { SkillManager } from "@/components/settings/SkillManager";
 import { AboutSettings } from "@/components/settings/AboutSettings";
 import { AnalyticsSettings } from "@/components/settings/AnalyticsSettings";
 import { useSettingsStore } from "@/stores/settings-store";
@@ -50,7 +51,7 @@ const NAV_ITEMS: NavItem[] = [
   { id: "agents", label: "ACP Agents", icon: Bot },
   { id: "mcp", label: "MCP Servers", icon: Plug },
   { id: "engines", label: "Engines", icon: Cpu },
-  { id: "skills", label: "Skills", icon: Sparkles, comingSoon: true },
+  { id: "skills", label: "Skills", icon: Sparkles },
   { id: "custom-agents", label: "Agents", icon: Users, comingSoon: true },
   { id: "advanced", label: "Advanced", icon: Wrench },
   { id: "about", label: "About", icon: Info },
@@ -166,14 +167,7 @@ export const SettingsView = memo(function SettingsView({
           />
         );
       case "skills":
-        return (
-          <PlaceholderSection
-            title="Skills"
-            description="Create, install, and manage agent skills that extend what your AI coding agents can do."
-            icon={Sparkles}
-            comingSoon
-          />
-        );
+        return <SkillManager />;
       case "custom-agents":
         return (
           <PlaceholderSection

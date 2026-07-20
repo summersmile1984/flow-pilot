@@ -95,7 +95,7 @@ export function useSessionPersistence({
         : false;
 
       if (wasProcessing && !isProcessing && session && !continuedQueuedSession) {
-        window.dispatchEvent(new CustomEvent("harnss:background-session-complete", {
+        window.dispatchEvent(new CustomEvent("pilot:background-session-complete", {
           detail: {
             sessionId,
             sessionTitle: session.title,
@@ -129,7 +129,7 @@ export function useSessionPersistence({
         },
       });
 
-      window.dispatchEvent(new CustomEvent("harnss:background-permission-request", {
+      window.dispatchEvent(new CustomEvent("pilot:background-permission-request", {
         detail: {
           sessionId,
           sessionTitle,
@@ -318,7 +318,8 @@ export function useSessionPersistence({
     });
 
     // Route Mastra events for non-active sessions to the background store
-    const unsubMastra = (window as any).pilot?.mastra?.onEvent((event: { sessionId?: string; _sessionId?: string }) => {
+    const unsubMastra = window.pilot?.mastra?.onEvent((raw: unknown) => {
+      const event = raw as { sessionId?: string; _sessionId?: string };
       const sid = event._sessionId ?? event.sessionId;
       if (!sid || sid === activeSessionIdRef.current || visibleSplitSessionIdsRef.current.includes(sid)) return;
       backgroundStoreRef.current.handleMastraEvent(sid, event);

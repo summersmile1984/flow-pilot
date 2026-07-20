@@ -2,12 +2,42 @@ import { AgentController } from '@mastra/core/agent-controller';
 import { Agent } from '@mastra/core/agent';
 import { LibSQLStore } from '@mastra/libsql';
 import { Memory } from '@mastra/memory';
-import { AcpAgent } from '@mastra/acp';
 import { Workspace, LocalFilesystem } from '@mastra/core/workspace';
+import { load as yamlLoad } from 'js-yaml';
 import path from 'path';
 import fs from 'fs';
 import { app } from 'electron';
 import { log } from './logger';
+import { createSupervisorAgent, createPassthroughAgent, createACPSupervisorAgent, type AgentMode } from './agent-factory';
+
+export type { AgentMode };
+
+// ── Pilot config.yaml types and parsing ──
+
+export interface PilotAgentConfig {
+  command: string;
+  args: string[];
+  capabilities?: string[];
+  strengths?: string[];
+  role?: 'primary' | 'sub' | 'both';
+}
+
+export interface PilotConfig {
+  supervisor?: {
+    model?: string;
+  };
+  agents?: Record<string, PilotAgentConfig>;
+}
+
+function loadPilotConfig(projectPath: string): PilotConfig {
+  try {
+    const configPath = path.join(projectPath, '.pilot', 'config.yaml');
+    const content = fs.readFileSync(configPath, 'utf-8');
+    return yamlLoad(content) as PilotConfig;
+  } catch {
+    return {};
+  }
+}
 
 // ── ACP session persistence (fix: resume claude-code/codex context across app restarts) ──
 
@@ -44,121 +74,6 @@ function readProjectMemory(projectPath: string): string {
   }
 }
 
-/**
- * AcpAgent subclass that makes the ACP agent's inner activity visible when it
- * runs as a Mastra subagent. The delegation tool (`agent-<id>`) forwards only
- * `data-*` chunks from the subagent's stream to the AgentController, so we
- * translate the inner tool-call / tool-result chunks into
- * `data-mastracode-tool-progress` chunks — those surface as `tool_update`
- * events and render as live steps on the delegation card.
- */
-class StreamingAcpAgent extends AcpAgent {
-  /** Parent-injected memory — used by the delegation tool to persist sub-threads. */
-  private injectedMemory: unknown;
-
-  constructor(options: ConstructorParameters<typeof AcpAgent>[0]) {
-    super(options);
-    this.wireSessionResume(options.id, options.cwd ?? process.cwd());
-  }
-
-  /**
-   * The delegation tool injects the parent agent's memory into subagents that
-   * have none (so sub-conversations persist as LibSQL sub-threads). Stock
-   * AcpAgent implements __setMemory as a no-op and getMemory as undefined,
-   * which silently drops the injection — store and return it instead.
-   */
-  override __setMemory(memory: Parameters<AcpAgent['__setMemory']>[0]): void {
-    this.injectedMemory = memory;
-  }
-
-  override getMemory(): undefined {
-    return this.injectedMemory as undefined;
-  }
-
-  /**
-   * Resume the ACP agent's own session across app restarts: after the stock
-   * initialize() creates a fresh session, call ACP `session/load` with the
-   * previously persisted session id (both claude-agent-acp and codex-acp
-   * advertise loadSession support) and swap it in. Falls back to the fresh
-   * session when the saved one is gone. Runtime patch — @mastra/acp's
-   * ACPConnection has no resume hook of its own.
-   */
-  private wireSessionResume(agentId: string, cwd: string): void {
-    const conn = this.connection as unknown as {
-      initialize?: () => Promise<void>;
-      connection?: { loadSession: (p: { sessionId: string; cwd: string; mcpServers: never[] }) => Promise<unknown> };
-      session?: { sessionId: string };
-    };
-    if (typeof conn.initialize !== 'function') return;
-    const storeKey = `${cwd}::${agentId}`;
-    const origInit = conn.initialize.bind(conn);
-    conn.initialize = async () => {
-      await origInit();
-      const saved = readAcpSessionIds()[storeKey];
-      if (saved && saved !== conn.session?.sessionId && conn.connection?.loadSession) {
-        try {
-          await conn.connection.loadSession({ sessionId: saved, cwd, mcpServers: [] });
-          if (conn.session) conn.session.sessionId = saved;
-          log('mastra-service', `${agentId}: resumed ACP session ${saved}`);
-        } catch (err) {
-          log('mastra-service', `${agentId}: ACP session resume failed, using fresh session (${err})`);
-        }
-      }
-      if (conn.session?.sessionId) writeAcpSessionId(storeKey, conn.session.sessionId);
-    };
-  }
-
-  async stream(
-    messages: Parameters<AcpAgent['stream']>[0],
-    options?: Parameters<AcpAgent['stream']>[1],
-  ): ReturnType<AcpAgent['stream']> {
-    const result = await super.stream(messages, options);
-    const agentId = this.id;
-    const source = result.fullStream;
-
-    const fullStream = new ReadableStream({
-      async start(controller) {
-        const reader = source.getReader();
-        const report = (progress: Record<string, unknown>) => {
-          controller.enqueue({
-            type: 'data-mastracode-tool-progress',
-            runId: result.runId,
-            from: 'AGENT',
-            data: { toolCallId: `acp:${agentId}`, progress: { agentId, ...progress } },
-          } as unknown as Parameters<typeof controller.enqueue>[0]);
-        };
-        try {
-          for (;;) {
-            const { done, value } = await reader.read();
-            if (done) break;
-            const chunk = value as { type?: string; payload?: { toolCallId?: string; toolName?: string; args?: unknown; isError?: boolean } };
-            if (chunk.type === 'tool-call' && chunk.payload?.toolCallId) {
-              report({
-                kind: 'tool_start',
-                id: chunk.payload.toolCallId,
-                title: chunk.payload.toolName,
-                input: chunk.payload.args,
-              });
-            } else if (chunk.type === 'tool-result' && chunk.payload?.toolCallId) {
-              report({
-                kind: 'tool_end',
-                id: chunk.payload.toolCallId,
-                status: chunk.payload.isError ? 'failed' : 'completed',
-              });
-            }
-            controller.enqueue(value);
-          }
-          controller.close();
-        } catch (err) {
-          controller.error(err);
-        }
-      },
-    });
-
-    return { ...result, fullStream };
-  }
-}
-
 let agentController: AgentController | null = null;
 
 // Model API keys live in <app root>/.env (gitignored). The GUI-launched app
@@ -174,10 +89,29 @@ function loadEnvFile(): void {
   }
 }
 
-export async function initMastraService(projectPath: string): Promise<AgentController> {
+export interface InitOptions {
+  projectPath: string;
+  mode?: AgentMode;
+  modelOverride?: string;
+  directAgentId?: string;      // mode='direct' 时使用
+  supervisorAgentId?: string;  // mode='acp-supervisor' 时使用
+}
+
+export async function initMastraService(projectPathOrOptions: string | InitOptions, modelOverride?: string): Promise<AgentController> {
   if (agentController) return agentController;
 
+  // Support both old signature (projectPath, modelOverride) and new options object
+  const options: InitOptions = typeof projectPathOrOptions === 'string'
+    ? { projectPath: projectPathOrOptions, modelOverride }
+    : projectPathOrOptions;
+
   loadEnvFile();
+
+  // Load config.yaml and resolve supervisor model
+  const config = loadPilotConfig(options.projectPath);
+  const supervisorModel = options.modelOverride || config.supervisor?.model || 'deepseek/deepseek-chat';
+  const mode = options.mode || 'supervisor';
+  log('mastra-service', `Initializing in ${mode} mode with model: ${supervisorModel}`);
 
   const dataDir = path.join(app.getPath('userData'), 'pilot-data');
   const dbPath = path.join(dataDir, 'pilot.db');
@@ -192,34 +126,12 @@ export async function initMastraService(projectPath: string): Promise<AgentContr
   // Create workspace with project filesystem
   const workspace = new Workspace({
     id: 'pilot-workspace',
-    filesystem: new LocalFilesystem({ basePath: projectPath }),
-  });
-
-  // ACP CLI agents registered as Mastra subagents: the AgentController is the
-  // orchestration layer, each ACP agent keeps its own internal capabilities.
-  const claudeCodeAgent = new StreamingAcpAgent({
-    id: 'claude-code',
-    name: 'Claude Code',
-    description: 'Claude Code agent for complex refactoring, multi-file changes, and architecture decisions',
-    command: 'npx',
-    args: ['-y', '@agentclientprotocol/claude-agent-acp'],
-    cwd: projectPath,
-    workspace,
-  });
-
-  const codexAgent = new StreamingAcpAgent({
-    id: 'codex',
-    name: 'Codex',
-    description: 'Codex agent for test generation, quick fixes, and simple implementations',
-    command: 'npx',
-    args: ['-y', '@agentclientprotocol/codex-acp'],
-    cwd: projectPath,
-    workspace,
+    filesystem: new LocalFilesystem({ basePath: options.projectPath }),
   });
 
   // Project memory (.pilot/memory/project.md) rides along in the supervisor's
   // instructions — architecture decisions, conventions, cross-session context.
-  const projectMemory = readProjectMemory(projectPath);
+  const projectMemory = readProjectMemory(options.projectPath);
 
   // Conversation persistence: messages go to LibSQL so resumed sessions carry
   // their history and delegation sub-threads are recorded. Semantic recall and
@@ -235,28 +147,61 @@ export async function initMastraService(projectPath: string): Promise<AgentContr
     },
   });
 
-  const supervisorAgent = new Agent({
-    id: 'supervisor',
-    name: 'Supervisor',
-    description: 'Routes coding tasks to the best ACP subagent',
-    instructions: `You are a supervisor agent that delegates coding tasks to specialized subagents.
-- Use the \`agent-claude-code\` tool for complex refactoring, multi-file changes, architecture decisions
-- Use the \`agent-codex\` tool for test generation, quick fixes, simple implementations
-- Write clear, self-contained prompts — subagents do not see this conversation
-- You can delegate to multiple subagents in parallel for independent subtasks${
-      projectMemory ? `\n\n## Project memory (.pilot/memory/project.md)\n${projectMemory}` : ''
-    }`,
-    model: 'deepseek/deepseek-chat',
-    memory,
-    agents: {
-      'claude-code': claudeCodeAgent,
-      'codex': codexAgent,
-    },
-  });
+  // Create the primary agent based on mode
+  let primaryAgent: Agent;
+  const agents = config.agents || {
+    'claude-code': { command: 'npx', args: ['-y', '@agentclientprotocol/claude-agent-acp'] },
+    'codex': { command: 'npx', args: ['-y', '@agentclientprotocol/codex-acp'] },
+  };
+
+  switch (mode) {
+    case 'direct': {
+      // Mode 2: Direct ACP - passthrough to single agent
+      const agentId = options.directAgentId || 'claude-code';
+      const agentConfig = agents[agentId];
+      if (!agentConfig) throw new Error(`Agent ${agentId} not found in config`);
+      primaryAgent = createPassthroughAgent({
+        acpId: agentId,
+        acpCommand: agentConfig.command,
+        acpArgs: agentConfig.args,
+        cwd: options.projectPath,
+        model: supervisorModel,
+      });
+      break;
+    }
+
+    case 'acp-supervisor': {
+      // Mode 3: ACP Supervisor - ACP agent makes decisions via proxy
+      const supervisorId = options.supervisorAgentId || 'claude-code';
+      const supervisorConfig = agents[supervisorId];
+      if (!supervisorConfig) throw new Error(`Agent ${supervisorId} not found in config`);
+      const subAgents = { ...agents };
+      delete subAgents[supervisorId];
+      primaryAgent = createACPSupervisorAgent({
+        projectPath: options.projectPath,
+        agents: subAgents,
+        projectMemory,
+        supervisorId,
+        supervisorConfig,
+        proxyModel: supervisorModel,
+      });
+      break;
+    }
+
+    default: {
+      // Mode 1: Supervisor - Mastra makes decisions (default)
+      primaryAgent = createSupervisorAgent({
+        projectPath: options.projectPath,
+        agents,
+        projectMemory,
+        model: supervisorModel,
+      });
+    }
+  }
 
   agentController = new AgentController({
     id: 'pilot-controller',
-    agent: supervisorAgent,
+    agent: primaryAgent,
     storage,
     memory,
     workspace,
@@ -282,8 +227,13 @@ export async function initMastraService(projectPath: string): Promise<AgentContr
   });
 
   await agentController.init();
-  log('mastra-service', 'Mastra service initialized');
+  log('mastra-service', `Mastra service initialized in ${mode} mode`);
   return agentController;
+}
+
+/** Get the current pilot config for the project. */
+export function getPilotConfig(projectPath: string): PilotConfig {
+  return loadPilotConfig(projectPath);
 }
 
 export function getAgentController(): AgentController | null {

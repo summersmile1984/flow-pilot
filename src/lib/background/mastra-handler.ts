@@ -20,7 +20,7 @@ function isDelegationTool(toolName: string | undefined): boolean {
   return !!toolName && toolName.startsWith("agent-");
 }
 
-/** Map ACP tool kinds to Harnss tool names so step rows get familiar icons. */
+/** Map ACP tool kinds to Pilot tool names so step rows get familiar icons. */
 const ACP_KIND_TO_TOOL: Record<string, string> = {
   read: "Read",
   edit: "Edit",

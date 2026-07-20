@@ -13,7 +13,7 @@
          Runs after <html> exists but before CSS renders the first frame. -->
     <script>
       (function() {
-        var stored = localStorage.getItem("harnss-theme");
+        var stored = localStorage.getItem("pilot-theme");
         var isDark = true;
         if (stored === "light") isDark = false;
         else if (stored === "system") isDark = window.matchMedia("(prefers-color-scheme: dark)").matches;

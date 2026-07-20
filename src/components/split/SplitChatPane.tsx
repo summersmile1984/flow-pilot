@@ -264,6 +264,9 @@ function SplitChatPaneInner({
             <BottomComposer
               pendingPermission={paneState.pendingPermission}
               onRespondPermission={paneState.engine.respondPermission}
+              pendingMastraApproval={null}
+              onMastraApprove={undefined}
+              onMastraDecline={undefined}
               onSend={paneController.handlePaneSend}
               onClear={paneController.handlePaneClear}
               onStop={paneController.handlePaneStop}

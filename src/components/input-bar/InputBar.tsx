@@ -77,6 +77,14 @@ export interface InputBarProps {
   agents?: InstalledAgent[];
   selectedAgent?: InstalledAgent | null;
   onAgentChange?: (agent: InstalledAgent | null) => void;
+  /** Mastra agent mode options */
+  mastraModeOptions?: Array<{ id: string; label: string; description: string; agentId?: string }>;
+  /** Currently selected Mastra mode */
+  selectedMastraMode?: string;
+  /** Callback when Mastra mode changes */
+  onMastraModeChange?: (mode: string, agentId?: string) => void;
+  /** Whether Mastra mode is being switched */
+  mastraModeLoading?: boolean;
   /** Slash commands available for the current engine session */
   slashCommands?: SlashCommand[];
   acpConfigOptions?: ACPConfigOption[];
@@ -133,6 +141,10 @@ export const InputBar = memo(function InputBar({
   agents,
   selectedAgent,
   onAgentChange,
+  mastraModeOptions,
+  selectedMastraMode,
+  onMastraModeChange,
+  mastraModeLoading,
   slashCommands,
   acpConfigOptions,
   acpConfigOptionsLoading,
@@ -180,6 +192,7 @@ export const InputBar = memo(function InputBar({
   // ── Derived engine state ──
   const isACPAgent = selectedAgent != null && selectedAgent.engine === "acp";
   const isCodexAgent = selectedAgent != null && selectedAgent.engine === "codex";
+  const isMastraAgent = selectedAgent != null && selectedAgent.engine === "mastra";
   const showACPConfigOptions = isACPAgent && (acpConfigOptions?.length ?? 0) > 0;
   const isAwaitingAcpOptions = isACPAgent && !!acpConfigOptionsLoading;
 
@@ -628,8 +641,10 @@ export const InputBar = memo(function InputBar({
       if (items) {
         const imageFiles: globalThis.File[] = [];
         for (const item of items) {
-          if (item.kind === "file" && isAcceptedImage(item.getAsFile()!)) {
-            imageFiles.push(item.getAsFile()!);
+          if (item.kind !== "file") continue;
+          const file = item.getAsFile();
+          if (file && isAcceptedImage(file)) {
+            imageFiles.push(file);
           }
         }
         if (imageFiles.length > 0) {
@@ -902,9 +917,14 @@ export const InputBar = memo(function InputBar({
               isProcessing={isProcessing}
               isACPAgent={isACPAgent}
               isCodexAgent={isCodexAgent}
+              isMastraAgent={isMastraAgent}
               selectedAgent={selectedAgent ?? null}
               agents={agents ?? []}
               onAgentChange={onAgentChange ?? (() => {})}
+              mastraModeOptions={mastraModeOptions}
+              selectedMastraMode={selectedMastraMode}
+              onMastraModeChange={onMastraModeChange}
+              mastraModeLoading={mastraModeLoading}
               selectedModelId={selectedModelId}
               selectedModelLabel={selectedModel?.label ?? ""}
               modelList={modelList}
