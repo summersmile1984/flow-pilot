@@ -1002,11 +1002,11 @@ export function AppLayout() {
 
   // Mastra mode options
   const mastraModeOptions = useMemo(() => [
-    { id: "supervisor", label: "Supervisor", short: "Supervisor", description: "Mastra routes tasks to best ACP agent" },
-    { id: "direct-opencode", label: "Direct (OpenCode)", short: "OpenCode", description: "Direct chat with OpenCode", agentId: "opencode" },
-    { id: "direct-codex", label: "Direct (Codex)", short: "Codex", description: "Direct chat with Codex", agentId: "codex" },
-    { id: "acp-supervisor-opencode", label: "ACP Supervisor (OpenCode)", short: "OpenCode Lead", description: "OpenCode makes routing decisions", agentId: "opencode" },
-    { id: "acp-supervisor-codex", label: "ACP Supervisor (Codex)", short: "Codex Lead", description: "Codex makes routing decisions", agentId: "codex" },
+    { id: "supervisor", group: "auto" as const, label: "Auto routing", short: "Auto", description: "DeepSeek picks the best agent for each task" },
+    { id: "direct-opencode", group: "single" as const, label: "OpenCode only", short: "OpenCode", description: "Every message goes straight to OpenCode", agentId: "opencode" },
+    { id: "direct-codex", group: "single" as const, label: "Codex only", short: "Codex", description: "Every message goes straight to Codex", agentId: "codex" },
+    { id: "acp-supervisor-opencode", group: "lead" as const, label: "OpenCode leads", short: "OpenCode Lead", description: "OpenCode plans the work and can pull in Codex", agentId: "opencode" },
+    { id: "acp-supervisor-codex", group: "lead" as const, label: "Codex leads", short: "Codex Lead", description: "Codex plans the work and can pull in OpenCode", agentId: "codex" },
   ], []);
 
   // Effective mastra mode: the active chat's recorded mode wins (mode is fixed
@@ -1024,7 +1024,7 @@ export function AppLayout() {
   }, [activeMastra, settings.mastraMode, settings.mastraAgentId]);
 
   const mastraModeBadge = useMemo(
-    () => mastraModeOptions.find((o) => o.id === selectedMastraMode)?.short ?? "Supervisor",
+    () => mastraModeOptions.find((o) => o.id === selectedMastraMode)?.short ?? "Auto",
     [mastraModeOptions, selectedMastraMode],
   );
 

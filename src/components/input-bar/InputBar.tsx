@@ -78,7 +78,7 @@ export interface InputBarProps {
   selectedAgent?: InstalledAgent | null;
   onAgentChange?: (agent: InstalledAgent | null) => void;
   /** Mastra agent mode options */
-  mastraModeOptions?: Array<{ id: string; label: string; short?: string; description: string; agentId?: string }>;
+  mastraModeOptions?: Array<{ id: string; label: string; short?: string; group?: "auto" | "single" | "lead"; description: string; agentId?: string }>;
   /** Currently selected Mastra mode */
   selectedMastraMode?: string;
   /** Callback when Mastra mode changes */

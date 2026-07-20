@@ -46,6 +46,8 @@ export interface MastraModeOption {
   label: string;
   /** Compact label for the trigger badge (e.g. "OpenCode Lead"). */
   short?: string;
+  /** Menu section: auto routing, single agent, or agent-led. */
+  group?: "auto" | "single" | "lead";
   description: string;
   agentId?: string;
 }
@@ -282,12 +284,12 @@ export const EnginePickerDropdown = memo(function EnginePickerDropdown({
         </DropdownMenuItem>
       )}
 
-      {/* Mastra mode options */}
+      {/* Mastra mode options — grouped: auto routing / single agent / agent-led */}
       {isMastraAgent && mastraModeOptions && mastraModeOptions.length > 0 && onMastraModeChange && (
         <>
           <DropdownMenuSeparator />
           <div className="px-2 py-1 text-[10px] font-medium text-muted-foreground">
-            Agent Mode
+            How Pilot runs
           </div>
           {mastraModeLoading && (
             <DropdownMenuItem disabled className="text-xs text-muted-foreground">
@@ -295,27 +297,41 @@ export const EnginePickerDropdown = memo(function EnginePickerDropdown({
               Switching mode...
             </DropdownMenuItem>
           )}
-          {!mastraModeLoading && mastraModeOptions.map((opt) => (
-            <DropdownMenuItem
-              key={opt.id}
-              onClick={() => onMastraModeChange(opt.id, opt.agentId)}
-              className={opt.id === selectedMastraMode ? "bg-accent" : ""}
-            >
-              <div>
-                <div className="flex items-center gap-2">
-                  <span>{opt.label}</span>
-                  {opt.id === selectedMastraMode && (
-                    <span className="text-[10px] text-muted-foreground">
-                      Current
-                    </span>
-                  )}
-                </div>
-                <div className="text-[10px] text-muted-foreground">
-                  {opt.description}
-                </div>
+          {!mastraModeLoading && (["auto", "single", "lead"] as const).map((group) => {
+            const groupOptions = mastraModeOptions.filter((o) => (o.group ?? "auto") === group);
+            if (groupOptions.length === 0) return null;
+            const groupTitle = group === "single" ? "One agent only" : group === "lead" ? "One agent leads the others" : null;
+            return (
+              <div key={group}>
+                {groupTitle && (
+                  <div className="px-2 pt-1.5 pb-0.5 text-[9px] font-medium uppercase tracking-wider text-muted-foreground/60">
+                    {groupTitle}
+                  </div>
+                )}
+                {groupOptions.map((opt) => (
+                  <DropdownMenuItem
+                    key={opt.id}
+                    onClick={() => onMastraModeChange(opt.id, opt.agentId)}
+                    className={opt.id === selectedMastraMode ? "bg-accent" : ""}
+                  >
+                    <div>
+                      <div className="flex items-center gap-2">
+                        <span>{opt.label}</span>
+                        {opt.id === selectedMastraMode && (
+                          <span className="text-[10px] text-muted-foreground">
+                            Current
+                          </span>
+                        )}
+                      </div>
+                      <div className="text-[10px] text-muted-foreground">
+                        {opt.description}
+                      </div>
+                    </div>
+                  </DropdownMenuItem>
+                ))}
               </div>
-            </DropdownMenuItem>
-          ))}
+            );
+          })}
         </>
       )}
     </>
@@ -383,8 +399,15 @@ export const EnginePickerDropdown = memo(function EnginePickerDropdown({
     return false;
   };
 
+  const ENGINE_SUBTITLES: Record<string, string> = {
+    claude: "Anthropic CLI on this machine",
+    codex: "OpenAI CLI on this machine",
+    mastra: "Orchestrates OpenCode & Codex via ACP",
+  };
+
   const renderAgent = (agent: InstalledAgent, isCrossEngine: boolean) => {
     const isCurrent = (selectedAgent?.id ?? "claude-code") === agent.id;
+    const subtitle = ENGINE_SUBTITLES[agent.engine];
 
     const agentLabel = (
       <>
@@ -393,6 +416,11 @@ export const EnginePickerDropdown = memo(function EnginePickerDropdown({
           <div className="flex items-center gap-1.5">
             {agent.name}
           </div>
+          {subtitle && (
+            <div className="text-[10px] text-muted-foreground">
+              {subtitle}
+            </div>
+          )}
           {isCrossEngine && (
             <div className="text-[10px] text-muted-foreground/70">
               Opens new chat
@@ -427,9 +455,12 @@ export const EnginePickerDropdown = memo(function EnginePickerDropdown({
     );
   };
 
-  // Split agents into first-party engines (claude, codex, mastra) vs ACP agents
-  const firstPartyAgents = hasMultipleAgents
-    ? agents.filter((a) => a.engine === "claude" || a.engine === "codex" || a.engine === "mastra")
+  // Split agents: single-agent CLI engines / the Pilot orchestrator / ACP agents
+  const directEngines = hasMultipleAgents
+    ? agents.filter((a) => a.engine === "claude" || a.engine === "codex")
+    : [];
+  const orchestrators = hasMultipleAgents
+    ? agents.filter((a) => a.engine === "mastra")
     : [];
   const acpAgents = hasMultipleAgents
     ? agents.filter((a) => a.engine === "acp")
@@ -450,17 +481,28 @@ export const EnginePickerDropdown = memo(function EnginePickerDropdown({
       <DropdownMenuContent align="start" className="w-64">
         {hasMultipleAgents ? (
           <>
-            {firstPartyAgents.length > 0 && (
+            {directEngines.length > 0 && (
               <DropdownMenuGroup>
                 <DropdownMenuLabel className="text-[10px] font-medium text-muted-foreground">
-                  Engines
+                  Single agent
                 </DropdownMenuLabel>
-                {firstPartyAgents.map((a) => renderAgent(a, willOpenNewChat(a)))}
+                {directEngines.map((a) => renderAgent(a, willOpenNewChat(a)))}
               </DropdownMenuGroup>
+            )}
+            {orchestrators.length > 0 && (
+              <>
+                {directEngines.length > 0 && <DropdownMenuSeparator />}
+                <DropdownMenuGroup>
+                  <DropdownMenuLabel className="text-[10px] font-medium text-muted-foreground">
+                    Multi-agent
+                  </DropdownMenuLabel>
+                  {orchestrators.map((a) => renderAgent(a, willOpenNewChat(a)))}
+                </DropdownMenuGroup>
+              </>
             )}
             {acpAgents.length > 0 && (
               <>
-                {firstPartyAgents.length > 0 && <DropdownMenuSeparator />}
+                {(directEngines.length > 0 || orchestrators.length > 0) && <DropdownMenuSeparator />}
                 <DropdownMenuGroup>
                   <DropdownMenuLabel className="text-[10px] font-medium text-muted-foreground">
                     ACP Agents
