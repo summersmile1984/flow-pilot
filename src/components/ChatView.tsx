@@ -441,14 +441,24 @@ function ChatViewContent({
   // ── Structural identity key for expensive derived data ──
   // Primitive string key so useMemo can do stable dependency comparison.
   // Recomputes turn summaries, divider labels, and tool groups only when
-  // message structure actually changes (new message, tool result arrives, processing toggles).
+  // message structure actually changes (new message, tool result arrives,
+  // subagent steps progress, processing toggles). Scans the whole list —
+  // integer tallies are cheap, and results can arrive for tools far back
+  // (parallel calls, long delegations), which a last-N window would miss.
   const structKey = useMemo(() => {
     let toolResultCount = 0;
-    for (let i = nonQueuedMessages.length - 1; i >= Math.max(0, nonQueuedMessages.length - 10); i--) {
-      if (nonQueuedMessages[i].role === "tool_call" && nonQueuedMessages[i].toolResult) toolResultCount++;
+    let toolErrorCount = 0;
+    let subagentStepSum = 0;
+    let runningSubagents = 0;
+    for (const m of nonQueuedMessages) {
+      if (m.role !== "tool_call") continue;
+      if (m.toolResult) toolResultCount++;
+      if (m.toolError) toolErrorCount++;
+      if (m.subagentSteps) subagentStepSum += m.subagentSteps.length;
+      if (m.subagentStatus === "running") runningSubagents++;
     }
     const lastId = nonQueuedMessages[nonQueuedMessages.length - 1]?.id ?? "";
-    return `${nonQueuedMessages.length}:${lastId}:${toolResultCount}:${isProcessing}`;
+    return `${nonQueuedMessages.length}:${lastId}:${toolResultCount}:${toolErrorCount}:${subagentStepSum}:${runningSubagents}:${isProcessing}`;
   }, [nonQueuedMessages, isProcessing]);
 
   // ── Turn summaries (rerender-derived-state-no-effect) ──

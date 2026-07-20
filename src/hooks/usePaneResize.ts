@@ -6,6 +6,7 @@
  */
 
 import { useCallback, useRef, useState } from "react";
+import { useDocumentDrag } from "@/hooks/useDocumentDrag";
 import {
   MIN_PANE_WIDTH_FRACTION,
   equalWidthFractions,
@@ -33,6 +34,7 @@ export function usePaneResize({
   handleWidthPx = 0,
 }: UsePaneResizeOptions) {
   const [isResizing, setIsResizing] = useState(false);
+  const beginDrag = useDocumentDrag();
   const startXRef = useRef(0);
   const startFractionsRef = useRef<number[]>([]);
   const containerWidthRef = useRef(0);
@@ -105,16 +107,9 @@ export function usePaneResize({
         setWidthFractions(fractions.map(f => f / sum));
       };
 
-      const handleUp = () => {
-        setIsResizing(false);
-        document.removeEventListener("mousemove", handleMove);
-        document.removeEventListener("mouseup", handleUp);
-      };
-
-      document.addEventListener("mousemove", handleMove);
-      document.addEventListener("mouseup", handleUp);
+      beginDrag(handleMove, () => setIsResizing(false));
     },
-    [containerRef, handleWidthPx, minWidthsPx, setWidthFractions, widthFractions],
+    [beginDrag, containerRef, handleWidthPx, minWidthsPx, setWidthFractions, widthFractions],
   );
 
   /** Reset all panes to equal widths. */

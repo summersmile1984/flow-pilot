@@ -8,7 +8,7 @@ import {
   CollapsibleTrigger,
 } from "@/components/ui/collapsible";
 import { isRecord } from "@/lib/utils";
-import { stripHtml } from "./helpers";
+import { stripHtml, asRecordArray } from "./helpers";
 import { Field, McpListHeader, McpEmptyState, MCP_ROW_CLASS } from "./shared";
 
 // ── Confluence: Search results ──
@@ -26,7 +26,7 @@ interface ConfluenceSearchData {
 }
 
 function ConfluenceSearchResultsView({ data }: { data: ConfluenceSearchData }) {
-  const results = data.results;
+  const results = asRecordArray<NonNullable<typeof data.results>[number]>(data.results);
   if (!results || results.length === 0) {
     return <McpEmptyState message="No results found" />;
   }
@@ -83,7 +83,7 @@ interface ConfluenceSpacesData {
 }
 
 function ConfluenceSpacesView({ data }: { data: ConfluenceSpacesData }) {
-  const spaces = data.results;
+  const spaces = asRecordArray<NonNullable<typeof data.results>[number]>(data.results);
   if (!spaces || spaces.length === 0) {
     return <McpEmptyState message="No spaces found" />;
   }
@@ -144,7 +144,7 @@ interface ConfluencePageDescendantsData {
 }
 
 function ConfluencePageDescendantsView({ data }: { data: ConfluencePageDescendantsData }) {
-  const results = data.results;
+  const results = asRecordArray<NonNullable<typeof data.results>[number]>(data.results);
   if (!results || results.length === 0) {
     return <McpEmptyState message="No descendants found" />;
   }
@@ -380,7 +380,7 @@ interface ConfluencePageListData {
 }
 
 function ConfluencePageListView({ data }: { data: ConfluencePageListData }) {
-  const results = data.results;
+  const results = asRecordArray<NonNullable<typeof data.results>[number]>(data.results);
   if (!results || results.length === 0) {
     return <McpEmptyState message="No pages found" />;
   }

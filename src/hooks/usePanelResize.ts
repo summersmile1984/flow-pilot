@@ -1,4 +1,5 @@
 import { useCallback, useEffect, useRef, useState } from "react";
+import { useDocumentDrag } from "@/hooks/useDocumentDrag";
 import type { Settings } from "@/hooks/useSettings";
 import {
   MIN_RIGHT_PANEL_WIDTH,
@@ -28,6 +29,7 @@ export function usePanelResize({
   activeProjectId,
 }: UsePanelResizeOptions) {
   const [isResizing, setIsResizing] = useState(false);
+  const beginDrag = useDocumentDrag();
   const minChatWidth = activeSessionId ? getChatPaneMinWidthPx("single") : getMinChatWidth(isIsland);
 
   // ToolPicker strip width (flat divider is an overlay, excluded from width math)
@@ -66,17 +68,12 @@ export function usePanelResize({
         settings.setRightPanelWidth(next);
       };
 
-      const onMouseUp = () => {
+      beginDrag(onMouseMove, () => {
         setIsResizing(false);
-        document.removeEventListener("mousemove", onMouseMove);
-        document.removeEventListener("mouseup", onMouseUp);
         settings.saveRightPanelWidth();
-      };
-
-      document.addEventListener("mousemove", onMouseMove);
-      document.addEventListener("mouseup", onMouseUp);
+      });
     },
-    [settings, minChatWidth, pickerW, handleW],
+    [beginDrag, settings, minChatWidth, pickerW, handleW],
   );
 
   // ── Reactive right panel clamping on window resize / project switch ──
@@ -131,17 +128,12 @@ export function usePanelResize({
         settings.setRightSplitRatio(next);
       };
 
-      const onMouseUp = () => {
+      beginDrag(onMouseMove, () => {
         setIsResizing(false);
-        document.removeEventListener("mousemove", onMouseMove);
-        document.removeEventListener("mouseup", onMouseUp);
         settings.saveRightSplitRatio();
-      };
-
-      document.addEventListener("mousemove", onMouseMove);
-      document.addEventListener("mouseup", onMouseUp);
+      });
     },
-    [settings],
+    [beginDrag, settings],
   );
 
   return {

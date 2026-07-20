@@ -426,5 +426,56 @@ declare global {
         onPreReleaseStatus: (cb: (info: PreReleaseInfo) => void) => () => void;
       };
     };
+    /** Pilot-specific bridge: Mastra orchestration, unified skills, project memory. */
+    pilot: {
+      mastra: {
+        init: (projectPath: string) => Promise<{ success: boolean; sessionId?: string; error?: string }>;
+        sendMessage: (content: string) => Promise<{ success: boolean; error?: string }>;
+        start: (options: {
+          cwd: string;
+          mode?: "supervisor" | "direct" | "acp-supervisor";
+          directAgentId?: string;
+          supervisorAgentId?: string;
+        }) => Promise<{ sessionId?: string; error?: string }>;
+        send: (sessionId: string, content: string, cwd?: string) => Promise<{ ok?: boolean; error?: string }>;
+        abort: () => Promise<{ success: boolean }>;
+        switchMode: (modeId: string) => Promise<{ success: boolean; error?: string }>;
+        getDisplayState: () => Promise<{ success: boolean; state?: Record<string, unknown>; error?: string }>;
+        respondToApproval: (options: {
+          decision: "approve" | "decline";
+          toolCallId?: string;
+          sessionId?: string;
+        }) => Promise<{ success: boolean; error?: string }>;
+        setToolPolicy: (options: {
+          toolName: string;
+          policy: "allow" | "ask" | "deny";
+          sessionId?: string;
+        }) => Promise<{ success: boolean; error?: string }>;
+        setPermissionMode: (options: {
+          mode: "default" | "bypassPermissions";
+          sessionId?: string;
+        }) => Promise<{ success: boolean; error?: string }>;
+        destroy: () => Promise<{ success: boolean }>;
+        setModel: (options: { model: string; cwd: string }) => Promise<{ success: boolean; error?: string }>;
+        getConfig: (cwd: string) => Promise<{ success: boolean; config?: Record<string, unknown>; error?: string }>;
+        getCurrentMode: () => Promise<{ success: boolean; modeId?: string; error?: string }>;
+        onEvent: (callback: (event: unknown) => void) => () => void;
+      };
+      skills: {
+        init: (projectPath: string) => Promise<{ success: boolean }>;
+        list: () => Promise<{ success: boolean; skills?: unknown[]; error?: string }>;
+        manifest: () => Promise<{ success: boolean; manifest?: string[]; error?: string }>;
+        create: (options: { name: string; content: string; scope: "project" | "global" }) => Promise<{ success: boolean; error?: string }>;
+        delete: (skillPath: string) => Promise<{ success: boolean; error?: string }>;
+        update: (options: { skillPath: string; content: string }) => Promise<{ success: boolean; error?: string }>;
+        read: (skillPath: string) => Promise<{ success: boolean; content?: string; error?: string }>;
+      };
+      memory: {
+        init: (projectPath: string) => Promise<{ success: boolean }>;
+        read: () => Promise<{ success: boolean; content?: string; error?: string }>;
+        write: (content: string) => Promise<{ success: boolean; error?: string }>;
+        append: (section: string, content: string) => Promise<{ success: boolean; error?: string }>;
+      };
+    };
   }
 }

@@ -1,5 +1,6 @@
-import { memo } from "react";
+import { Component, memo, type ReactNode } from "react";
 import type { UIMessage, ToolUseResult } from "@/types";
+import { captureException } from "@/lib/analytics/analytics";
 
 // ── MCP renderers (extracted) ──
 import { JiraIssueList, JiraIssueDetail, JiraProjectList, JiraTransitions } from "./mcp-renderers/jira";
@@ -191,6 +192,48 @@ export function getMcpCompactSummary(toolName: string, toolInput: Record<string,
   return "";
 }
 
+// ── Error containment ──
+// MCP payloads come from external servers; a renderer hitting a malformed
+// shape must degrade to a fallback row, not crash the whole chat.
+
+function RendererSlot({ renderer, data, toolInput, rawText }: {
+  renderer: McpRenderer;
+  data: unknown;
+  toolInput: Record<string, unknown>;
+  rawText: string | null;
+}) {
+  return <>{renderer({ data, toolInput, rawText })}</>;
+}
+
+class McpRendererBoundary extends Component<{ toolName: string; children: ReactNode }, { failed: boolean }> {
+  state = { failed: false };
+
+  static getDerivedStateFromError(): { failed: boolean } {
+    return { failed: true };
+  }
+
+  componentDidCatch(error: Error): void {
+    captureException(error, { label: "MCP_RENDERER_ERR", toolName: this.props.toolName });
+  }
+
+  componentDidUpdate(prevProps: { toolName: string }): void {
+    if (prevProps.toolName !== this.props.toolName && this.state.failed) {
+      this.setState({ failed: false });
+    }
+  }
+
+  render(): ReactNode {
+    if (this.state.failed) {
+      return (
+        <p className="text-xs text-muted-foreground italic">
+          Unable to render this tool result
+        </p>
+      );
+    }
+    return this.props.children;
+  }
+}
+
 /** Render MCP tool result with specialized view */
 export const McpToolContent = memo(function McpToolContent({ message }: { message: UIMessage }) {
   const toolName = message.toolName ?? "";
@@ -206,7 +249,9 @@ export const McpToolContent = memo(function McpToolContent({ message }: { messag
 
   return (
     <div className="text-xs">
-      {renderer({ data: data ?? {}, toolInput: message.toolInput ?? {}, rawText })}
+      <McpRendererBoundary toolName={toolName}>
+        <RendererSlot renderer={renderer} data={data ?? {}} toolInput={message.toolInput ?? {}} rawText={rawText} />
+      </McpRendererBoundary>
     </div>
   );
 });

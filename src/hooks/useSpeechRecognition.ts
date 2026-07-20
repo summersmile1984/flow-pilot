@@ -83,6 +83,10 @@ export function useSpeechRecognition({
   const mediaRecorderRef = useRef<MediaRecorder | null>(null);
   const audioChunksRef = useRef<Blob[]>([]);
   const streamRef = useRef<MediaStream | null>(null);
+  // Async recorder callbacks and the dictation flash timer can outlive the
+  // component — guard their setStates so they no-op after unmount.
+  const mountedRef = useRef(true);
+  const dictationFlashRef = useRef<ReturnType<typeof setTimeout> | null>(null);
 
   // Stable callback refs
   const onResultRef = useRef(onResult);
@@ -193,23 +197,25 @@ export function useSpeechRecognition({
         const chunks = audioChunksRef.current;
         if (chunks.length === 0) return;
 
-        setIsTranscribing(true);
+        if (mountedRef.current) setIsTranscribing(true);
         try {
           const blob = new Blob(chunks, { type: recorder.mimeType });
           const audioData = await blobToFloat32Audio(blob);
           // Run Whisper inference
           const result = await whisperPipeline(audioData);
           const text = (result?.text ?? "").trim();
-          if (text) {
+          if (text && mountedRef.current) {
             onResultRef.current?.(text);
           }
         } catch (err) {
           const msg = err instanceof Error ? err.message : "Transcription failed";
           captureException(err instanceof Error ? err : new Error(msg), { label: "WHISPER_TRANSCRIBE_ERR" });
-          setError(msg);
-          onErrorRef.current?.(msg);
+          if (mountedRef.current) {
+            setError(msg);
+            onErrorRef.current?.(msg);
+          }
         } finally {
-          setIsTranscribing(false);
+          if (mountedRef.current) setIsTranscribing(false);
         }
       };
 
@@ -245,7 +251,10 @@ export function useSpeechRecognition({
     // Native dictation: macOS handles everything, no isListening state to manage
     // We briefly flash the state for visual feedback
     setIsListening(true);
-    setTimeout(() => setIsListening(false), 500);
+    if (dictationFlashRef.current) clearTimeout(dictationFlashRef.current);
+    dictationFlashRef.current = setTimeout(() => {
+      if (mountedRef.current) setIsListening(false);
+    }, 500);
   }, []);
 
   // ── Toggle ──
@@ -265,7 +274,10 @@ export function useSpeechRecognition({
   // ── Cleanup on unmount ──
 
   useEffect(() => {
+    mountedRef.current = true;
     return () => {
+      mountedRef.current = false;
+      if (dictationFlashRef.current) clearTimeout(dictationFlashRef.current);
       if (mediaRecorderRef.current?.state === "recording") {
         mediaRecorderRef.current.stop();
       }

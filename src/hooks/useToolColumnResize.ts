@@ -1,4 +1,5 @@
 import { useCallback, useState } from "react";
+import { useDocumentDrag } from "@/hooks/useDocumentDrag";
 import { MIN_STACKED_TOOL_PANEL_HEIGHT } from "@/lib/layout/workspace-constraints";
 
 interface UseToolColumnResizeOptions {
@@ -11,6 +12,7 @@ export function useToolColumnResize({
   setSplitRatios,
 }: UseToolColumnResizeOptions) {
   const [activeResizeId, setActiveResizeId] = useState<string | null>(null);
+  const beginDrag = useDocumentDrag();
 
   const handleResizeStart = useCallback((
     columnId: string,
@@ -60,15 +62,8 @@ export function useToolColumnResize({
       );
     };
 
-    const handleUp = () => {
-      setActiveResizeId(null);
-      document.removeEventListener("mousemove", handleMove);
-      document.removeEventListener("mouseup", handleUp);
-    };
-
-    document.addEventListener("mousemove", handleMove);
-    document.addEventListener("mouseup", handleUp);
-  }, [columnRefs, setSplitRatios]);
+    beginDrag(handleMove, () => setActiveResizeId(null));
+  }, [beginDrag, columnRefs, setSplitRatios]);
 
   return {
     activeResizeId,

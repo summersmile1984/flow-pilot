@@ -1,4 +1,5 @@
 import { useCallback, useState } from "react";
+import { useDocumentDrag } from "@/hooks/useDocumentDrag";
 import {
   MAX_BOTTOM_TOOLS_HEIGHT,
   MIN_BOTTOM_TOOLS_HEIGHT,
@@ -19,6 +20,7 @@ export function useBottomHeightResize(
   handleResizeStart: (event: React.MouseEvent) => void;
 } {
   const [isResizing, setIsResizing] = useState(false);
+  const beginDrag = useDocumentDrag();
 
   const handleResizeStart = useCallback((event: React.MouseEvent) => {
     event.preventDefault();
@@ -32,15 +34,8 @@ export function useBottomHeightResize(
       setBottomHeight(next);
     };
 
-    const handleUp = () => {
-      setIsResizing(false);
-      document.removeEventListener("mousemove", handleMove);
-      document.removeEventListener("mouseup", handleUp);
-    };
-
-    document.addEventListener("mousemove", handleMove);
-    document.addEventListener("mouseup", handleUp);
-  }, [bottomHeight, setBottomHeight]);
+    beginDrag(handleMove, () => setIsResizing(false));
+  }, [beginDrag, bottomHeight, setBottomHeight]);
 
   return { isResizing, handleResizeStart };
 }

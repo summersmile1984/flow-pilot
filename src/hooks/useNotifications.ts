@@ -197,11 +197,12 @@ export function useNotifications({
 
     if (completed) {
       if (consumeSuppressedSessionCompletion(current.sessionId)) return;
+      const completedSessionId = current.sessionId;
       fireNotification(
         settings.sessionComplete,
         "Task complete",
         `${activeActor} has finished processing.`,
-        current.sessionId ? () => openSession(current.sessionId) : undefined,
+        completedSessionId ? () => openSession(completedSessionId) : undefined,
       );
     }
   }, [activeActor, activeSessionId, isProcessing, openSession, settings]);
@@ -244,11 +245,11 @@ export function useNotifications({
       );
     };
 
-    window.addEventListener("harnss:background-session-complete", onBackgroundComplete as EventListener);
-    window.addEventListener("harnss:background-permission-request", onBackgroundPermission as EventListener);
+    window.addEventListener("pilot:background-session-complete", onBackgroundComplete as EventListener);
+    window.addEventListener("pilot:background-permission-request", onBackgroundPermission as EventListener);
     return () => {
-      window.removeEventListener("harnss:background-session-complete", onBackgroundComplete as EventListener);
-      window.removeEventListener("harnss:background-permission-request", onBackgroundPermission as EventListener);
+      window.removeEventListener("pilot:background-session-complete", onBackgroundComplete as EventListener);
+      window.removeEventListener("pilot:background-permission-request", onBackgroundPermission as EventListener);
     };
   }, [openSession, settings]);
 }
