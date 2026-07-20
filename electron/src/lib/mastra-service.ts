@@ -39,32 +39,6 @@ function loadPilotConfig(projectPath: string): PilotConfig {
   }
 }
 
-// ── ACP session persistence (fix: resume claude-code/codex context across app restarts) ──
-
-function acpSessionStorePath(): string {
-  return path.join(app.getPath('userData'), 'pilot-data', 'acp-sessions.json');
-}
-
-function readAcpSessionIds(): Record<string, string> {
-  try {
-    return JSON.parse(fs.readFileSync(acpSessionStorePath(), 'utf-8')) as Record<string, string>;
-  } catch {
-    return {};
-  }
-}
-
-function writeAcpSessionId(key: string, sessionId: string): void {
-  try {
-    const all = readAcpSessionIds();
-    if (all[key] === sessionId) return;
-    all[key] = sessionId;
-    fs.mkdirSync(path.dirname(acpSessionStorePath()), { recursive: true });
-    fs.writeFileSync(acpSessionStorePath(), JSON.stringify(all, null, 2));
-  } catch (err) {
-    log('mastra-service', `Failed to persist ACP session id: ${err}`);
-  }
-}
-
 /** Read the project memory file maintained under .pilot/memory/project.md. */
 function readProjectMemory(projectPath: string): string {
   try {

@@ -429,8 +429,6 @@ declare global {
     /** Pilot-specific bridge: Mastra orchestration, unified skills, project memory. */
     pilot: {
       mastra: {
-        init: (projectPath: string) => Promise<{ success: boolean; sessionId?: string; error?: string }>;
-        sendMessage: (content: string) => Promise<{ success: boolean; error?: string }>;
         start: (options: {
           cwd: string;
           mode?: "supervisor" | "direct" | "acp-supervisor";

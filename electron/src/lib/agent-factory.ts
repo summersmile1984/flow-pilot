@@ -1,5 +1,5 @@
 import { Agent } from '@mastra/core/agent';
-import { createACPTool } from '@mastra/acp';
+import { createStreamingACPTool } from './streaming-acp-tool';
 import type { PilotAgentConfig } from './mastra-service';
 
 export type AgentMode = 'supervisor' | 'direct' | 'acp-supervisor';
@@ -15,11 +15,12 @@ export interface AgentFactoryOptions {
  * 用于通用场景，成本低
  */
 export function createSupervisorAgent(options: AgentFactoryOptions & { model: string }): Agent {
-  const acpTools: Record<string, ReturnType<typeof createACPTool>> = {};
+  const acpTools: Record<string, ReturnType<typeof createStreamingACPTool>> = {};
 
   for (const [id, config] of Object.entries(options.agents)) {
-    acpTools[id] = createACPTool({
-      id,
+    acpTools[`agent-${id}`] = createStreamingACPTool({
+      id: `agent-${id}`,
+      agentId: id,
       description: `${id} agent - ${(config.strengths || []).join(', ')}`,
       command: config.command,
       args: config.args,
@@ -62,8 +63,10 @@ export function createPassthroughAgent(options: {
   cwd: string;
   model?: string;
 }): Agent {
-  const acpTool = createACPTool({
-    id: options.acpId,
+  const toolName = `agent-${options.acpId}`;
+  const acpTool = createStreamingACPTool({
+    id: toolName,
+    agentId: options.acpId,
     description: `Direct access to ${options.acpId}`,
     command: options.acpCommand,
     args: options.acpArgs,
@@ -74,10 +77,10 @@ export function createPassthroughAgent(options: {
     id: `passthrough-${options.acpId}`,
     name: options.acpId,
     description: `Direct ${options.acpId} agent`,
-    instructions: `You are a passthrough agent. Forward ALL user messages to the ${options.acpId} tool exactly as received. Do not add any commentary, analysis, or modification. Just call the tool with the user's message and return the result.`,
+    instructions: `You are a passthrough agent. Forward ALL user messages to the \`${toolName}\` tool exactly as received. Do not add any commentary, analysis, or modification. Just call the tool with the user's message and return the result.`,
     model: options.model || 'deepseek/deepseek-chat',
     tools: {
-      [options.acpId]: acpTool,
+      [toolName]: acpTool,
     },
   });
 }
@@ -93,8 +96,10 @@ export function createACPSupervisorAgent(options: AgentFactoryOptions & {
   proxyModel: string;
 }): Agent {
   // Supervisor ACP tool (主决策者)
-  const supervisorTool = createACPTool({
-    id: options.supervisorId,
+  const supervisorToolName = `agent-${options.supervisorId}`;
+  const supervisorTool = createStreamingACPTool({
+    id: supervisorToolName,
+    agentId: options.supervisorId,
     description: `Main supervisor agent (${options.supervisorId})`,
     command: options.supervisorConfig.command,
     args: options.supervisorConfig.args,
@@ -102,19 +107,20 @@ export function createACPSupervisorAgent(options: AgentFactoryOptions & {
   });
 
   // Sub-agent ACP tools (可被委托)
-  const subTools: Record<string, ReturnType<typeof createACPTool>> = {};
+  const subTools: Record<string, ReturnType<typeof createStreamingACPTool>> = {};
   const subAgentList: string[] = [];
 
   for (const [id, config] of Object.entries(options.agents)) {
     if (id === options.supervisorId) continue; // Skip supervisor itself
-    subTools[id] = createACPTool({
-      id,
+    subTools[`agent-${id}`] = createStreamingACPTool({
+      id: `agent-${id}`,
+      agentId: id,
       description: `Sub-agent: ${id} - ${(config.strengths || []).join(', ')}`,
       command: config.command,
       args: config.args,
       cwd: options.projectPath,
     });
-    subAgentList.push(`- ${id}: ${(config.strengths || []).join(', ')}`);
+    subAgentList.push(`- \`agent-${id}\`: ${(config.strengths || []).join(', ')}`);
   }
 
   return new Agent({
@@ -124,7 +130,7 @@ export function createACPSupervisorAgent(options: AgentFactoryOptions & {
     instructions: `You are a proxy agent for the ${options.supervisorId} supervisor.
 
 WORKFLOW:
-1. Forward ALL user messages to the \`${options.supervisorId}\` tool
+1. Forward ALL user messages to the \`${supervisorToolName}\` tool
 2. Return the supervisor's response directly to the user
 3. If the supervisor's response explicitly requests delegation to another agent, use that agent's tool
 4. Do NOT add commentary or analysis — just forward responses
@@ -135,7 +141,7 @@ ${subAgentList.join('\n') || '(none)'}${
     }`,
     model: options.proxyModel,
     tools: {
-      [options.supervisorId]: supervisorTool,
+      [supervisorToolName]: supervisorTool,
       ...subTools,
     },
   });
