@@ -50,7 +50,7 @@ import {
 } from "./input-bar-utils";
 import { ContextGauge } from "./ContextGauge";
 import { AttachmentPreview } from "./AttachmentPreview";
-import { EnginePickerDropdown } from "./EnginePickerDropdown";
+import { EnginePickerDropdown, type MastraModeOption } from "./EnginePickerDropdown";
 import { EngineControls } from "./EngineControls";
 import { MentionPicker } from "./MentionPicker";
 import { useMentionAutocomplete } from "./useMentionAutocomplete";
@@ -78,13 +78,15 @@ export interface InputBarProps {
   selectedAgent?: InstalledAgent | null;
   onAgentChange?: (agent: InstalledAgent | null) => void;
   /** Mastra agent mode options */
-  mastraModeOptions?: Array<{ id: string; label: string; short?: string; group?: "auto" | "single" | "lead"; description: string; agentId?: string }>;
+  mastraModeOptions?: MastraModeOption[];
   /** Currently selected Mastra mode */
   selectedMastraMode?: string;
   /** Callback when Mastra mode changes */
   onMastraModeChange?: (mode: string, agentId?: string) => void;
   /** Whether Mastra mode is being switched */
   mastraModeLoading?: boolean;
+  /** True when picking a different mode opens a new chat (mode is per-chat). */
+  mastraModeOpensNewChat?: boolean;
   /** Slash commands available for the current engine session */
   slashCommands?: SlashCommand[];
   acpConfigOptions?: ACPConfigOption[];
@@ -145,6 +147,7 @@ export const InputBar = memo(function InputBar({
   selectedMastraMode,
   onMastraModeChange,
   mastraModeLoading,
+  mastraModeOpensNewChat,
   slashCommands,
   acpConfigOptions,
   acpConfigOptionsLoading,
@@ -925,6 +928,7 @@ export const InputBar = memo(function InputBar({
               selectedMastraMode={selectedMastraMode}
               onMastraModeChange={onMastraModeChange}
               mastraModeLoading={mastraModeLoading}
+              mastraModeOpensNewChat={mastraModeOpensNewChat}
               selectedModelId={selectedModelId}
               selectedModelLabel={selectedModel?.label ?? ""}
               modelList={modelList}

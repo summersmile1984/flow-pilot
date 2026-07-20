@@ -57,6 +57,7 @@ import { useJiraBoard } from "@/hooks/useJiraBoard";
 import { useSplitDragDrop } from "@/hooks/useSplitDragDrop";
 import { useToolDragDrop, findDraggedIsland, type ToolDragState } from "@/hooks/useToolDragDrop";
 import { useAppLayoutUIState } from "@/hooks/app-layout/useAppLayoutUIState";
+import { buildSessionOptions } from "@/hooks/app-layout/session-utils";
 import {
   useMainToolWorkspace,
   togglePanelTool,
@@ -1046,17 +1047,44 @@ export function AppLayout() {
     settings.setMastraMode(newMode);
     if (newAgentId) settings.setMastraAgentId(newAgentId);
 
-    // Show toast notification
-    const agentLabel = newAgentId ? newAgentId.charAt(0).toUpperCase() + newAgentId.slice(1) : "";
+    const agentLabel = newAgentId
+      ? ({ opencode: "OpenCode", codex: "Codex" } as Record<string, string>)[newAgentId]
+        ?? newAgentId.charAt(0).toUpperCase() + newAgentId.slice(1)
+      : "";
     const modeLabels: Record<string, string> = {
-      supervisor: "Supervisor",
-      direct: `Direct (${agentLabel})`,
-      "acp-supervisor": `ACP Supervisor (${agentLabel})`,
+      supervisor: "Auto routing",
+      direct: `${agentLabel} only`,
+      "acp-supervisor": `${agentLabel} leads`,
     };
+
+    // A chat's mode is fixed at creation, so picking a different mode inside
+    // an existing Pilot chat opens a fresh chat in that mode — same behavior
+    // as picking a different agent.
+    const active = manager.activeSession;
+    if (active?.engine === "mastra" && !manager.isDraft && mode !== selectedMastraMode) {
+      const pilotAgent = agents.find((a) => a.engine === "mastra") ?? null;
+      const options = buildSessionOptions(
+        "mastra",
+        settings.getModelForEngine,
+        settings.permissionMode,
+        settings.planMode,
+        settings.thinking,
+        () => undefined,
+        pilotAgent,
+        newMode,
+        newAgentId,
+      );
+      void manager.createSession(active.projectId, options);
+      toast.success("Agent mode changed", {
+        description: `Opened a new Pilot chat with ${modeLabels[newMode] || newMode}.`,
+      });
+      return;
+    }
+
     toast.success("Agent mode changed", {
-      description: `Switched to ${modeLabels[newMode] || newMode}. New sessions will use this mode.`,
+      description: `New Pilot chats will use ${modeLabels[newMode] || newMode}.`,
     });
-  }, [settings.setMastraMode, settings.setMastraAgentId]);
+  }, [agents, manager, selectedMastraMode, settings]);
 
   return (
     <ThemeProvider value={resolvedTheme}>
@@ -1602,6 +1630,7 @@ export function AppLayout() {
                   mastraModeOptions={mastraModeOptions}
                   selectedMastraMode={selectedMastraMode}
                   onMastraModeChange={handleMastraModeChange}
+                  mastraModeOpensNewChat={!!activeMastra && !manager.isDraft}
                   slashCommands={activePaneCtrl?.paneSlashCommands ?? manager.slashCommands}
                   acpConfigOptions={activePaneCtrl?.paneAcpConfigOptions ?? manager.acpConfigOptions}
                   acpConfigOptionsLoading={activePaneCtrl?.paneAcpConfigOptionsLoading ?? manager.acpConfigOptionsLoading}

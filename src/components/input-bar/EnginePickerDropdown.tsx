@@ -67,6 +67,8 @@ export interface EnginePickerDropdownProps {
   selectedMastraMode?: string;
   onMastraModeChange?: (mode: string, agentId?: string) => void;
   mastraModeLoading?: boolean;
+  /** True when picking a different mode opens a new chat (mode is per-chat). */
+  mastraModeOpensNewChat?: boolean;
   // Model state
   selectedModelId: string;
   selectedModelLabel: string;
@@ -107,6 +109,7 @@ export const EnginePickerDropdown = memo(function EnginePickerDropdown({
   selectedMastraMode,
   onMastraModeChange,
   mastraModeLoading,
+  mastraModeOpensNewChat,
   selectedModelId,
   selectedModelLabel,
   modelList,
@@ -328,6 +331,11 @@ export const EnginePickerDropdown = memo(function EnginePickerDropdown({
                       <div className="text-[10px] text-muted-foreground">
                         {opt.description}
                       </div>
+                      {mastraModeOpensNewChat && opt.id !== selectedMastraMode && (
+                        <div className="text-[10px] text-muted-foreground/70">
+                          Opens new chat
+                        </div>
+                      )}
                     </div>
                   </DropdownMenuItem>
                 ))}
