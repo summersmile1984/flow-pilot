@@ -660,6 +660,10 @@ export function useDraftMaterialization({
           agentId: options.agentId ?? "codex",
           codexThreadId,
         } : {}),
+        ...(draftEngine === "mastra" ? {
+          mastraMode: options.mastraMode ?? "supervisor",
+          ...(options.mastraAgentId ? { mastraAgentId: options.mastraAgentId } : {}),
+        } : {}),
       };
 
       // Replace the DRAFT_ID placeholder (if any) with the real session entry

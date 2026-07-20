@@ -24,6 +24,8 @@ export function toChatSession(
     isActive,
     engine: session.engine,
     codexThreadId: session.codexThreadId,
+    mastraMode: session.mastraMode,
+    mastraAgentId: session.mastraAgentId,
     folderId: session.folderId,
     pinned: session.pinned,
     branch: session.branch,
@@ -56,5 +58,7 @@ export function buildPersistedSession(
     ...(session.agentId ? { agentId: session.agentId } : {}),
     ...(session.agentSessionId ? { agentSessionId: session.agentSessionId } : {}),
     ...(session.engine === "codex" && session.codexThreadId ? { codexThreadId: session.codexThreadId } : {}),
+    ...(session.engine === "mastra" && session.mastraMode ? { mastraMode: session.mastraMode } : {}),
+    ...(session.engine === "mastra" && session.mastraAgentId ? { mastraAgentId: session.mastraAgentId } : {}),
   };
 }

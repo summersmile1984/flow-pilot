@@ -421,7 +421,8 @@ contextBridge.exposeInMainWorld("pilot", {
   mastra: {
     start: (options: { cwd: string; mode?: 'supervisor' | 'direct' | 'acp-supervisor'; directAgentId?: string; supervisorAgentId?: string }) =>
       ipcRenderer.invoke("mastra:start", options),
-    send: (sessionId: string, content: string, cwd?: string) => ipcRenderer.invoke("mastra:send", { sessionId, content, cwd }),
+    send: (sessionId: string, content: string, cwd?: string, resume?: { mode?: string; agentId?: string }) =>
+      ipcRenderer.invoke("mastra:send", { sessionId, content, cwd, resume }),
     abort: () => ipcRenderer.invoke("mastra:abort"),
     switchMode: (modeId: string) => ipcRenderer.invoke("mastra:switchMode", modeId),
     getDisplayState: () => ipcRenderer.invoke("mastra:getDisplayState"),

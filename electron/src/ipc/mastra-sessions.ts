@@ -118,14 +118,26 @@ export function register(getMainWindow: () => BrowserWindow | null): void {
     }
   });
 
-  ipcMain.handle("mastra:send", async (_event, { sessionId, content, cwd }: { sessionId: string; content: string; cwd?: string }) => {
+  ipcMain.handle("mastra:send", async (_event, { sessionId, content, cwd, resume }: {
+    sessionId: string;
+    content: string;
+    cwd?: string;
+    resume?: { mode?: AgentMode; agentId?: string };
+  }) => {
     log("mastra-ipc", `mastra:send called with sessionId=${sessionId}, content=${content.substring(0, 50)}...`);
     let session = getSession(sessionId);
     if (!session && cwd) {
-      // App restarted since this chat was created — resume the session
+      // App restarted since this chat was created — resume it with the mode
+      // the chat was originally created in (recorded on the session entry)
       try {
-        session = await ensureSession(sessionId, cwd);
-        log("mastra-ipc", `Session resumed: ${sessionId}`);
+        session = await ensureSession(
+          sessionId,
+          cwd,
+          resume?.mode,
+          resume?.mode === "direct" ? resume?.agentId : undefined,
+          resume?.mode === "acp-supervisor" ? resume?.agentId : undefined,
+        );
+        log("mastra-ipc", `Session resumed: ${sessionId} (mode=${resume?.mode ?? currentMode})`);
       } catch (err) {
         log("mastra-ipc", `Session resume failed: ${err}`);
         return { error: `Failed to resume session: ${err}` };

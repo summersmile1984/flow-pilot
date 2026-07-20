@@ -32,6 +32,8 @@ interface ChatHeaderProps {
   planMode?: boolean;
   permissionMode?: string;
   acpPermissionBehavior?: AcpPermissionBehavior;
+  /** Mastra sessions: compact run-mode label (e.g. "Supervisor", "OpenCode Lead"). */
+  mastraModeBadge?: string;
   onToggleSidebar: () => void;
   showDevFill?: boolean;
   onSeedDevExampleConversation?: () => void;
@@ -53,6 +55,7 @@ export const ChatHeader = memo(function ChatHeader({
   planMode,
   permissionMode,
   acpPermissionBehavior,
+  mastraModeBadge,
   onToggleSidebar,
   showDevFill,
   onSeedDevExampleConversation,
@@ -144,6 +147,16 @@ export const ChatHeader = memo(function ChatHeader({
           {title}
         </span>
       ) : null}
+
+      {mastraModeBadge && (
+        <span
+          className={`no-drag shrink-0 inline-flex items-center rounded-full bg-foreground/[0.06] px-1.5 py-px text-[10px] font-medium text-foreground/45 ${
+            islandLayout ? "relative top-px" : ""
+          }`}
+        >
+          {mastraModeBadge}
+        </span>
+      )}
 
       {/* Session info, split view toggle, and pane close */}
       {(showDevSeedButton || hasDetails || onClosePane) && (

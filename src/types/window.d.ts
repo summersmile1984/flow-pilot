@@ -435,7 +435,12 @@ declare global {
           directAgentId?: string;
           supervisorAgentId?: string;
         }) => Promise<{ sessionId?: string; error?: string }>;
-        send: (sessionId: string, content: string, cwd?: string) => Promise<{ ok?: boolean; error?: string }>;
+        send: (
+          sessionId: string,
+          content: string,
+          cwd?: string,
+          resume?: { mode?: "supervisor" | "direct" | "acp-supervisor"; agentId?: string },
+        ) => Promise<{ ok?: boolean; error?: string }>;
         abort: () => Promise<{ success: boolean }>;
         switchMode: (modeId: string) => Promise<{ success: boolean; error?: string }>;
         getDisplayState: () => Promise<{ success: boolean; state?: Record<string, unknown>; error?: string }>;

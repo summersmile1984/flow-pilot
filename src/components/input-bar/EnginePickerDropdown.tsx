@@ -44,6 +44,8 @@ interface ModelItem {
 export interface MastraModeOption {
   id: string;
   label: string;
+  /** Compact label for the trigger badge (e.g. "OpenCode Lead"). */
+  short?: string;
   description: string;
   agentId?: string;
 }
@@ -127,6 +129,7 @@ export const EnginePickerDropdown = memo(function EnginePickerDropdown({
     <>
       {/* Model list (Claude + Codex) */}
       {!isACPAgent &&
+        !isMastraAgent &&
         !modelsLoading &&
         modelList.length > 0 &&
         modelList.map((m) => (
@@ -147,7 +150,7 @@ export const EnginePickerDropdown = memo(function EnginePickerDropdown({
         ))}
 
       {/* Claude effort for current model */}
-      {!isCodexAgent && !isACPAgent && claudeEffortOptions.length > 0 && (
+      {!isCodexAgent && !isACPAgent && !isMastraAgent && claudeEffortOptions.length > 0 && (
         <>
           <DropdownMenuSeparator />
           <div className="px-2 py-1 text-[10px] font-medium text-muted-foreground">
@@ -184,7 +187,7 @@ export const EnginePickerDropdown = memo(function EnginePickerDropdown({
       )}
 
       {/* Models loading */}
-      {!isACPAgent && modelsLoading && (
+      {!isACPAgent && !isMastraAgent && modelsLoading && (
         <DropdownMenuItem disabled className="text-xs text-muted-foreground">
           <Loader2 className="h-3 w-3 animate-spin" />
           {modelsLoadingText}
@@ -328,12 +331,19 @@ export const EnginePickerDropdown = memo(function EnginePickerDropdown({
         className="shrink-0"
       />
       {selectedAgent?.name ?? "Claude Code"}
-      {!isACPAgent && !modelsLoading && selectedModelLabel && (
+      {isMastraAgent && (
+        <span className="text-muted-foreground/70">
+          · {mastraModeOptions?.find((o) => o.id === selectedMastraMode)?.short
+            ?? mastraModeOptions?.find((o) => o.id === selectedMastraMode)?.label
+            ?? "Supervisor"}
+        </span>
+      )}
+      {!isACPAgent && !isMastraAgent && !modelsLoading && selectedModelLabel && (
         <span className="text-muted-foreground/70">
           · {selectedModelLabel}
         </span>
       )}
-      {!isACPAgent && modelsLoading && (
+      {!isACPAgent && !isMastraAgent && modelsLoading && (
         <Loader2 className="h-3 w-3 animate-spin text-muted-foreground/50" />
       )}
       {isACPAgent &&

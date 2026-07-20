@@ -102,6 +102,10 @@ export interface SessionBase {
   agentSessionId?: string;
   agentId?: string;
   codexThreadId?: string;
+  /** Mastra sessions: run mode this chat was created with. */
+  mastraMode?: "supervisor" | "direct" | "acp-supervisor";
+  /** Mastra sessions: ACP agent for direct/acp-supervisor modes. */
+  mastraAgentId?: string;
   /** Which folder this chat belongs to (undefined = root level). */
   folderId?: string;
   /** Whether this chat is pinned to the top of the sidebar. */

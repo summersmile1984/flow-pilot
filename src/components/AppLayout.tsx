@@ -1002,18 +1002,31 @@ export function AppLayout() {
 
   // Mastra mode options
   const mastraModeOptions = useMemo(() => [
-    { id: "supervisor", label: "Supervisor", description: "Mastra routes tasks to best ACP agent" },
-    { id: "direct-opencode", label: "Direct (OpenCode)", description: "Direct chat with OpenCode", agentId: "opencode" },
-    { id: "direct-codex", label: "Direct (Codex)", description: "Direct chat with Codex", agentId: "codex" },
-    { id: "acp-supervisor-opencode", label: "ACP Supervisor (OpenCode)", description: "OpenCode makes routing decisions", agentId: "opencode" },
-    { id: "acp-supervisor-codex", label: "ACP Supervisor (Codex)", description: "Codex makes routing decisions", agentId: "codex" },
+    { id: "supervisor", label: "Supervisor", short: "Supervisor", description: "Mastra routes tasks to best ACP agent" },
+    { id: "direct-opencode", label: "Direct (OpenCode)", short: "OpenCode", description: "Direct chat with OpenCode", agentId: "opencode" },
+    { id: "direct-codex", label: "Direct (Codex)", short: "Codex", description: "Direct chat with Codex", agentId: "codex" },
+    { id: "acp-supervisor-opencode", label: "ACP Supervisor (OpenCode)", short: "OpenCode Lead", description: "OpenCode makes routing decisions", agentId: "opencode" },
+    { id: "acp-supervisor-codex", label: "ACP Supervisor (Codex)", short: "Codex Lead", description: "Codex makes routing decisions", agentId: "codex" },
   ], []);
 
+  // Effective mastra mode: the active chat's recorded mode wins (mode is fixed
+  // at chat creation), the global setting only applies to drafts/new chats.
+  const activeMastra = manager.activeSession?.engine === "mastra" ? manager.activeSession : null;
   const selectedMastraMode = useMemo(() => {
-    if (settings.mastraMode === "direct") return `direct-${settings.mastraAgentId}`;
-    if (settings.mastraMode === "acp-supervisor") return `acp-supervisor-${settings.mastraAgentId}`;
+    // Active chats display the mode they were created with — never the global
+    // setting, which only shapes NEW chats. Chats predating mode recording
+    // default to supervisor (the historical behavior).
+    const mode = activeMastra ? (activeMastra.mastraMode ?? "supervisor") : settings.mastraMode;
+    const agentId = activeMastra ? activeMastra.mastraAgentId : settings.mastraAgentId;
+    if (mode === "direct") return `direct-${agentId}`;
+    if (mode === "acp-supervisor") return `acp-supervisor-${agentId}`;
     return "supervisor";
-  }, [settings.mastraMode, settings.mastraAgentId]);
+  }, [activeMastra, settings.mastraMode, settings.mastraAgentId]);
+
+  const mastraModeBadge = useMemo(
+    () => mastraModeOptions.find((o) => o.id === selectedMastraMode)?.short ?? "Supervisor",
+    [mastraModeOptions, selectedMastraMode],
+  );
 
   const handleMastraModeChange = useCallback((mode: string, _agentId?: string) => {
     let newMode = mode;
@@ -1031,10 +1044,11 @@ export function AppLayout() {
     if (newAgentId) settings.setMastraAgentId(newAgentId);
 
     // Show toast notification
+    const agentLabel = newAgentId ? newAgentId.charAt(0).toUpperCase() + newAgentId.slice(1) : "";
     const modeLabels: Record<string, string> = {
       supervisor: "Supervisor",
-      direct: `Direct (${newAgentId === "codex" ? "Codex" : "Claude Code"})`,
-      "acp-supervisor": `ACP Supervisor (${newAgentId === "codex" ? "Codex" : "Claude"})`,
+      direct: `Direct (${agentLabel})`,
+      "acp-supervisor": `ACP Supervisor (${agentLabel})`,
     };
     toast.success("Agent mode changed", {
       description: `Switched to ${modeLabels[newMode] || newMode}. New sessions will use this mode.`,
@@ -1518,6 +1532,7 @@ export function AppLayout() {
                   planMode={activePaneCtrl?.panePlanMode ?? settings.planMode}
                   permissionMode={activePaneCtrl?.panePermissionMode}
                   acpPermissionBehavior={manager.activeSession?.engine === "acp" ? settings.acpPermissionBehavior : undefined}
+                  mastraModeBadge={activeMastra ? mastraModeBadge : undefined}
                   onToggleSidebar={sidebar.toggle}
                   showDevFill={devFillEnabled}
                   onSeedDevExampleConversation={manager.seedDevExampleConversation}

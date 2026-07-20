@@ -104,6 +104,8 @@ export function useSessionCache({
             ...(data.agentId ? { agentId: data.agentId } : {}),
             ...(data.agentSessionId ? { agentSessionId: data.agentSessionId } : {}),
             ...(data.codexThreadId ? { codexThreadId: data.codexThreadId } : {}),
+            ...(data.mastraMode ? { mastraMode: data.mastraMode } : {}),
+            ...(data.mastraAgentId ? { mastraAgentId: data.mastraAgentId } : {}),
             ...(data.effort ? { effort: data.effort } : {}),
             ...(data.permissionMode ? { permissionMode: data.permissionMode } : {}),
             planMode: !!data.planMode,

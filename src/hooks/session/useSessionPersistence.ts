@@ -354,6 +354,8 @@ export function useSessionPersistence({
         ...(session.agentId ? { agentId: session.agentId } : {}),
         ...(session.agentSessionId ? { agentSessionId: session.agentSessionId } : {}),
         ...(session.engine === "codex" && session.codexThreadId ? { codexThreadId: session.codexThreadId } : {}),
+        ...(session.engine === "mastra" && session.mastraMode ? { mastraMode: session.mastraMode } : {}),
+        ...(session.engine === "mastra" && session.mastraAgentId ? { mastraAgentId: session.mastraAgentId } : {}),
       };
       void persistSessionWithCodexFallback(data);
     }, 2000);

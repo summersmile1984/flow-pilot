@@ -14,7 +14,7 @@ export interface SessionMeta {
   permissionMode?: string;
   planMode?: boolean;
   totalCost?: number;
-  engine?: "claude" | "acp" | "codex";
+  engine?: "claude" | "acp" | "codex" | "mastra";
   codexThreadId?: string;
   /** Which folder this chat belongs to (undefined = root level). */
   folderId?: string;
@@ -24,6 +24,10 @@ export interface SessionMeta {
   branch?: string;
   /** Agent ID — which agent was used for this session. */
   agentId?: string;
+  /** Mastra sessions: run mode this chat was created with. */
+  mastraMode?: "supervisor" | "direct" | "acp-supervisor";
+  /** Mastra sessions: ACP agent for direct/acp-supervisor modes. */
+  mastraAgentId?: string;
 }
 
 /**
@@ -61,5 +65,7 @@ export function extractSessionMeta(data: Record<string, unknown>, lastMessageAt:
     pinned: data.pinned as boolean | undefined,
     branch: data.branch as string | undefined,
     agentId: data.agentId as string | undefined,
+    mastraMode: data.mastraMode as SessionMeta["mastraMode"],
+    mastraAgentId: data.mastraAgentId as string | undefined,
   };
 }

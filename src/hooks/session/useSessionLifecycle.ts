@@ -408,13 +408,16 @@ export function useSessionLifecycle({
         const activeSession = refs.sessionsRef.current.find((s) => s.id === activeId);
         const project = activeSession ? findProject(activeSession.projectId) : null;
         const cwd = project ? getProjectCwd(project) : undefined;
+        const resume = activeSession?.mastraMode
+          ? { mode: activeSession.mastraMode, agentId: activeSession.mastraAgentId }
+          : undefined;
         claude.setMessages((prev) => [
           ...prev,
           createUserMessage(text, images, displayText),
         ]);
         claude.setIsProcessing(true);
         try {
-          const result = await window.pilot.mastra.send(activeId, text, cwd);
+          const result = await window.pilot.mastra.send(activeId, text, cwd, resume);
           if (result?.error) {
             claude.setMessages((prev) => [
               ...prev,
