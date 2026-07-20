@@ -434,12 +434,13 @@ declare global {
           mode?: "supervisor" | "direct" | "acp-supervisor";
           directAgentId?: string;
           supervisorAgentId?: string;
+          permissionMode?: string;
         }) => Promise<{ sessionId?: string; error?: string }>;
         send: (
           sessionId: string,
           content: string,
           cwd?: string,
-          resume?: { mode?: "supervisor" | "direct" | "acp-supervisor"; agentId?: string },
+          resume?: { mode?: "supervisor" | "direct" | "acp-supervisor"; agentId?: string; permissionMode?: string },
         ) => Promise<{ ok?: boolean; error?: string }>;
         abort: () => Promise<{ success: boolean }>;
         switchMode: (modeId: string) => Promise<{ success: boolean; error?: string }>;

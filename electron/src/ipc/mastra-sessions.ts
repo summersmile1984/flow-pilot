@@ -54,6 +54,7 @@ export function register(getMainWindow: () => BrowserWindow | null): void {
     mode?: AgentMode,
     directAgentId?: string,
     supervisorAgentId?: string,
+    permissionMode?: string,
   ): Promise<Session> {
     const existing = sessions.get(sessionId);
     if (existing) return existing;
@@ -88,6 +89,11 @@ export function register(getMainWindow: () => BrowserWindow | null): void {
     } catch (err) {
       log("mastra-ipc", `ask_user allow policy failed: ${err}`);
     }
+    // The chat's recorded permission mode: "Allow All" (bypassPermissions)
+    // maps to yolo — auto-approve every tool call in this session.
+    if (permissionMode === "bypassPermissions") {
+      await enableYoloMode(session);
+    }
     currentSession = session;
 
     // Store mode for future sessions
@@ -115,6 +121,7 @@ export function register(getMainWindow: () => BrowserWindow | null): void {
     mode?: AgentMode;
     directAgentId?: string;
     supervisorAgentId?: string;
+    permissionMode?: string;
   }) => {
     log("mastra-ipc", `mastra:start called with cwd=${options.cwd}, mode=${options.mode || 'supervisor'}`);
     try {
@@ -125,6 +132,7 @@ export function register(getMainWindow: () => BrowserWindow | null): void {
         options.mode,
         options.directAgentId,
         options.supervisorAgentId,
+        options.permissionMode,
       );
       const sessionId = session.identity.getId();
       log("mastra-ipc", `Session created: ${sessionId} (requested ${requestedId})`);
@@ -139,7 +147,7 @@ export function register(getMainWindow: () => BrowserWindow | null): void {
     sessionId: string;
     content: string;
     cwd?: string;
-    resume?: { mode?: AgentMode; agentId?: string };
+    resume?: { mode?: AgentMode; agentId?: string; permissionMode?: string };
   }) => {
     log("mastra-ipc", `mastra:send called with sessionId=${sessionId}, content=${content.substring(0, 50)}...`);
     let session = getSession(sessionId);
@@ -153,6 +161,7 @@ export function register(getMainWindow: () => BrowserWindow | null): void {
           resume?.mode,
           resume?.mode === "direct" ? resume?.agentId : undefined,
           resume?.mode === "acp-supervisor" ? resume?.agentId : undefined,
+          resume?.permissionMode,
         );
         log("mastra-ipc", `Session resumed: ${sessionId} (mode=${resume?.mode ?? currentMode})`);
       } catch (err) {

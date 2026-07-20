@@ -205,6 +205,15 @@ export function useSessionSettings({
     }
     if (sessionEngine === "codex") {
       engine.setPermissionMode(normalizedPermission);
+      return;
+    }
+    if (sessionEngine === "mastra") {
+      // Pilot has two levels: "Allow All" = yolo (auto-approve every tool
+      // call); anything else falls back to the approval gate.
+      void window.pilot?.mastra?.setPermissionMode({
+        mode: normalizedPermission === "bypassPermissions" ? "bypassPermissions" : "default",
+        sessionId: id,
+      });
     }
   }, [engine.setPermissionMode, persistSessionPatch]);
 

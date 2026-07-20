@@ -565,6 +565,9 @@ export function useDraftMaterialization({
 
         // Build start options with mastra mode
         const mastraStartOptions: Parameters<typeof window.pilot.mastra.start>[0] = { cwd: getProjectCwd(project) };
+        if (options.permissionMode) {
+          mastraStartOptions.permissionMode = options.permissionMode;
+        }
         if (options.mastraMode) {
           mastraStartOptions.mode = options.mastraMode;
         }

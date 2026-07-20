@@ -450,8 +450,12 @@ export function useSessionLifecycle({
         const activeSession = refs.sessionsRef.current.find((s) => s.id === activeId);
         const project = activeSession ? findProject(activeSession.projectId) : null;
         const cwd = project ? getProjectCwd(project) : undefined;
-        const resume = activeSession?.mastraMode
-          ? { mode: activeSession.mastraMode, agentId: activeSession.mastraAgentId }
+        const resume = (activeSession?.mastraMode || activeSession?.permissionMode)
+          ? {
+              mode: activeSession?.mastraMode,
+              agentId: activeSession?.mastraAgentId,
+              permissionMode: activeSession?.permissionMode,
+            }
           : undefined;
         claude.setMessages((prev) => [
           ...prev,
