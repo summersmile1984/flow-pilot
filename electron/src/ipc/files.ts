@@ -10,6 +10,7 @@ import { getAppSetting } from "../lib/app-settings";
 import { captureEvent } from "../lib/posthog";
 import { reportError } from "../lib/error-utils";
 import { safeSend } from "../lib/safe-send";
+import { convertToPdf } from "../lib/office-convert";
 
 /** Max bytes returned as base64 by file:read-binary for document previews (25 MB). */
 const MAX_PREVIEW_BYTES = 25 * 1024 * 1024;
@@ -558,6 +559,21 @@ export function register(getMainWindow: () => BrowserWindow | null): void {
     } catch (err) {
       const errMsg = reportError("FILE:READ_ERR", err, { filePath });
       return { error: errMsg };
+    }
+  });
+
+  // Convert a document (e.g. iWork) to PDF via LibreOffice, returned as base64.
+  ipcMain.handle("file:convert-to-pdf", async (_event, filePath: string) => {
+    try {
+      const absPath = path.resolve(filePath);
+      if (!absPath || absPath === path.sep) return { error: "Invalid file path" };
+      const pdfPath = await convertToPdf(absPath);
+      const stat = await fsPromises.stat(pdfPath);
+      if (stat.size > MAX_PREVIEW_BYTES) return { error: "Converted PDF too large to preview" };
+      const buf = await fsPromises.readFile(pdfPath);
+      return { base64: buf.toString("base64"), size: stat.size };
+    } catch (err) {
+      return { error: err instanceof Error ? err.message : String(err) };
     }
   });
 

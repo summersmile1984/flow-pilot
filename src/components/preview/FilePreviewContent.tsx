@@ -79,6 +79,8 @@ export const FilePreviewContent = memo(function FilePreviewContent({ filePath }:
     setBytes(null);
 
     const run = async () => {
+      // iWork loads itself (LibreOffice convert / embedded-preview fallback).
+      if (kind === "iwork") return;
       if (kind === "text" || kind === "html") {
         const res = await window.claude.readFile(filePath);
         if (cancelled) return;
@@ -121,14 +123,17 @@ export const FilePreviewContent = memo(function FilePreviewContent({ filePath }:
   if (loading) return spinner;
   if (error) return <Centered><p className="max-w-md text-center text-sm text-muted-foreground/70 whitespace-pre-wrap">{error}</p></Centered>;
 
-  if (bytes && (kind === "pdf" || kind === "docx" || kind === "xlsx" || kind === "pptx" || kind === "iwork")) {
+  if (kind === "iwork") {
+    return <Suspense fallback={spinner}><IworkRenderer filePath={filePath} /></Suspense>;
+  }
+
+  if (bytes && (kind === "pdf" || kind === "docx" || kind === "xlsx" || kind === "pptx")) {
     return (
       <Suspense fallback={spinner}>
         {kind === "pdf" && <PdfRenderer bytes={bytes} />}
         {kind === "docx" && <DocxRenderer bytes={bytes} />}
         {kind === "xlsx" && <XlsxRenderer bytes={bytes} />}
         {kind === "pptx" && <PptxRenderer bytes={bytes} />}
-        {kind === "iwork" && <IworkRenderer bytes={bytes} />}
       </Suspense>
     );
   }

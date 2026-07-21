@@ -131,6 +131,7 @@ contextBridge.exposeInMainWorld("claude", {
     ipcRenderer.invoke("claude:restart-session", { sessionId, mcpServers, cwd, effort, model }),
   readFile: (filePath: string) => ipcRenderer.invoke("file:read", filePath),
   readFileBinary: (filePath: string) => ipcRenderer.invoke("file:read-binary", filePath),
+  convertToPdf: (filePath: string) => ipcRenderer.invoke("file:convert-to-pdf", filePath),
   renameFile: (oldPath: string, newPath: string) => ipcRenderer.invoke("file:rename", { oldPath, newPath }),
   trashItem: (filePath: string) => ipcRenderer.invoke("file:trash", filePath),
   newFile: (filePath: string) => ipcRenderer.invoke("file:new-file", filePath),
