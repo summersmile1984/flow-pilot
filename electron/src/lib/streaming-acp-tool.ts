@@ -84,6 +84,8 @@ export interface StreamingACPToolOptions {
    * relay model doesn't have to reproduce it verbatim.
    */
   taskPrefix?: string;
+  /** MCP servers (ACP wire format) advertised to the agent's session. */
+  mcpServers?: unknown[];
 }
 
 /**
@@ -103,6 +105,9 @@ export function createStreamingACPTool(options: StreamingACPToolOptions) {
     args: options.args,
     cwd: options.cwd,
     model: options.model,
+    ...(options.mcpServers?.length
+      ? { session: { mcpServers: options.mcpServers as never } }
+      : {}),
   });
   wireSessionResume(acpAgent, options.agentId, options.cwd);
 

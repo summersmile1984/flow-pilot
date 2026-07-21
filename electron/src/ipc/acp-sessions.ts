@@ -190,8 +190,9 @@ function summarizeUpdate(update: Record<string, unknown>): string {
   }
 }
 
-/** Convert renderer MCP server configs to ACP SDK format (with fresh auth headers). */
-async function buildAcpMcpServers(servers: McpServerInput[]): Promise<McpServer[]> {
+/** Convert renderer MCP server configs to ACP SDK format (with fresh auth headers).
+ *  Exported for the mastra layer, which passes the same servers to its ACP subagents. */
+export async function buildAcpMcpServers(servers: McpServerInput[]): Promise<McpServer[]> {
   const resolved = await Promise.all(servers.map(async (s): Promise<McpServer | null> => {
     if (s.transport === "stdio") {
       if (!s.command) { log("ACP_MCP_WARN", `Server "${s.name}" (stdio) missing command — skipping`); return null; }

@@ -15,7 +15,7 @@ const DEFAULT_SKILL_TEMPLATE = `# Skill Name
 Description of what this skill does and when to use it.
 `;
 
-export function SkillManager() {
+export function SkillManager({ projectPath }: { projectPath?: string | null }) {
   const [skills, setSkills] = useState<Skill[]>([]);
   const [isLoading, setIsLoading] = useState(true);
   const [isCreating, setIsCreating] = useState(false);
@@ -29,6 +29,9 @@ export function SkillManager() {
     setIsLoading(true);
     setError(null);
     try {
+      // The skills IPC is stateful — point it at the active project (or
+      // global-only when none is open) before listing.
+      await window.pilot.skills.init(projectPath ?? null);
       const result = await window.pilot.skills.list();
       if (result.success) {
         setSkills((result.skills ?? []) as Skill[]);
@@ -40,7 +43,7 @@ export function SkillManager() {
     } finally {
       setIsLoading(false);
     }
-  }, []);
+  }, [projectPath]);
 
   useEffect(() => {
     loadSkills();

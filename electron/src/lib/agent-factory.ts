@@ -10,6 +10,8 @@ export interface AgentFactoryOptions {
   projectMemory?: string;
   /** Rendered skills catalog (from SkillManager) for the instructions. */
   skillsCatalog?: string;
+  /** MCP servers (ACP wire format) advertised to every subagent session. */
+  mcpServers?: unknown[];
 }
 
 /**
@@ -27,6 +29,7 @@ export function createSupervisorAgent(options: AgentFactoryOptions & { model: st
       command: config.command,
       args: config.args,
       cwd: options.projectPath,
+      mcpServers: options.mcpServers,
     });
   }
 

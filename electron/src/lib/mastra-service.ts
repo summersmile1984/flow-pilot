@@ -10,6 +10,8 @@ import { app } from 'electron';
 import { log } from './logger';
 import { createSupervisorAgent, createPassthroughAgent, createACPSupervisorAgent, type AgentMode } from './agent-factory';
 import { SkillManager } from './skill-manager';
+import { buildAcpMcpServers } from '../ipc/acp-sessions';
+import type { McpServerInput } from '@shared/lib/mcp-config';
 
 export type { AgentMode };
 
@@ -84,6 +86,8 @@ export interface InitOptions {
   modelOverride?: string;
   directAgentId?: string;      // mode='direct' 时使用
   supervisorAgentId?: string;  // mode='acp-supervisor' 时使用
+  /** Project MCP servers (renderer config shape) shared with all subagents. */
+  mcpServers?: McpServerInput[];
 }
 
 export async function initMastraService(projectPathOrOptions: string | InitOptions, modelOverride?: string): Promise<AgentController> {
@@ -123,6 +127,18 @@ export async function initMastraService(projectPathOrOptions: string | InitOptio
   // Project memory (.pilot/memory/project.md) rides along in the supervisor's
   // instructions — architecture decisions, conventions, cross-session context.
   const projectMemory = readProjectMemory(options.projectPath);
+
+  // Project MCP servers ride into every subagent's ACP session — the same
+  // list (and conversion) the direct ACP engine uses.
+  let acpMcpServers: unknown[] | undefined;
+  if (options.mcpServers?.length) {
+    try {
+      acpMcpServers = await buildAcpMcpServers(options.mcpServers);
+      log('mastra-service', `Passing ${acpMcpServers.length} MCP server(s) to subagents`);
+    } catch (err) {
+      log('mastra-service', `MCP server conversion failed: ${err}`);
+    }
+  }
 
   // Skills catalog (.pilot/skills + ~/.pilot/skills): name, description, and
   // path per skill so the supervisor knows what exists and where to read it.
@@ -201,6 +217,7 @@ export async function initMastraService(projectPathOrOptions: string | InitOptio
         agents,
         projectMemory,
         skillsCatalog,
+        mcpServers: acpMcpServers,
         model: supervisorModel,
       });
     }

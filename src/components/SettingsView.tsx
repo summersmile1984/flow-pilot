@@ -69,6 +69,8 @@ interface SettingsViewProps {
   onReplayWelcome: () => void;
   /** Open directly to a specific section (e.g. "agents" from the engine picker). */
   initialSection?: SettingsSection;
+  /** Active project path — scopes project-level skills in the Skills section. */
+  activeProjectPath?: string | null;
 }
 
 // ── Component ──
@@ -81,6 +83,7 @@ export const SettingsView = memo(function SettingsView({
   onToggleSidebar,
   onReplayWelcome,
   initialSection,
+  activeProjectPath,
 }: SettingsViewProps) {
   const { agents, saveAgent, deleteAgent } = useAgentContext();
   const islandLayout = useSettingsStore((s) => s.islandLayout);
@@ -167,7 +170,7 @@ export const SettingsView = memo(function SettingsView({
           />
         );
       case "skills":
-        return <SkillManager />;
+        return <SkillManager projectPath={activeProjectPath} />;
       case "custom-agents":
         return (
           <PlaceholderSection

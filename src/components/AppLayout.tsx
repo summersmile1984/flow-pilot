@@ -1175,6 +1175,7 @@ export function AppLayout() {
             onToggleSidebar={sidebar.toggle}
             onReplayWelcome={handleReplayWelcome}
             initialSection={showSettings}
+            activeProjectPath={activeProjectPath}
           />
         )}
         {/* Keep chat area mounted (hidden) when settings is open to avoid

@@ -10,17 +10,20 @@ export interface SkillInfo {
 }
 
 export class SkillManager {
-  private projectPath: string;
+  private projectPath: string | null;
   private globalPath: string;
 
-  constructor(projectPath: string) {
+  /** `projectPath: null` manages global skills only (no project open). */
+  constructor(projectPath: string | null) {
     this.projectPath = projectPath;
     this.globalPath = path.join(process.env.HOME || '', '.pilot', 'skills');
   }
 
   async discoverSkills(): Promise<SkillInfo[]> {
     const skills: SkillInfo[] = [];
-    skills.push(...await this.scanSkillDir(path.join(this.projectPath, '.pilot', 'skills'), 'project'));
+    if (this.projectPath) {
+      skills.push(...await this.scanSkillDir(path.join(this.projectPath, '.pilot', 'skills'), 'project'));
+    }
     skills.push(...await this.scanSkillDir(this.globalPath, 'global'));
     return skills;
   }

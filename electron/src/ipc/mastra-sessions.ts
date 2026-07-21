@@ -1,5 +1,6 @@
 import { BrowserWindow, ipcMain } from "electron";
 import { initMastraService, destroyMastraService, getPilotConfig, type AgentMode } from "../lib/mastra-service";
+import type { McpServerInput } from "@shared/lib/mcp-config";
 import { log } from "../lib/logger";
 import { safeSend } from "../lib/safe-send";
 import type { Session } from "@mastra/core/agent-controller";
@@ -55,6 +56,7 @@ export function register(getMainWindow: () => BrowserWindow | null): void {
     directAgentId?: string,
     supervisorAgentId?: string,
     permissionMode?: string,
+    mcpServers?: McpServerInput[],
   ): Promise<Session> {
     const existing = sessions.get(sessionId);
     if (existing) return existing;
@@ -69,6 +71,7 @@ export function register(getMainWindow: () => BrowserWindow | null): void {
       mode: effectiveMode,
       directAgentId: effectiveDirectAgentId,
       supervisorAgentId: effectiveSupervisorAgentId,
+      mcpServers,
     });
     const session = await ac.createSession({
       id: sessionId,
@@ -122,6 +125,7 @@ export function register(getMainWindow: () => BrowserWindow | null): void {
     directAgentId?: string;
     supervisorAgentId?: string;
     permissionMode?: string;
+    mcpServers?: McpServerInput[];
   }) => {
     log("mastra-ipc", `mastra:start called with cwd=${options.cwd}, mode=${options.mode || 'supervisor'}`);
     try {
@@ -133,6 +137,7 @@ export function register(getMainWindow: () => BrowserWindow | null): void {
         options.directAgentId,
         options.supervisorAgentId,
         options.permissionMode,
+        options.mcpServers,
       );
       const sessionId = session.identity.getId();
       log("mastra-ipc", `Session created: ${sessionId} (requested ${requestedId})`);
@@ -147,7 +152,7 @@ export function register(getMainWindow: () => BrowserWindow | null): void {
     sessionId: string;
     content: string;
     cwd?: string;
-    resume?: { mode?: AgentMode; agentId?: string; permissionMode?: string };
+    resume?: { mode?: AgentMode; agentId?: string; permissionMode?: string; mcpServers?: McpServerInput[] };
   }) => {
     log("mastra-ipc", `mastra:send called with sessionId=${sessionId}, content=${content.substring(0, 50)}...`);
     let session = getSession(sessionId);
@@ -162,6 +167,7 @@ export function register(getMainWindow: () => BrowserWindow | null): void {
           resume?.mode === "direct" ? resume?.agentId : undefined,
           resume?.mode === "acp-supervisor" ? resume?.agentId : undefined,
           resume?.permissionMode,
+          resume?.mcpServers,
         );
         log("mastra-ipc", `Session resumed: ${sessionId} (mode=${resume?.mode ?? currentMode})`);
       } catch (err) {

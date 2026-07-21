@@ -450,13 +450,20 @@ export function useSessionLifecycle({
         const activeSession = refs.sessionsRef.current.find((s) => s.id === activeId);
         const project = activeSession ? findProject(activeSession.projectId) : null;
         const cwd = project ? getProjectCwd(project) : undefined;
-        const resume = (activeSession?.mastraMode || activeSession?.permissionMode)
-          ? {
-              mode: activeSession?.mastraMode,
-              agentId: activeSession?.mastraAgentId,
-              permissionMode: activeSession?.permissionMode,
-            }
-          : undefined;
+        let resume: Parameters<typeof window.pilot.mastra.send>[3];
+        if (activeSession?.mastraMode || activeSession?.permissionMode) {
+          resume = {
+            mode: activeSession?.mastraMode,
+            agentId: activeSession?.mastraAgentId,
+            permissionMode: activeSession?.permissionMode,
+          };
+          // MCP servers only matter when the backend session is being rebuilt
+          // (post-restart); harmless extra payload otherwise.
+          try {
+            const mcpServers = activeSession ? await window.claude.mcp.list(activeSession.projectId) : [];
+            if (mcpServers?.length) resume.mcpServers = mcpServers;
+          } catch { /* best-effort */ }
+        }
         claude.setMessages((prev) => [
           ...prev,
           createUserMessage(text, images, displayText),

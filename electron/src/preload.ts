@@ -419,9 +419,9 @@ contextBridge.exposeInMainWorld("claude", {
 
 contextBridge.exposeInMainWorld("pilot", {
   mastra: {
-    start: (options: { cwd: string; mode?: 'supervisor' | 'direct' | 'acp-supervisor'; directAgentId?: string; supervisorAgentId?: string; permissionMode?: string }) =>
+    start: (options: { cwd: string; mode?: 'supervisor' | 'direct' | 'acp-supervisor'; directAgentId?: string; supervisorAgentId?: string; permissionMode?: string; mcpServers?: unknown[] }) =>
       ipcRenderer.invoke("mastra:start", options),
-    send: (sessionId: string, content: string, cwd?: string, resume?: { mode?: string; agentId?: string; permissionMode?: string }) =>
+    send: (sessionId: string, content: string, cwd?: string, resume?: { mode?: string; agentId?: string; permissionMode?: string; mcpServers?: unknown[] }) =>
       ipcRenderer.invoke("mastra:send", { sessionId, content, cwd, resume }),
     abort: () => ipcRenderer.invoke("mastra:abort"),
     switchMode: (modeId: string) => ipcRenderer.invoke("mastra:switchMode", modeId),
@@ -445,7 +445,7 @@ contextBridge.exposeInMainWorld("pilot", {
     },
   },
   skills: {
-    init: (projectPath: string) => ipcRenderer.invoke("skills:init", projectPath),
+    init: (projectPath: string | null) => ipcRenderer.invoke("skills:init", projectPath),
     list: () => ipcRenderer.invoke("skills:list"),
     manifest: () => ipcRenderer.invoke("skills:manifest"),
     create: (options: { name: string; content: string; scope: 'project' | 'global' }) =>

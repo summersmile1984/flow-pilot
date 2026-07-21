@@ -8,10 +8,10 @@ let skillManager: SkillManager | null = null;
 let currentProjectPath: string | null = null;
 
 export function register(): void {
-  ipcMain.handle('skills:init', async (_event, projectPath: string) => {
+  ipcMain.handle('skills:init', async (_event, projectPath: string | null) => {
     skillManager = new SkillManager(projectPath);
     currentProjectPath = projectPath;
-    log('skills-ipc', `Initialized for ${projectPath}`);
+    log('skills-ipc', `Initialized for ${projectPath ?? '(global only)'}`);
     return { success: true };
   });
 
@@ -28,16 +28,16 @@ export function register(): void {
   });
 
   ipcMain.handle('skills:create', async (_event, { name, content, scope }: { name: string; content: string; scope: 'project' | 'global' }) => {
-    if (!currentProjectPath) return { success: false, error: 'Not initialized' };
+    if (scope === 'project' && !currentProjectPath) return { success: false, error: 'No project open' };
     try {
       const baseDir = scope === 'project'
-        ? path.join(currentProjectPath, '.pilot', 'skills', name)
+        ? path.join(currentProjectPath!, '.pilot', 'skills', name)
         : path.join(process.env.HOME || '', '.pilot', 'skills', name);
       await fs.mkdir(baseDir, { recursive: true });
       await fs.writeFile(path.join(baseDir, 'SKILL.md'), content, 'utf-8');
       log('skills-ipc', `Created skill: ${name} (${scope})`);
       // Refresh skill manager
-      if (skillManager && currentProjectPath) {
+      if (skillManager) {
         skillManager = new SkillManager(currentProjectPath);
       }
       return { success: true };

@@ -435,12 +435,13 @@ declare global {
           directAgentId?: string;
           supervisorAgentId?: string;
           permissionMode?: string;
+          mcpServers?: McpServerConfig[];
         }) => Promise<{ sessionId?: string; error?: string }>;
         send: (
           sessionId: string,
           content: string,
           cwd?: string,
-          resume?: { mode?: "supervisor" | "direct" | "acp-supervisor"; agentId?: string; permissionMode?: string },
+          resume?: { mode?: "supervisor" | "direct" | "acp-supervisor"; agentId?: string; permissionMode?: string; mcpServers?: McpServerConfig[] },
         ) => Promise<{ ok?: boolean; error?: string }>;
         abort: () => Promise<{ success: boolean }>;
         switchMode: (modeId: string) => Promise<{ success: boolean; error?: string }>;
@@ -471,7 +472,7 @@ declare global {
         onEvent: (callback: (event: unknown) => void) => () => void;
       };
       skills: {
-        init: (projectPath: string) => Promise<{ success: boolean }>;
+        init: (projectPath: string | null) => Promise<{ success: boolean }>;
         list: () => Promise<{ success: boolean; skills?: unknown[]; error?: string }>;
         manifest: () => Promise<{ success: boolean; manifest?: string[]; error?: string }>;
         create: (options: { name: string; content: string; scope: "project" | "global" }) => Promise<{ success: boolean; error?: string }>;
