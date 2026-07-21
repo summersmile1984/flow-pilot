@@ -1,5 +1,6 @@
 import { Agent } from '@mastra/core/agent';
 import { createStreamingACPTool } from './streaming-acp-tool';
+import { webFetchTool } from './web-fetch-tool';
 import type { PilotAgentConfig } from './mastra-service';
 
 export type AgentMode = 'supervisor' | 'direct' | 'acp-supervisor';
@@ -51,6 +52,7 @@ Guidelines:
 - Write clear, self-contained prompts — subagents do not see this conversation
 - You can delegate to multiple subagents in parallel for independent subtasks
 - When you need the user to clarify requirements or pick between options, call the \`ask_user\` tool (question + options, single_select or multi_select) instead of writing the choices as plain text, then wait for the answer before proceeding
+- \`web_fetch\` reads one URL as text — use it to check a page or API before deciding; for web search or multi-page browsing, delegate to a subagent (they have their own web tooling)
 
 ## Skills
 Skills are reusable playbooks stored as \`.pilot/skills/<name>/SKILL.md\` in the project (and globally in \`~/.pilot/skills\`). When a task matches a skill, read its SKILL.md with the file tools and fold the relevant steps into your answer or the delegation prompt.
@@ -58,7 +60,7 @@ ${options.skillsCatalog || 'No skills are currently installed.'}${
       options.projectMemory ? `\n\n## Project memory (.pilot/memory/project.md)\n${options.projectMemory}` : ''
     }`,
     model: options.model,
-    tools: acpTools,
+    tools: { ...acpTools, web_fetch: webFetchTool },
   });
 }
 
