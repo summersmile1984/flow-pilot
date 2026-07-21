@@ -1,27 +1,30 @@
 import { useCallback, useEffect, useRef } from "react";
-import { X, FileText } from "lucide-react";
+import { X } from "lucide-react";
 import { OpenInEditorButton } from "./OpenInEditorButton";
 import { FilePreviewContent } from "./preview/FilePreviewContent";
 
 interface PreviewPaneProps {
-  filePath: string;
+  /** Open file paths, in tab order. */
+  tabs: string[];
+  /** Currently shown file path. */
+  activePath: string;
+  onSelectTab: (path: string) => void;
+  onCloseTab: (path: string) => void;
+  /** Close the whole pane. */
+  onClose: () => void;
   /** Current pane width in px. */
   width: number;
-  /** Called with a new width during a left-edge drag. */
   onWidthChange: (width: number) => void;
-  onClose: () => void;
-  /** Left/right bounds (px) the pane width is clamped to while dragging. */
   minWidth: number;
   maxWidth: number;
 }
 
 /**
  * A large, resizable file preview pane anchored to the right of the main
- * content area. Unlike a modal it never covers the chat — you keep chatting on
- * the left and drag its left edge to make the preview as wide as you like.
+ * content area — an editor-like surface with tabs for multiple open files.
+ * Unlike a modal it never covers the chat; drag its left edge to resize.
  */
-export function PreviewPane({ filePath, width, onWidthChange, onClose, minWidth, maxWidth }: PreviewPaneProps) {
-  const fileName = filePath.split("/").pop() ?? filePath;
+export function PreviewPane({ tabs, activePath, onSelectTab, onCloseTab, onClose, width, onWidthChange, minWidth, maxWidth }: PreviewPaneProps) {
   const dragging = useRef(false);
 
   const onHandleDown = useCallback((e: React.MouseEvent) => {
@@ -34,9 +37,7 @@ export function PreviewPane({ filePath, width, onWidthChange, onClose, minWidth,
   useEffect(() => {
     const onMove = (e: MouseEvent) => {
       if (!dragging.current) return;
-      // Pane is right-anchored: width grows as the pointer moves left.
-      const next = Math.min(maxWidth, Math.max(minWidth, window.innerWidth - e.clientX));
-      onWidthChange(next);
+      onWidthChange(Math.min(maxWidth, Math.max(minWidth, window.innerWidth - e.clientX)));
     };
     const onUp = () => {
       if (!dragging.current) return;
@@ -52,7 +53,6 @@ export function PreviewPane({ filePath, width, onWidthChange, onClose, minWidth,
     };
   }, [minWidth, maxWidth, onWidthChange]);
 
-  // Close on Escape
   useEffect(() => {
     const onKey = (e: KeyboardEvent) => {
       if (e.key === "Escape") { e.stopPropagation(); onClose(); }
@@ -62,42 +62,59 @@ export function PreviewPane({ filePath, width, onWidthChange, onClose, minWidth,
   }, [onClose]);
 
   return (
-    <div
-      className="absolute inset-y-0 end-0 z-20 flex"
-      style={{ width }}
-    >
+    <div className="absolute inset-y-0 end-0 z-20 flex" style={{ width }}>
       {/* Left-edge resize handle */}
-      <div
-        onMouseDown={onHandleDown}
-        className="group relative w-1 shrink-0 cursor-col-resize"
-        title="Drag to resize"
-      >
+      <div onMouseDown={onHandleDown} className="group relative w-1 shrink-0 cursor-col-resize" title="Drag to resize">
         <div className="absolute inset-y-0 -inset-x-1" />
         <div className="absolute inset-y-0 start-0 w-px bg-foreground/10 transition-colors group-hover:bg-foreground/30" />
       </div>
 
       <div className="island relative flex min-w-0 flex-1 flex-col overflow-hidden rounded-[var(--island-radius)] border border-foreground/10 bg-background shadow-2xl">
-        {/* Header */}
-        <div className="flex items-center gap-2 border-b border-foreground/[0.08] px-3 py-2">
-          <FileText className="h-3.5 w-3.5 shrink-0 text-muted-foreground/70" />
-          <span className="min-w-0 flex-1 truncate text-sm font-medium text-foreground">{fileName}</span>
-          <OpenInEditorButton
-            filePath={filePath}
-            className="!text-muted-foreground/40 hover:!text-muted-foreground"
-          />
-          <button
-            type="button"
-            onClick={onClose}
-            title="Close preview"
-            className="inline-flex h-6 w-6 cursor-pointer items-center justify-center rounded-md
-              text-muted-foreground/40 transition-colors hover:text-foreground hover:bg-foreground/[0.06] active:scale-90"
-          >
-            <X className="h-3.5 w-3.5" />
-          </button>
+        {/* Tab strip */}
+        <div className="flex items-stretch border-b border-foreground/[0.08]">
+          <div className="flex min-w-0 flex-1 items-stretch overflow-x-auto">
+            {tabs.map((path) => {
+              const name = path.split("/").pop() ?? path;
+              const isActive = path === activePath;
+              return (
+                <div
+                  key={path}
+                  onClick={() => onSelectTab(path)}
+                  className={`group flex max-w-[200px] shrink-0 cursor-pointer items-center gap-1.5 border-e border-foreground/[0.06] px-3 py-1.5 text-xs transition-colors ${
+                    isActive ? "bg-foreground/[0.06] text-foreground" : "text-muted-foreground hover:bg-foreground/[0.03] hover:text-foreground/80"
+                  }`}
+                  title={path}
+                >
+                  <span className="truncate">{name}</span>
+                  <button
+                    type="button"
+                    onClick={(e) => { e.stopPropagation(); onCloseTab(path); }}
+                    className={`inline-flex h-4 w-4 shrink-0 items-center justify-center rounded transition-opacity hover:bg-foreground/10 ${
+                      isActive ? "opacity-60 hover:opacity-100" : "opacity-0 group-hover:opacity-60"
+                    }`}
+                    title="Close tab"
+                  >
+                    <X className="h-3 w-3" />
+                  </button>
+                </div>
+              );
+            })}
+          </div>
+          <div className="flex shrink-0 items-center gap-0.5 px-2">
+            <OpenInEditorButton filePath={activePath} className="!text-muted-foreground/40 hover:!text-muted-foreground" />
+            <button
+              type="button"
+              onClick={onClose}
+              title="Close preview"
+              className="inline-flex h-6 w-6 cursor-pointer items-center justify-center rounded-md text-muted-foreground/40 transition-colors hover:text-foreground hover:bg-foreground/[0.06] active:scale-90"
+            >
+              <X className="h-3.5 w-3.5" />
+            </button>
+          </div>
         </div>
 
         <div className="min-h-0 flex-1">
-          <FilePreviewContent key={filePath} filePath={filePath} />
+          <FilePreviewContent key={activePath} filePath={activePath} />
         </div>
       </div>
     </div>

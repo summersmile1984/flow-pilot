@@ -142,8 +142,11 @@ export function AppLayout() {
     clearGrabbedElements,
     handleElementGrab,
     handleRemoveGrabbedElement,
-    previewFile,
+    previewTabs,
+    activePreviewPath,
     handlePreviewFile,
+    selectPreviewTab,
+    closePreviewTab,
     handleClosePreview,
   } = layoutUI;
 
@@ -1890,14 +1893,17 @@ export function AppLayout() {
           )}
           </>
           )}
-          {/* Right-anchored, resizable file preview pane (opened from Project
-              Files) — large and dockable without covering the chat. */}
-          {previewFile && (
+          {/* Right-anchored, resizable, tabbed file preview pane (opened from
+              Project Files) — large and dockable without covering the chat. */}
+          {activePreviewPath && (
             <PreviewPane
-              filePath={previewFile.path}
+              tabs={previewTabs}
+              activePath={activePreviewPath}
+              onSelectTab={selectPreviewTab}
+              onCloseTab={closePreviewTab}
+              onClose={handleClosePreview}
               width={previewPaneWidth}
               onWidthChange={setPreviewPaneWidth}
-              onClose={handleClosePreview}
               minWidth={360}
               maxWidth={Math.max(360, (topRowRef.current?.clientWidth ?? window.innerWidth) - 360)}
             />

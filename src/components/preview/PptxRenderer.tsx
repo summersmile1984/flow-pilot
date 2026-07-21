@@ -4,26 +4,34 @@ import { Loader2, ChevronLeft, ChevronRight } from "lucide-react";
 interface Viewer {
   loadFile: (input: ArrayBuffer | Uint8Array) => Promise<unknown>;
   getSlideCount: () => number;
+  getSlideDimensions?: () => { cx?: number; cy?: number };
   goToSlide: (i: number, canvas?: HTMLCanvasElement | null) => Promise<unknown>;
 }
+
+// High-res backing width so slides stay crisp on retina after downscaling.
+const TARGET_WIDTH = 1920;
 
 /** Render .pptx slides to canvas via pptxviewjs, with prev/next navigation. */
 export default function PptxRenderer({ bytes }: { bytes: Uint8Array }) {
   const canvasRef = useRef<HTMLCanvasElement>(null);
   const viewerRef = useRef<Viewer | null>(null);
+  const canvasSize = useRef<{ w: number; h: number }>({ w: TARGET_WIDTH, h: Math.round(TARGET_WIDTH * 0.75) });
   const [slide, setSlide] = useState(0);
   const [count, setCount] = useState(0);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
 
-  // pptxviewjs sets inline width/height on the canvas (its own display size),
-  // which would leave the slide small. Override it after each render so the
-  // canvas scales to fill the area, keeping the bitmap's aspect ratio.
+  // pptxviewjs decides its render resolution from parseFloat(canvas.style.width),
+  // so we keep an explicit px width (canvasSize) and only constrain the *display*
+  // with max-width/height — using "100%" for style.width would make it render at
+  // ~100px. The px width stays readable by pptxviewjs; max-* fits it to the pane.
   const fitCanvas = useCallback(() => {
     const c = canvasRef.current;
     if (!c) return;
-    c.style.width = "100%";
-    c.style.height = "100%";
+    c.style.width = `${canvasSize.current.w}px`;
+    c.style.height = `${canvasSize.current.h}px`;
+    c.style.maxWidth = "100%";
+    c.style.maxHeight = "100%";
     c.style.objectFit = "contain";
   }, []);
 
@@ -34,11 +42,21 @@ export default function PptxRenderer({ bytes }: { bytes: Uint8Array }) {
       const PPTXViewer = (mod as { PPTXViewer: new (o: unknown) => Viewer }).PPTXViewer;
       const canvas = canvasRef.current;
       if (!canvas || cancelled) return;
-      // 'actual' renders each slide at its native resolution (correct aspect
-      // ratio, sharp); CSS then scales the canvas to fit the container.
-      const viewer = new PPTXViewer({ canvas, slideSizeMode: "actual", backgroundColor: "#ffffff" });
+      // pptxviewjs sizes 'actual'/'fit' from the canvas's laid-out size, which
+      // is unreliable in a just-opened pane. Instead we read the slide's real
+      // aspect and pin the canvas backing store to a fixed high resolution, so
+      // 'fit' always renders sharp regardless of the display size.
+      const viewer = new PPTXViewer({ canvas, slideSizeMode: "fit", backgroundColor: "#ffffff" });
       await viewer.loadFile(bytes.slice().buffer);
       if (cancelled) return;
+      const dim = viewer.getSlideDimensions?.() ?? {};
+      const aspect = (dim.cx || 9144000) / (dim.cy || 6858000);
+      canvasSize.current = { w: TARGET_WIDTH, h: Math.round(TARGET_WIDTH / aspect) };
+      // pptxviewjs reads the canvas's CSS box to decide render resolution — pin
+      // it to the high-res target so 'fit' renders sharp, then object-contain
+      // scales it down for display.
+      canvas.style.width = `${canvasSize.current.w}px`;
+      canvas.style.height = `${canvasSize.current.h}px`;
       viewerRef.current = viewer;
       setCount(viewer.getSlideCount());
       await viewer.goToSlide(0, canvas);
@@ -52,8 +70,11 @@ export default function PptxRenderer({ bytes }: { bytes: Uint8Array }) {
 
   const go = useCallback(async (next: number) => {
     const viewer = viewerRef.current;
-    if (!viewer || next < 0 || next >= count) return;
-    await viewer.goToSlide(next, canvasRef.current);
+    const canvas = canvasRef.current;
+    if (!viewer || !canvas || next < 0 || next >= count) return;
+    canvas.style.width = `${canvasSize.current.w}px`;
+    canvas.style.height = `${canvasSize.current.h}px`;
+    await viewer.goToSlide(next, canvas);
     fitCanvas();
     setSlide(next);
   }, [count, fitCanvas]);

@@ -50,7 +50,7 @@
     "mermaid": "^11.13.0",
     "motion": "^12.34.3",
     "node-pty": "^1.1.0",
-    "pdfjs-dist": "^6.1.200",
+    "pdfjs-dist": "^4.10.38",
     "posthog-js": "^1.360.0",
     "posthog-node": "^4.3.1",
     "pptxviewjs": "^1.1.9",

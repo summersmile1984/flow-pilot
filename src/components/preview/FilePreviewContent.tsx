@@ -11,6 +11,8 @@ const PdfRenderer = lazy(() => import("./PdfRenderer"));
 const DocxRenderer = lazy(() => import("./DocxRenderer"));
 const XlsxRenderer = lazy(() => import("./XlsxRenderer"));
 const PptxRenderer = lazy(() => import("./PptxRenderer"));
+const HtmlRenderer = lazy(() => import("./HtmlRenderer"));
+const IworkRenderer = lazy(() => import("./IworkRenderer"));
 
 // ── File-type routing ──
 
@@ -21,8 +23,11 @@ const IMAGE_MIME: Record<string, string> = {
 const DOCX_EXTS = new Set(["docx"]);
 const XLSX_EXTS = new Set(["xlsx", "xls", "ods"]);
 const PPTX_EXTS = new Set(["pptx"]);
+const HTML_EXTS = new Set(["html", "htm"]);
+// Apple iWork bundles (Pages / Numbers / Keynote).
+const IWORK_EXTS = new Set(["pages", "numbers", "key"]);
 
-export type PreviewKind = "image" | "pdf" | "docx" | "xlsx" | "pptx" | "text";
+export type PreviewKind = "image" | "pdf" | "docx" | "xlsx" | "pptx" | "html" | "iwork" | "text";
 
 export function previewKind(filePath: string): PreviewKind {
   const ext = filePath.split(".").pop()?.toLowerCase() ?? "";
@@ -31,6 +36,8 @@ export function previewKind(filePath: string): PreviewKind {
   if (DOCX_EXTS.has(ext)) return "docx";
   if (XLSX_EXTS.has(ext)) return "xlsx";
   if (PPTX_EXTS.has(ext)) return "pptx";
+  if (HTML_EXTS.has(ext)) return "html";
+  if (IWORK_EXTS.has(ext)) return "iwork";
   return "text";
 }
 
@@ -72,7 +79,7 @@ export const FilePreviewContent = memo(function FilePreviewContent({ filePath }:
     setBytes(null);
 
     const run = async () => {
-      if (kind === "text") {
+      if (kind === "text" || kind === "html") {
         const res = await window.claude.readFile(filePath);
         if (cancelled) return;
         if (res.error) setError(res.error);
@@ -114,13 +121,22 @@ export const FilePreviewContent = memo(function FilePreviewContent({ filePath }:
   if (loading) return spinner;
   if (error) return <Centered><p className="max-w-md text-center text-sm text-muted-foreground/70 whitespace-pre-wrap">{error}</p></Centered>;
 
-  if (bytes && (kind === "pdf" || kind === "docx" || kind === "xlsx" || kind === "pptx")) {
+  if (bytes && (kind === "pdf" || kind === "docx" || kind === "xlsx" || kind === "pptx" || kind === "iwork")) {
     return (
       <Suspense fallback={spinner}>
         {kind === "pdf" && <PdfRenderer bytes={bytes} />}
         {kind === "docx" && <DocxRenderer bytes={bytes} />}
         {kind === "xlsx" && <XlsxRenderer bytes={bytes} />}
         {kind === "pptx" && <PptxRenderer bytes={bytes} />}
+        {kind === "iwork" && <IworkRenderer bytes={bytes} />}
+      </Suspense>
+    );
+  }
+
+  if (content !== null && kind === "html") {
+    return (
+      <Suspense fallback={spinner}>
+        <HtmlRenderer content={content} />
       </Suspense>
     );
   }

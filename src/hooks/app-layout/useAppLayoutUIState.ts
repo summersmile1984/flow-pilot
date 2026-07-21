@@ -13,7 +13,9 @@ export function useAppLayoutUIState(input: UseAppLayoutUIStateInput) {
     () => localStorage.getItem(WELCOME_COMPLETED_KEY) === "true",
   );
   const [grabbedElements, setGrabbedElements] = useState<GrabbedElement[]>([]);
-  const [previewFile, setPreviewFile] = useState<{ path: string; sourceRect: DOMRect } | null>(null);
+  // Open preview tabs (file paths) + which one is active, like an editor.
+  const [previewTabs, setPreviewTabs] = useState<string[]>([]);
+  const [activePreviewPath, setActivePreviewPath] = useState<string | null>(null);
 
   useEffect(() => {
     if (!input.isNativeGlass) return;
@@ -50,12 +52,32 @@ export function useAppLayoutUIState(input: UseAppLayoutUIStateInput) {
     setGrabbedElements([]);
   }, []);
 
-  const handlePreviewFile = useCallback((filePath: string, sourceRect: DOMRect) => {
-    setPreviewFile({ path: filePath, sourceRect });
+  const handlePreviewFile = useCallback((filePath: string) => {
+    setPreviewTabs((prev) => (prev.includes(filePath) ? prev : [...prev, filePath]));
+    setActivePreviewPath(filePath);
+  }, []);
+
+  const selectPreviewTab = useCallback((filePath: string) => {
+    setActivePreviewPath(filePath);
+  }, []);
+
+  const closePreviewTab = useCallback((filePath: string) => {
+    setPreviewTabs((prev) => {
+      const idx = prev.indexOf(filePath);
+      const next = prev.filter((p) => p !== filePath);
+      setActivePreviewPath((active) => {
+        if (active !== filePath) return active;
+        if (next.length === 0) return null;
+        // Activate the neighbor (prefer the one that shifted into this slot).
+        return next[Math.min(idx, next.length - 1)];
+      });
+      return next;
+    });
   }, []);
 
   const handleClosePreview = useCallback(() => {
-    setPreviewFile(null);
+    setPreviewTabs([]);
+    setActivePreviewPath(null);
   }, []);
 
   return {
@@ -67,8 +89,11 @@ export function useAppLayoutUIState(input: UseAppLayoutUIStateInput) {
     clearGrabbedElements,
     handleElementGrab,
     handleRemoveGrabbedElement,
-    previewFile,
+    previewTabs,
+    activePreviewPath,
     handlePreviewFile,
+    selectPreviewTab,
+    closePreviewTab,
     handleClosePreview,
   };
 }
