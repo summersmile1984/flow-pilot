@@ -289,8 +289,10 @@ export const EnginePickerDropdown = memo(function EnginePickerDropdown({
         </DropdownMenuItem>
       )}
 
-      {/* Mastra mode options — grouped: auto routing / single agent / agent-led */}
-      {isMastraAgent && mastraModeOptions && mastraModeOptions.length > 0 && onMastraModeChange && (
+      {/* Mastra mode options. With a single visible mode there is nothing to
+          switch, so the whole section disappears (hidden entries are retired
+          modes kept only for old chats' badges/resume). */}
+      {isMastraAgent && mastraModeOptions && mastraModeOptions.filter((o) => !o.hidden).length > 1 && onMastraModeChange && (
         <>
           <DropdownMenuSeparator />
           <div className="px-2 py-1 text-[10px] font-medium text-muted-foreground">
@@ -416,6 +418,12 @@ export const EnginePickerDropdown = memo(function EnginePickerDropdown({
     mastra: "DeepSeek routes work to OpenCode & Codex",
   };
 
+  // Pilot's submenu carries only the mode switcher; with a single live mode
+  // there is nothing to configure, so the current Pilot entry renders as a
+  // plain highlighted item instead of an empty submenu.
+  const mastraHasSubmenuContent =
+    (mastraModeOptions?.filter((o) => !o.hidden).length ?? 0) > 1;
+
   const renderAgent = (agent: InstalledAgent, isCrossEngine: boolean) => {
     const isCurrent = (selectedAgent?.id ?? "claude-code") === agent.id;
     const subtitle = ENGINE_SUBTITLES[agent.engine];
@@ -442,6 +450,13 @@ export const EnginePickerDropdown = memo(function EnginePickerDropdown({
     );
 
     if (isCurrent) {
+      if (agent.engine === "mastra" && !mastraHasSubmenuContent) {
+        return (
+          <DropdownMenuItem key={agent.id} className="bg-accent">
+            {agentLabel}
+          </DropdownMenuItem>
+        );
+      }
       return (
         <DropdownMenuSub key={agent.id}>
           <DropdownMenuSubTrigger className="bg-accent">

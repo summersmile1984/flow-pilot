@@ -1001,16 +1001,17 @@ export function AppLayout() {
     !!manager.acpAuthSessionId &&
     manager.acpAuthRequired;
 
-  // Mastra mode options
+  // Mastra mode options. Pilot has exactly one live mode — Auto routing
+  // (DeepSeek supervisor). The hidden entries are retired modes kept only so
+  // old chats still show their badge and resume with the right controller:
+  // solo chats moved to the Direct group, and the lead modes turned out to be
+  // a DeepSeek relay in front of one agent — Direct + Auto cover both.
   const mastraModeOptions = useMemo(() => [
     { id: "supervisor", group: "auto" as const, label: "Auto routing", short: "Auto", description: "DeepSeek picks the best agent for each task" },
-    // Hidden from the menu: solo chats now live in the Direct group (OpenCode
-    // via ACP, Codex native). Kept so old direct-mode chats still show their
-    // badge and resume with the right controller.
     { id: "direct-opencode", group: "single" as const, hidden: true, label: "OpenCode only", short: "OpenCode", description: "Every message goes straight to OpenCode", agentId: "opencode" },
     { id: "direct-codex", group: "single" as const, hidden: true, label: "Codex only", short: "Codex", description: "Every message goes straight to Codex", agentId: "codex" },
-    { id: "acp-supervisor-opencode", group: "lead" as const, label: "OpenCode leads", short: "OpenCode Lead", description: "OpenCode plans the work and can pull in Codex", agentId: "opencode" },
-    { id: "acp-supervisor-codex", group: "lead" as const, label: "Codex leads", short: "Codex Lead", description: "Codex plans the work and can pull in OpenCode", agentId: "codex" },
+    { id: "acp-supervisor-opencode", group: "lead" as const, hidden: true, label: "OpenCode leads", short: "OpenCode Lead", description: "OpenCode plans the work and can pull in Codex", agentId: "opencode" },
+    { id: "acp-supervisor-codex", group: "lead" as const, hidden: true, label: "Codex leads", short: "Codex Lead", description: "Codex plans the work and can pull in OpenCode", agentId: "codex" },
   ], []);
 
   // Effective mastra mode: the active chat's recorded mode wins (mode is fixed

@@ -324,10 +324,9 @@ function readLegacyGlobalSettings(): GlobalSettingsState {
     coloredSidebarIcons: readLegacyBool("pilot-colored-sidebar-icons", true),
     showToolIcons: readLegacyBool("pilot-show-tool-icons", true),
     coloredToolIcons: readLegacyBool("pilot-colored-tool-icons", false),
-    mastraMode: (() => {
-      const legacy = localStorage.getItem("pilot-mastra-mode") || "supervisor";
-      return legacy === "direct" ? "supervisor" : legacy;
-    })(),
+    // The only live Pilot mode; retired legacy values (direct/acp-supervisor)
+    // are intentionally not migrated
+    mastraMode: "supervisor",
     mastraAgentId: localStorage.getItem("pilot-mastra-agent-id") || "opencode",
   };
 }
@@ -653,9 +652,12 @@ export const useSettingsStore = create<SettingsStore>()(
           ...incoming,
           // Ensure projects is always an object, never undefined
           projects: incoming.projects ?? current.projects,
-          // Pilot's "direct" mode is no longer offered for new chats (solo
-          // agents live in the Direct group now) — retire stale settings
-          mastraMode: incoming.mastraMode === "direct" ? "supervisor" : (incoming.mastraMode ?? current.mastraMode),
+          // "direct" and "acp-supervisor" are retired for new chats (solo
+          // agents live in the Direct group; the lead modes were a relay in
+          // front of one agent) — coerce stale settings back to supervisor
+          mastraMode: incoming.mastraMode && incoming.mastraMode !== "supervisor"
+            ? "supervisor"
+            : (incoming.mastraMode ?? current.mastraMode),
         };
       },
     },
