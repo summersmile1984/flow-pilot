@@ -1,5 +1,7 @@
 import { BrowserWindow, ipcMain } from "electron";
 import { initMastraService, destroyMastraService, getPilotConfig, DEFAULT_SUPERVISOR_MODELS, type AgentMode } from "../lib/mastra-service";
+import { getAppSettings } from "../lib/app-settings";
+import { onSettingsChanged } from "./settings";
 import type { McpServerInput } from "@shared/lib/mcp-config";
 import { log } from "../lib/logger";
 import { safeSend } from "../lib/safe-send";
@@ -18,12 +20,34 @@ let currentMode: AgentMode = 'supervisor';
 let currentDirectAgentId: string | undefined;
 let currentSupervisorAgentId: string | undefined;
 
+/** Tear down all cached sessions/subscriptions and controllers. */
+async function resetMastraState(): Promise<void> {
+  currentSession = null;
+  for (const unsubscribe of subscriptions.values()) unsubscribe();
+  subscriptions.clear();
+  sessions.clear();
+  await destroyMastraService();
+}
+
 function getSession(sessionId?: string): Session | null {
   if (sessionId) return sessions.get(sessionId) ?? null;
   return currentSession;
 }
 
 export function register(getMainWindow: () => BrowserWindow | null): void {
+  // Rebuild controllers when the supervisor LLM provider changes — the API key
+  // and base URL are baked into each controller's agent, so a cached one would
+  // keep using the old credentials otherwise.
+  let lastProvider = `${getAppSettings().pilotSupervisorApiKey}::${getAppSettings().pilotSupervisorBaseUrl}`;
+  onSettingsChanged((next) => {
+    const provider = `${next.pilotSupervisorApiKey}::${next.pilotSupervisorBaseUrl}`;
+    if (provider !== lastProvider) {
+      lastProvider = provider;
+      log("mastra-ipc", "Supervisor LLM provider changed — resetting controllers");
+      void resetMastraState();
+    }
+  });
+
   ipcMain.handle("mastra:abort", async () => {
     if (currentSession) currentSession.abort();
     return { success: true };
@@ -278,14 +302,10 @@ export function register(getMainWindow: () => BrowserWindow | null): void {
   );
 
   ipcMain.handle("mastra:destroy", async () => {
-    currentSession = null;
-    for (const unsubscribe of subscriptions.values()) unsubscribe();
-    subscriptions.clear();
-    sessions.clear();
+    await resetMastraState();
     currentMode = 'supervisor';
     currentDirectAgentId = undefined;
     currentSupervisorAgentId = undefined;
-    await destroyMastraService();
     return { success: true };
   });
 

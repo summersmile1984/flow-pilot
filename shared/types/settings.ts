@@ -59,6 +59,10 @@ export interface AppSettings {
   showJiraBoard: boolean;
   /** Preferred native macOS background material when window transparency is enabled */
   macBackgroundEffect: MacBackgroundEffect;
+  /** Pilot supervisor LLM: API key (overrides .env DEEPSEEK_API_KEY when set) */
+  pilotSupervisorApiKey: string;
+  /** Pilot supervisor LLM: custom base URL for an OpenAI-compatible endpoint */
+  pilotSupervisorBaseUrl: string;
   /** Enable anonymous analytics to help improve the app (default: true) */
   analyticsEnabled: boolean;
   /** Anonymous user ID for analytics (auto-generated) */

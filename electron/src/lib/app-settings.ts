@@ -37,6 +37,8 @@ const DEFAULTS: AppSettings = {
   showDevFillInChatTitleBar: false,
   showJiraBoard: false,
   macBackgroundEffect: "liquid-glass",
+  pilotSupervisorApiKey: "",
+  pilotSupervisorBaseUrl: "",
   analyticsEnabled: true,
 };
 

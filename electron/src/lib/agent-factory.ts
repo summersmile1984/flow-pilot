@@ -1,4 +1,5 @@
 import { Agent } from '@mastra/core/agent';
+import type { MastraModelConfig } from '@mastra/core/llm';
 import { createStreamingACPTool } from './streaming-acp-tool';
 import { webFetchTool } from './web-fetch-tool';
 import type { PilotAgentConfig } from './mastra-service';
@@ -19,7 +20,7 @@ export interface AgentFactoryOptions {
  * 模式 1: Supervisor Agent (Mastra 做决策)
  * 用于通用场景，成本低
  */
-export function createSupervisorAgent(options: AgentFactoryOptions & { model: string }): Agent {
+export function createSupervisorAgent(options: AgentFactoryOptions & { model: MastraModelConfig }): Agent {
   const acpTools: Record<string, ReturnType<typeof createStreamingACPTool>> = {};
 
   for (const [id, config] of Object.entries(options.agents)) {
@@ -80,7 +81,7 @@ export function createPassthroughAgent(options: {
   acpCommand: string;
   acpArgs: string[];
   cwd: string;
-  model?: string;
+  model?: MastraModelConfig;
 }): Agent {
   const toolName = `agent-${options.acpId}`;
   const acpTool = createStreamingACPTool({
@@ -102,7 +103,7 @@ STRICT PROTOCOL — no exceptions:
 1. For EVERY user message, your first and only action is to call the \`${toolName}\` tool with the user's message passed through verbatim as the task.
 2. NEVER answer from your own knowledge, even for trivial or identity questions ("who are you", greetings, one-word replies) — the ${options.acpId} agent must answer them, not you.
 3. After the tool returns, output the tool's result as-is. No commentary, no reformatting, no additions.`,
-    model: options.model || 'deepseek/deepseek-chat',
+    model: options.model ?? 'deepseek/deepseek-chat',
     tools: {
       [toolName]: acpTool,
     },
@@ -117,7 +118,7 @@ STRICT PROTOCOL — no exceptions:
 export function createACPSupervisorAgent(options: AgentFactoryOptions & {
   supervisorId: string;
   supervisorConfig: PilotAgentConfig;
-  proxyModel: string;
+  proxyModel: MastraModelConfig;
 }): Agent {
   const subAgentIds = Object.keys(options.agents).filter((id) => id !== options.supervisorId);
   // Injected in code (not by the relay model) so every prompt reliably tells

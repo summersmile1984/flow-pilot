@@ -1,5 +1,6 @@
 import { AgentController } from '@mastra/core/agent-controller';
 import { Agent } from '@mastra/core/agent';
+import type { MastraModelConfig } from '@mastra/core/llm';
 import { LibSQLStore } from '@mastra/libsql';
 import { Memory } from '@mastra/memory';
 import { Workspace, LocalFilesystem } from '@mastra/core/workspace';
@@ -10,6 +11,7 @@ import { app } from 'electron';
 import { log } from './logger';
 import { createSupervisorAgent, createPassthroughAgent, createACPSupervisorAgent, type AgentMode } from './agent-factory';
 import { SkillManager } from './skill-manager';
+import { getAppSettings } from './app-settings';
 import { buildAcpMcpServers } from '../ipc/acp-sessions';
 import type { McpServerInput } from '@shared/lib/mcp-config';
 
@@ -117,11 +119,26 @@ export async function initMastraService(projectPathOrOptions: string | InitOptio
   const allowedModels = config.supervisor?.models?.length ? config.supervisor.models : DEFAULT_SUPERVISOR_MODELS;
   const defaultModel = config.supervisor?.model || allowedModels[0] || 'deepseek/deepseek-chat';
   const requested = options.modelOverride;
-  const supervisorModel = (requested && (allowedModels.includes(requested) || requested === defaultModel))
+  const supervisorModelId = (requested && (allowedModels.includes(requested) || requested === defaultModel))
     ? requested
     : defaultModel;
   const mode = options.mode || 'supervisor';
-  log('mastra-service', `Initializing in ${mode} mode with model: ${supervisorModel}`);
+
+  // LLM provider config from Settings (Engines → Pilot supervisor). When a key
+  // or base URL is set, pass the model as an OpenAI-compatible config so the
+  // UI values win over .env / the built-in provider defaults; otherwise use
+  // the bare model id and let the model router resolve it from the environment.
+  const app_settings = getAppSettings();
+  const uiApiKey = app_settings.pilotSupervisorApiKey?.trim();
+  const uiBaseUrl = app_settings.pilotSupervisorBaseUrl?.trim();
+  const supervisorModel: MastraModelConfig = (uiApiKey || uiBaseUrl)
+    ? {
+        id: supervisorModelId as `${string}/${string}`,
+        ...(uiApiKey ? { apiKey: uiApiKey } : {}),
+        ...(uiBaseUrl ? { url: uiBaseUrl } : {}),
+      }
+    : supervisorModelId;
+  log('mastra-service', `Initializing in ${mode} mode with model: ${supervisorModelId}${uiApiKey ? ' (UI key)' : ''}${uiBaseUrl ? ` @ ${uiBaseUrl}` : ''}`);
 
   const dataDir = path.join(app.getPath('userData'), 'pilot-data');
   const dbPath = path.join(dataDir, 'pilot.db');
