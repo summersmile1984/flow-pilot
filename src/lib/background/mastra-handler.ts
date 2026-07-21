@@ -271,10 +271,14 @@ export function applyMastraEvent(prev: UIMessage[], event: MastraEvent): UIMessa
     }
 
     case "error": {
+      // Run-engine errors arrive as {name, message, stack} — show the message,
+      // not the serialized object
+      const err = event.error as { message?: string } | string | undefined;
+      const message = typeof err === "string" ? err : err?.message;
       return [...prev, {
         id: nextId("sys-err"),
         role: "system",
-        content: stringifyResult(event.error) || "An error occurred",
+        content: message || stringifyResult(event.error) || "An error occurred",
         isError: true,
         timestamp: Date.now(),
       }];

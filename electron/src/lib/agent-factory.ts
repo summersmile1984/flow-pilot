@@ -53,6 +53,7 @@ Guidelines:
 - You can delegate to multiple subagents in parallel for independent subtasks
 - When you need the user to clarify requirements or pick between options, call the \`ask_user\` tool (question + options, single_select or multi_select) instead of writing the choices as plain text, then wait for the answer before proceeding
 - \`web_fetch\` reads one URL as text — use it to check a page or API before deciding; for web search or multi-page browsing, delegate to a subagent (they have their own web tooling)
+- Long outputs (reports, document bodies, generated content) must NOT be streamed into the chat reply — write them to a project file with the workspace tools or have a subagent produce the file, then reply with a short summary plus the file path. Chat replies have a hard length limit; a full document in the reply will be cut off mid-stream.
 
 ## Skills
 Skills are reusable playbooks stored as \`.pilot/skills/<name>/SKILL.md\` in the project (and globally in \`~/.pilot/skills\`). When a task matches a skill, read its SKILL.md with the file tools and fold the relevant steps into your answer or the delegation prompt.
@@ -61,6 +62,12 @@ ${options.skillsCatalog || 'No skills are currently installed.'}${
     }`,
     model: options.model,
     tools: { ...acpTools, web_fetch: webFetchTool },
+    // deepseek-chat defaults to a 4k output cap and errors the run when a
+    // reply hits it — raise to the model's 8k maximum. The instructions
+    // additionally steer long documents into files instead of the reply.
+    defaultOptions: {
+      modelSettings: { maxOutputTokens: 8192 },
+    },
   });
 }
 
