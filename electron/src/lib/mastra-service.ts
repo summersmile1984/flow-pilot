@@ -11,7 +11,7 @@ import { app } from 'electron';
 import { log } from './logger';
 import { createSupervisorAgent, createPassthroughAgent, createACPSupervisorAgent, type AgentMode } from './agent-factory';
 import { SkillManager } from './skill-manager';
-import { getAppSettings } from './app-settings';
+import { resolveProviderModel } from './llm-provider-store';
 import { buildAcpMcpServers } from '../ipc/acp-sessions';
 import type { McpServerInput } from '@shared/lib/mcp-config';
 
@@ -111,34 +111,27 @@ export async function initMastraService(projectPathOrOptions: string | InitOptio
 
   loadEnvFile();
 
-  // Load config.yaml and resolve supervisor model. Only honor a requested
-  // override that's a known supervisor model — this guards against a foreign
-  // value (e.g. a leftover Claude model in the mastra settings slot) reaching
-  // the deepseek provider and breaking the run.
   const config = loadPilotConfig(options.projectPath);
-  const allowedModels = config.supervisor?.models?.length ? config.supervisor.models : DEFAULT_SUPERVISOR_MODELS;
-  const defaultModel = config.supervisor?.model || allowedModels[0] || 'deepseek/deepseek-chat';
-  const requested = options.modelOverride;
-  const supervisorModelId = (requested && (allowedModels.includes(requested) || requested === defaultModel))
-    ? requested
-    : defaultModel;
   const mode = options.mode || 'supervisor';
 
-  // LLM provider config from Settings (Engines → Pilot supervisor). When a key
-  // or base URL is set, pass the model as an OpenAI-compatible config so the
-  // UI values win over .env / the built-in provider defaults; otherwise use
-  // the bare model id and let the model router resolve it from the environment.
-  const app_settings = getAppSettings();
-  const uiApiKey = app_settings.pilotSupervisorApiKey?.trim();
-  const uiBaseUrl = app_settings.pilotSupervisorBaseUrl?.trim();
-  const supervisorModel: MastraModelConfig = (uiApiKey || uiBaseUrl)
+  // Resolve the supervisor model from the saved LLM providers. The override is
+  // a compound `providerId::modelId` selection from the picker; the provider
+  // carries its own base URL and API key. When either is set we pass the model
+  // as an OpenAI-compatible config so the provider's values win; otherwise the
+  // bare `provider/model` id lets the model router resolve it from the env.
+  const { provider, modelId } = resolveProviderModel(options.modelOverride);
+  const providerPrefix = provider?.id || 'deepseek';
+  const fullModelId = `${providerPrefix}/${modelId}`;
+  const apiKey = provider?.apiKey?.trim();
+  const baseUrl = provider?.baseUrl?.trim();
+  const supervisorModel: MastraModelConfig = (apiKey || baseUrl)
     ? {
-        id: supervisorModelId as `${string}/${string}`,
-        ...(uiApiKey ? { apiKey: uiApiKey } : {}),
-        ...(uiBaseUrl ? { url: uiBaseUrl } : {}),
+        id: fullModelId as `${string}/${string}`,
+        ...(apiKey ? { apiKey } : {}),
+        ...(baseUrl ? { url: baseUrl } : {}),
       }
-    : supervisorModelId;
-  log('mastra-service', `Initializing in ${mode} mode with model: ${supervisorModelId}${uiApiKey ? ' (UI key)' : ''}${uiBaseUrl ? ` @ ${uiBaseUrl}` : ''}`);
+    : fullModelId;
+  log('mastra-service', `Initializing in ${mode} mode with model: ${fullModelId}${apiKey ? ' (key)' : ''}${baseUrl ? ` @ ${baseUrl}` : ''}`);
 
   const dataDir = path.join(app.getPath('userData'), 'pilot-data');
   const dbPath = path.join(dataDir, 'pilot.db');

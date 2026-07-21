@@ -438,6 +438,9 @@ contextBridge.exposeInMainWorld("pilot", {
     setModel: (options: { model: string; cwd: string }) => ipcRenderer.invoke("mastra:setModel", options),
     getConfig: (cwd: string) => ipcRenderer.invoke("mastra:getConfig", cwd),
     getCurrentMode: () => ipcRenderer.invoke("mastra:getCurrentMode"),
+    listProviders: () => ipcRenderer.invoke("mastra:listProviders"),
+    saveProvider: (provider: unknown) => ipcRenderer.invoke("mastra:saveProvider", provider),
+    deleteProvider: (id: string) => ipcRenderer.invoke("mastra:deleteProvider", id),
     onEvent: (callback: (event: unknown) => void) => {
       const handler = (_event: IpcRendererEvent, data: unknown) => callback(data);
       ipcRenderer.on("mastra:event", handler);

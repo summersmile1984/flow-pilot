@@ -20,6 +20,8 @@ import {
   equalWidthFractions,
 } from "@/lib/layout/constants";
 import type { InstalledAgent } from "@/types";
+import type { LlmProvider } from "@shared/types/llm-provider";
+import type { MastraModelOption } from "@/components/input-bar/EnginePickerDropdown";
 import { AppSidebar } from "./AppSidebar";
 import { ChatHeader } from "./ChatHeader";
 import { ChatSearchBar } from "./ChatSearchBar";
@@ -1087,45 +1089,48 @@ export function AppLayout() {
     });
   }, [agents, manager, selectedMastraMode, settings]);
 
-  // ── Pilot supervisor model selection ──
-  // The selectable list comes from .pilot/config.yaml (supervisor.models),
-  // resolved by mastra:getConfig which always returns a non-empty list.
-  const [mastraModels, setMastraModels] = useState<string[]>([]);
-  const [mastraDefaultModel, setMastraDefaultModel] = useState<string>("");
-  useEffect(() => {
-    if (!activeProjectPath) return;
-    let cancelled = false;
-    void window.pilot?.mastra?.getConfig(activeProjectPath).then((res) => {
-      if (cancelled || !res?.success) return;
-      const sup = (res.config as { supervisor?: { model?: string; models?: string[] } } | undefined)?.supervisor;
-      setMastraModels(sup?.models ?? []);
-      setMastraDefaultModel(sup?.model ?? "");
+  // ── Pilot supervisor provider + model selection ──
+  // Options come from the saved LLM providers (Settings → Engines). Each entry
+  // is a provider/model pair encoded as `providerId::model`, carried through
+  // the existing model plumbing (session.model / mastra:start).
+  const [mastraProviders, setMastraProviders] = useState<LlmProvider[]>([]);
+  const reloadProviders = useCallback(() => {
+    void window.pilot?.mastra?.listProviders().then((res) => {
+      if (res?.success) setMastraProviders(res.providers ?? []);
     });
-    return () => { cancelled = true; };
-  }, [activeProjectPath]);
+  }, []);
+  useEffect(() => { reloadProviders(); }, [reloadProviders, showSettings]);
+
+  const mastraModelOptions = useMemo<MastraModelOption[]>(
+    () => mastraProviders.flatMap((p) =>
+      p.models.map((m) => ({ id: `${p.id}::${m}`, label: m, group: p.name, model: m })),
+    ),
+    [mastraProviders],
+  );
+  const mastraDefaultModelId = mastraModelOptions[0]?.id ?? "";
 
   // The active chat's model wins (baked in at creation); drafts follow the
-  // setting; both fall back to the config default. Only honor a recorded value
-  // that's actually a configured supervisor model — guards a stale/foreign
-  // value (e.g. a leftover Claude model in the mastra slot).
+  // setting; both fall back to the first available option. Only honor a
+  // recorded value that's still an available provider/model pair.
   const selectedMastraModel = useMemo(() => {
     const recorded = activeMastra ? activeMastra.model : settings.getModelForEngine("mastra");
-    if (recorded && mastraModels.includes(recorded)) return recorded;
-    return mastraDefaultModel || mastraModels[0] || "";
-  }, [activeMastra, settings, mastraDefaultModel, mastraModels]);
+    if (recorded && mastraModelOptions.some((o) => o.id === recorded)) return recorded;
+    return mastraDefaultModelId;
+  }, [activeMastra, settings, mastraModelOptions, mastraDefaultModelId]);
 
-  const handleMastraModelChange = useCallback((model: string) => {
-    settings.setModelForEngine("mastra", model);
+  const handleMastraModelChange = useCallback((modelId: string) => {
+    settings.setModelForEngine("mastra", modelId);
 
-    const shortLabel = model.split("/").pop() || model;
+    const opt = mastraModelOptions.find((o) => o.id === modelId);
+    const label = opt ? `${opt.group} / ${opt.model}` : modelId;
     const active = manager.activeSession;
-    if (active?.engine === "mastra" && !manager.isDraft && model !== selectedMastraModel) {
+    if (active?.engine === "mastra" && !manager.isDraft && modelId !== selectedMastraModel) {
       // Model is baked into the controller at creation — switching it in an
       // existing chat opens a fresh chat on that model, like the mode switch.
       const pilotAgent = agents.find((a) => a.engine === "mastra") ?? null;
       const options = buildSessionOptions(
         "mastra",
-        (e) => (e === "mastra" ? model : settings.getModelForEngine(e)),
+        (e) => (e === "mastra" ? modelId : settings.getModelForEngine(e)),
         settings.permissionMode,
         settings.planMode,
         settings.thinking,
@@ -1135,11 +1140,11 @@ export function AppLayout() {
         activeMastra?.mastraAgentId,
       );
       void manager.createSession(active.projectId, options);
-      toast.success("Model changed", { description: `Opened a new Pilot chat on ${shortLabel}.` });
+      toast.success("Model changed", { description: `Opened a new Pilot chat on ${label}.` });
       return;
     }
-    toast.success("Model changed", { description: `New Pilot chats will use ${shortLabel}.` });
-  }, [agents, manager, activeMastra, selectedMastraModel, settings]);
+    toast.success("Model changed", { description: `New Pilot chats will use ${label}.` });
+  }, [agents, manager, activeMastra, selectedMastraModel, settings, mastraModelOptions]);
 
   return (
     <ThemeProvider value={resolvedTheme}>
@@ -1689,7 +1694,7 @@ export function AppLayout() {
                   selectedMastraMode={selectedMastraMode}
                   onMastraModeChange={handleMastraModeChange}
                   mastraModeOpensNewChat={!!activeMastra && !manager.isDraft}
-                  mastraModels={mastraModels}
+                  mastraModelOptions={mastraModelOptions}
                   selectedMastraModel={selectedMastraModel}
                   onMastraModelChange={handleMastraModelChange}
                   slashCommands={activePaneCtrl?.paneSlashCommands ?? manager.slashCommands}

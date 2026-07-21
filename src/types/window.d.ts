@@ -6,6 +6,7 @@ import type { ModelInfo, McpServerConfig, McpServerStatus } from "./mcp";
 import type { PermissionUpdate } from "./permissions";
 import type { GitRepoInfo, GitStatus, GitBranch, GitLogEntry } from "@shared/types/git";
 import type { InstalledAgent } from "@shared/types/registry";
+import type { LlmProvider } from "@shared/types/llm-provider";
 import type { AppSettings, MacBackgroundEffect, ThemeOption } from "@shared/types/settings";
 import type {
   ACPSessionEvent,
@@ -470,6 +471,9 @@ declare global {
         setModel: (options: { model: string; cwd: string }) => Promise<{ success: boolean; error?: string }>;
         getConfig: (cwd: string) => Promise<{ success: boolean; config?: Record<string, unknown>; error?: string }>;
         getCurrentMode: () => Promise<{ success: boolean; modeId?: string; error?: string }>;
+        listProviders: () => Promise<{ success: boolean; providers?: LlmProvider[]; error?: string }>;
+        saveProvider: (provider: LlmProvider) => Promise<{ success: boolean; providers?: LlmProvider[]; error?: string }>;
+        deleteProvider: (id: string) => Promise<{ success: boolean; providers?: LlmProvider[]; error?: string }>;
         onEvent: (callback: (event: unknown) => void) => () => void;
       };
       skills: {

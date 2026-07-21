@@ -50,7 +50,7 @@ import {
 } from "./input-bar-utils";
 import { ContextGauge } from "./ContextGauge";
 import { AttachmentPreview } from "./AttachmentPreview";
-import { EnginePickerDropdown, type MastraModeOption } from "./EnginePickerDropdown";
+import { EnginePickerDropdown, type MastraModeOption, type MastraModelOption } from "./EnginePickerDropdown";
 import { EngineControls } from "./EngineControls";
 import { MentionPicker } from "./MentionPicker";
 import { useMentionAutocomplete } from "./useMentionAutocomplete";
@@ -87,12 +87,12 @@ export interface InputBarProps {
   mastraModeLoading?: boolean;
   /** True when picking a different mode opens a new chat (mode is per-chat). */
   mastraModeOpensNewChat?: boolean;
-  /** Selectable Pilot supervisor models (from .pilot/config.yaml). */
-  mastraModels?: string[];
-  /** Currently selected Pilot supervisor model. */
+  /** Selectable Pilot supervisor provider/model pairs (from saved providers). */
+  mastraModelOptions?: MastraModelOption[];
+  /** Currently selected Pilot supervisor provider/model (compound id). */
   selectedMastraModel?: string;
-  /** Callback when the Pilot supervisor model changes. */
-  onMastraModelChange?: (model: string) => void;
+  /** Callback when the Pilot supervisor provider/model changes. */
+  onMastraModelChange?: (modelId: string) => void;
   /** Slash commands available for the current engine session */
   slashCommands?: SlashCommand[];
   acpConfigOptions?: ACPConfigOption[];
@@ -154,7 +154,7 @@ export const InputBar = memo(function InputBar({
   onMastraModeChange,
   mastraModeLoading,
   mastraModeOpensNewChat,
-  mastraModels,
+  mastraModelOptions,
   selectedMastraModel,
   onMastraModelChange,
   slashCommands,
@@ -938,7 +938,7 @@ export const InputBar = memo(function InputBar({
               onMastraModeChange={onMastraModeChange}
               mastraModeLoading={mastraModeLoading}
               mastraModeOpensNewChat={mastraModeOpensNewChat}
-              mastraModels={mastraModels}
+              mastraModelOptions={mastraModelOptions}
               selectedMastraModel={selectedMastraModel}
               onMastraModelChange={onMastraModelChange}
               selectedModelId={selectedModelId}

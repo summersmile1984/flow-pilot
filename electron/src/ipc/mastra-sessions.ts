@@ -1,7 +1,7 @@
 import { BrowserWindow, ipcMain } from "electron";
 import { initMastraService, destroyMastraService, getPilotConfig, DEFAULT_SUPERVISOR_MODELS, type AgentMode } from "../lib/mastra-service";
-import { getAppSettings } from "../lib/app-settings";
-import { onSettingsChanged } from "./settings";
+import { loadLlmProviders, saveLlmProvider, deleteLlmProvider } from "../lib/llm-provider-store";
+import type { LlmProvider } from "@shared/types/llm-provider";
 import type { McpServerInput } from "@shared/lib/mcp-config";
 import { log } from "../lib/logger";
 import { safeSend } from "../lib/safe-send";
@@ -35,16 +35,36 @@ function getSession(sessionId?: string): Session | null {
 }
 
 export function register(getMainWindow: () => BrowserWindow | null): void {
-  // Rebuild controllers when the supervisor LLM provider changes — the API key
-  // and base URL are baked into each controller's agent, so a cached one would
-  // keep using the old credentials otherwise.
-  let lastProvider = `${getAppSettings().pilotSupervisorApiKey}::${getAppSettings().pilotSupervisorBaseUrl}`;
-  onSettingsChanged((next) => {
-    const provider = `${next.pilotSupervisorApiKey}::${next.pilotSupervisorBaseUrl}`;
-    if (provider !== lastProvider) {
-      lastProvider = provider;
-      log("mastra-ipc", "Supervisor LLM provider changed — resetting controllers");
-      void resetMastraState();
+  // ── Supervisor LLM provider CRUD ──
+  // Providers carry the API key and base URL, which get baked into each
+  // controller's agent, so any change rebuilds cached controllers.
+  ipcMain.handle("mastra:listProviders", () => {
+    try {
+      return { success: true, providers: loadLlmProviders() };
+    } catch (err) {
+      return { success: false, error: String(err) };
+    }
+  });
+
+  ipcMain.handle("mastra:saveProvider", async (_e, provider: LlmProvider) => {
+    try {
+      const providers = saveLlmProvider(provider);
+      log("mastra-ipc", `Provider saved: ${provider.id} — resetting controllers`);
+      await resetMastraState();
+      return { success: true, providers };
+    } catch (err) {
+      return { success: false, error: String(err) };
+    }
+  });
+
+  ipcMain.handle("mastra:deleteProvider", async (_e, id: string) => {
+    try {
+      const providers = deleteLlmProvider(id);
+      log("mastra-ipc", `Provider deleted: ${id} — resetting controllers`);
+      await resetMastraState();
+      return { success: true, providers };
+    } catch (err) {
+      return { success: false, error: String(err) };
     }
   });
 
