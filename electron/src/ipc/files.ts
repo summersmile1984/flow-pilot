@@ -10,6 +10,10 @@ import { getAppSetting } from "../lib/app-settings";
 import { captureEvent } from "../lib/posthog";
 import { reportError } from "../lib/error-utils";
 import { safeSend } from "../lib/safe-send";
+import { convertOfficeToPdf, resolveSoffice } from "../lib/office-preview";
+
+/** Max bytes returned as base64 by file:read-binary / office preview (25 MB). */
+const MAX_PREVIEW_BYTES = 25 * 1024 * 1024;
 
 function listFilesGit(cwd: string): Promise<string[]> {
   return new Promise((resolve, reject) => {
@@ -556,6 +560,40 @@ export function register(getMainWindow: () => BrowserWindow | null): void {
       const errMsg = reportError("FILE:READ_ERR", err, { filePath });
       return { error: errMsg };
     }
+  });
+
+  // Read a file as base64 for binary previews (images, PDF).
+  ipcMain.handle("file:read-binary", async (_event, filePath: string) => {
+    try {
+      const absPath = path.resolve(filePath);
+      if (!absPath || absPath === path.sep) return { error: "Invalid file path" };
+      const stat = await fsPromises.stat(absPath);
+      if (stat.size > MAX_PREVIEW_BYTES) return { error: "File too large to preview" };
+      const buf = await fsPromises.readFile(absPath);
+      return { base64: buf.toString("base64"), size: stat.size };
+    } catch (err) {
+      return { error: reportError("FILE:READ_BINARY_ERR", err, { filePath }) };
+    }
+  });
+
+  // Convert an office document to PDF (LibreOffice) and return it as base64.
+  ipcMain.handle("file:office-preview", async (_event, filePath: string) => {
+    try {
+      const absPath = path.resolve(filePath);
+      if (!absPath || absPath === path.sep) return { error: "Invalid file path" };
+      const pdfPath = await convertOfficeToPdf(absPath);
+      const stat = await fsPromises.stat(pdfPath);
+      if (stat.size > MAX_PREVIEW_BYTES) return { error: "Converted PDF too large to preview" };
+      const buf = await fsPromises.readFile(pdfPath);
+      return { base64: buf.toString("base64"), size: stat.size };
+    } catch (err) {
+      return { error: err instanceof Error ? err.message : String(err) };
+    }
+  });
+
+  // Whether LibreOffice is available (drives the office-preview fallback UI).
+  ipcMain.handle("file:has-office-converter", async () => {
+    return { available: !!(await resolveSoffice()) };
   });
 
   ipcMain.handle("file:open-in-editor", async (_event, { filePath, line, editor: editorOverride }: { filePath: string; line?: number; editor?: string }) => {

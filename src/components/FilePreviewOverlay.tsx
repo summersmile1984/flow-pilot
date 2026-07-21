@@ -18,6 +18,30 @@ function formatFileSize(bytes: number): string {
   return `${(bytes / (1024 * 1024)).toFixed(1)} MB`;
 }
 
+// ── File-type routing ──
+
+const IMAGE_MIME: Record<string, string> = {
+  png: "image/png", jpg: "image/jpeg", jpeg: "image/jpeg", gif: "image/gif",
+  webp: "image/webp", svg: "image/svg+xml", bmp: "image/bmp", ico: "image/x-icon", avif: "image/avif",
+};
+// Office formats routed through LibreOffice → PDF (csv stays text — Monaco reads it fine).
+const OFFICE_EXTS = new Set(["docx", "doc", "odt", "rtf", "xlsx", "xls", "ods", "pptx", "ppt", "odp"]);
+
+type PreviewKind = "image" | "pdf" | "office" | "text";
+
+function previewKind(filePath: string): PreviewKind {
+  const ext = filePath.split(".").pop()?.toLowerCase() ?? "";
+  if (ext in IMAGE_MIME) return "image";
+  if (ext === "pdf") return "pdf";
+  if (OFFICE_EXTS.has(ext)) return "office";
+  return "text";
+}
+
+function base64ToObjectUrl(base64: string, mime: string): string {
+  const bytes = Uint8Array.from(atob(base64), (c) => c.charCodeAt(0));
+  return URL.createObjectURL(new Blob([bytes], { type: mime }));
+}
+
 // ── Props ──
 
 interface FilePreviewOverlayProps {
@@ -66,40 +90,66 @@ const OverlayContent = memo(function OverlayContent({
   onClose,
 }: OverlayContentProps) {
   const [content, setContent] = useState<string | null>(null);
+  const [binaryUrl, setBinaryUrl] = useState<string | null>(null);
+  const [binarySize, setBinarySize] = useState<number | null>(null);
   const [error, setError] = useState<string | null>(null);
   const [loading, setLoading] = useState(true);
   const resolvedTheme = useResolvedTheme();
 
-  // Load file content
+  const kind = useMemo(() => previewKind(filePath), [filePath]);
+
+  // Load file content by type: text via readFile, images/PDF as binary blobs,
+  // office documents converted to PDF by LibreOffice.
   useEffect(() => {
     let cancelled = false;
+    let objectUrl: string | null = null;
     setLoading(true);
     setError(null);
     setContent(null);
+    setBinaryUrl(null);
+    setBinarySize(null);
 
-    window.claude
-      .readFile(filePath)
-      .then((result) => {
+    const run = async () => {
+      if (kind === "text") {
+        const res = await window.claude.readFile(filePath);
         if (cancelled) return;
-        if (result.error) {
-          setError(result.error);
-        } else {
-          setContent(result.content ?? "");
-        }
-      })
+        if (res.error) setError(res.error);
+        else setContent(res.content ?? "");
+        return;
+      }
+      if (kind === "image" || kind === "pdf") {
+        const res = await window.claude.readFileBinary(filePath);
+        if (cancelled) return;
+        if (res.error || !res.base64) { setError(res.error ?? "Failed to read file"); return; }
+        const ext = filePath.split(".").pop()?.toLowerCase() ?? "";
+        const mime = kind === "pdf" ? "application/pdf" : (IMAGE_MIME[ext] ?? "application/octet-stream");
+        objectUrl = base64ToObjectUrl(res.base64, mime);
+        setBinaryUrl(objectUrl);
+        setBinarySize(res.size ?? null);
+        return;
+      }
+      // office → PDF
+      const res = await window.claude.officePreview(filePath);
+      if (cancelled) return;
+      if (res.error || !res.base64) { setError(res.error ?? "Failed to convert document"); return; }
+      objectUrl = base64ToObjectUrl(res.base64, "application/pdf");
+      setBinaryUrl(objectUrl);
+      setBinarySize(res.size ?? null);
+    };
+
+    run()
       .catch((err) => {
         if (cancelled) return;
-        captureException(err instanceof Error ? err : new Error(String(err)), { label: "FILE_READ_ERR" });
-        setError(err instanceof Error ? err.message : "Failed to read file");
+        captureException(err instanceof Error ? err : new Error(String(err)), { label: "FILE_PREVIEW_ERR" });
+        setError(err instanceof Error ? err.message : "Failed to preview file");
       })
-      .finally(() => {
-        if (!cancelled) setLoading(false);
-      });
+      .finally(() => { if (!cancelled) setLoading(false); });
 
     return () => {
       cancelled = true;
+      if (objectUrl) URL.revokeObjectURL(objectUrl);
     };
-  }, [filePath]);
+  }, [filePath, kind]);
 
   // Close on Escape
   useEffect(() => {
@@ -225,18 +275,34 @@ const OverlayContent = memo(function OverlayContent({
           {/* Editor content */}
           <div className="relative flex-1 overflow-hidden" style={{ minHeight: 300 }}>
             {loading && (
-              <div className="flex h-full items-center justify-center">
+              <div className="flex h-full flex-col items-center justify-center gap-2">
                 <Loader2 className="h-5 w-5 animate-spin text-muted-foreground/40" />
+                {kind === "office" && (
+                  <span className="text-xs text-muted-foreground/50">Converting document…</span>
+                )}
               </div>
             )}
 
             {error && (
               <div className="flex h-full items-center justify-center p-6">
-                <p className="text-center text-sm text-muted-foreground/60">{error}</p>
+                <p className="max-w-md text-center text-sm text-muted-foreground/70 whitespace-pre-wrap">{error}</p>
               </div>
             )}
 
-            {content !== null && !loading && (
+            {/* Rendered document (PDF, or office converted to PDF) */}
+            {binaryUrl && !loading && (kind === "pdf" || kind === "office") && (
+              <embed src={binaryUrl} type="application/pdf" className="h-full w-full" />
+            )}
+
+            {/* Image */}
+            {binaryUrl && !loading && kind === "image" && (
+              <div className="flex h-full items-center justify-center overflow-auto bg-[repeating-conic-gradient(#00000008_0_25%,transparent_0_50%)] bg-[length:20px_20px] p-4">
+                <img src={binaryUrl} alt={fileName} className="max-h-full max-w-full object-contain" />
+              </div>
+            )}
+
+            {/* Text / code via Monaco */}
+            {content !== null && !loading && kind === "text" && (
               <Suspense
                 fallback={
                   <div className="flex h-full items-center justify-center">
@@ -279,7 +345,7 @@ const OverlayContent = memo(function OverlayContent({
           </div>
 
           {/* Footer */}
-          {content !== null && !loading && (
+          {content !== null && !loading && kind === "text" && (
             <div className="flex items-center gap-3 border-t border-foreground/[0.08] px-4 py-1.5">
               <span className="text-[11px] text-muted-foreground/50">
                 {lineCount} {lineCount === 1 ? "line" : "lines"}
@@ -288,6 +354,19 @@ const OverlayContent = memo(function OverlayContent({
               <span className="text-[11px] text-muted-foreground/50">{language}</span>
               <span className="text-[11px] text-muted-foreground/30">•</span>
               <span className="text-[11px] text-muted-foreground/50">{fileSize}</span>
+            </div>
+          )}
+          {binaryUrl !== null && !loading && kind !== "text" && (
+            <div className="flex items-center gap-3 border-t border-foreground/[0.08] px-4 py-1.5">
+              <span className="text-[11px] text-muted-foreground/50">
+                {kind === "office" ? "Document (PDF preview)" : kind === "pdf" ? "PDF" : "Image"}
+              </span>
+              {binarySize !== null && (
+                <>
+                  <span className="text-[11px] text-muted-foreground/30">•</span>
+                  <span className="text-[11px] text-muted-foreground/50">{formatFileSize(binarySize)}</span>
+                </>
+              )}
             </div>
           )}
         </motion.div>

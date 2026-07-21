@@ -130,6 +130,9 @@ contextBridge.exposeInMainWorld("claude", {
   restartSession: (sessionId: string, mcpServers?: unknown[], cwd?: string, effort?: string, model?: string) =>
     ipcRenderer.invoke("claude:restart-session", { sessionId, mcpServers, cwd, effort, model }),
   readFile: (filePath: string) => ipcRenderer.invoke("file:read", filePath),
+  readFileBinary: (filePath: string) => ipcRenderer.invoke("file:read-binary", filePath),
+  officePreview: (filePath: string) => ipcRenderer.invoke("file:office-preview", filePath),
+  hasOfficeConverter: () => ipcRenderer.invoke("file:has-office-converter"),
   renameFile: (oldPath: string, newPath: string) => ipcRenderer.invoke("file:rename", { oldPath, newPath }),
   trashItem: (filePath: string) => ipcRenderer.invoke("file:trash", filePath),
   newFile: (filePath: string) => ipcRenderer.invoke("file:new-file", filePath),
