@@ -788,3 +788,38 @@ html.platform-win32 .drag-region {
   padding-inline-start: 10px;
   border-inline-start: 2px solid rgba(255, 255, 255, 0.1);
 }
+
+/* ── Spreadsheet preview (SheetJS sheet_to_html tables) ── */
+.xlsx-preview table {
+  border-collapse: collapse;
+  font-size: 12px;
+  color: var(--foreground);
+}
+.xlsx-preview td,
+.xlsx-preview th {
+  border: 1px solid color-mix(in oklab, var(--foreground) 12%, transparent);
+  padding: 3px 8px;
+  white-space: nowrap;
+  min-width: 40px;
+  max-width: 360px;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+.xlsx-preview tr:first-child td {
+  background: color-mix(in oklab, var(--foreground) 6%, transparent);
+  font-weight: 600;
+}
+.xlsx-preview table td[data-t="n"] {
+  text-align: end;
+  font-variant-numeric: tabular-nums;
+}
+
+/* ── docx-preview host: center the rendered pages, drop its gray backdrop ── */
+.docx-preview-host .docx-wrapper {
+  background: transparent;
+  padding: 0;
+}
+.docx-preview-host .docx-wrapper > section.docx {
+  margin: 0 auto 12px;
+  box-shadow: 0 1px 8px rgba(0, 0, 0, 0.12);
+}

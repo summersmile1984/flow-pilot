@@ -149,7 +149,6 @@ function createWindow(): void {
       contextIsolation: true,
       nodeIntegration: false,
       webviewTag: true,
-      plugins: true, // enables Chromium's built-in PDF viewer for <embed> previews
       devTools: !glassEnabled,
       v8CacheOptions: "bypassHeatCheckAndEagerCompile", // cache compiled JS on first run — eliminates cold-start jank
     },

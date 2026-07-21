@@ -11,6 +11,10 @@ import { captureException } from "@/lib/analytics/analytics";
 const MonacoEditor = lazy(() =>
   import("@monaco-editor/react").then((mod) => ({ default: mod.default })),
 );
+const PdfRenderer = lazy(() => import("./preview/PdfRenderer"));
+const DocxRenderer = lazy(() => import("./preview/DocxRenderer"));
+const XlsxRenderer = lazy(() => import("./preview/XlsxRenderer"));
+const PptxRenderer = lazy(() => import("./preview/PptxRenderer"));
 
 function formatFileSize(bytes: number): string {
   if (bytes < 1024) return `${bytes} B`;
@@ -24,22 +28,30 @@ const IMAGE_MIME: Record<string, string> = {
   png: "image/png", jpg: "image/jpeg", jpeg: "image/jpeg", gif: "image/gif",
   webp: "image/webp", svg: "image/svg+xml", bmp: "image/bmp", ico: "image/x-icon", avif: "image/avif",
 };
-// Office formats routed through LibreOffice → PDF (csv stays text — Monaco reads it fine).
-const OFFICE_EXTS = new Set(["docx", "doc", "odt", "rtf", "xlsx", "xls", "ods", "pptx", "ppt", "odp"]);
+// Office formats rendered natively by dedicated JS libraries (csv stays text —
+// Monaco reads it fine). .doc/.ppt (legacy binary) have no JS renderer.
+const DOCX_EXTS = new Set(["docx"]);
+const XLSX_EXTS = new Set(["xlsx", "xls", "ods"]);
+const PPTX_EXTS = new Set(["pptx"]);
 
-type PreviewKind = "image" | "pdf" | "office" | "text";
+type PreviewKind = "image" | "pdf" | "docx" | "xlsx" | "pptx" | "text";
 
 function previewKind(filePath: string): PreviewKind {
   const ext = filePath.split(".").pop()?.toLowerCase() ?? "";
   if (ext in IMAGE_MIME) return "image";
   if (ext === "pdf") return "pdf";
-  if (OFFICE_EXTS.has(ext)) return "office";
+  if (DOCX_EXTS.has(ext)) return "docx";
+  if (XLSX_EXTS.has(ext)) return "xlsx";
+  if (PPTX_EXTS.has(ext)) return "pptx";
   return "text";
 }
 
+function base64ToBytes(base64: string): Uint8Array {
+  return Uint8Array.from(atob(base64), (c) => c.charCodeAt(0));
+}
+
 function base64ToObjectUrl(base64: string, mime: string): string {
-  const bytes = Uint8Array.from(atob(base64), (c) => c.charCodeAt(0));
-  return URL.createObjectURL(new Blob([bytes], { type: mime }));
+  return URL.createObjectURL(new Blob([base64ToBytes(base64) as BlobPart], { type: mime }));
 }
 
 // ── Props ──
@@ -91,6 +103,7 @@ const OverlayContent = memo(function OverlayContent({
 }: OverlayContentProps) {
   const [content, setContent] = useState<string | null>(null);
   const [binaryUrl, setBinaryUrl] = useState<string | null>(null);
+  const [bytes, setBytes] = useState<Uint8Array | null>(null);
   const [binarySize, setBinarySize] = useState<number | null>(null);
   const [error, setError] = useState<string | null>(null);
   const [loading, setLoading] = useState(true);
@@ -98,8 +111,8 @@ const OverlayContent = memo(function OverlayContent({
 
   const kind = useMemo(() => previewKind(filePath), [filePath]);
 
-  // Load file content by type: text via readFile, images/PDF as binary blobs,
-  // office documents converted to PDF by LibreOffice.
+  // Load by type: text via readFile, images as an object URL, and documents
+  // (pdf/docx/xlsx/pptx) as raw bytes handed to native JS renderers.
   useEffect(() => {
     let cancelled = false;
     let objectUrl: string | null = null;
@@ -107,6 +120,7 @@ const OverlayContent = memo(function OverlayContent({
     setError(null);
     setContent(null);
     setBinaryUrl(null);
+    setBytes(null);
     setBinarySize(null);
 
     const run = async () => {
@@ -117,24 +131,18 @@ const OverlayContent = memo(function OverlayContent({
         else setContent(res.content ?? "");
         return;
       }
-      if (kind === "image" || kind === "pdf") {
-        const res = await window.claude.readFileBinary(filePath);
-        if (cancelled) return;
-        if (res.error || !res.base64) { setError(res.error ?? "Failed to read file"); return; }
+      const res = await window.claude.readFileBinary(filePath);
+      if (cancelled) return;
+      if (res.error || !res.base64) { setError(res.error ?? "Failed to read file"); return; }
+      setBinarySize(res.size ?? null);
+      if (kind === "image") {
         const ext = filePath.split(".").pop()?.toLowerCase() ?? "";
-        const mime = kind === "pdf" ? "application/pdf" : (IMAGE_MIME[ext] ?? "application/octet-stream");
-        objectUrl = base64ToObjectUrl(res.base64, mime);
+        objectUrl = base64ToObjectUrl(res.base64, IMAGE_MIME[ext] ?? "application/octet-stream");
         setBinaryUrl(objectUrl);
-        setBinarySize(res.size ?? null);
         return;
       }
-      // office → PDF
-      const res = await window.claude.officePreview(filePath);
-      if (cancelled) return;
-      if (res.error || !res.base64) { setError(res.error ?? "Failed to convert document"); return; }
-      objectUrl = base64ToObjectUrl(res.base64, "application/pdf");
-      setBinaryUrl(objectUrl);
-      setBinarySize(res.size ?? null);
+      // pdf / docx / xlsx / pptx — hand raw bytes to the native renderer
+      setBytes(base64ToBytes(res.base64));
     };
 
     run()
@@ -275,11 +283,8 @@ const OverlayContent = memo(function OverlayContent({
           {/* Editor content */}
           <div className="relative flex-1 overflow-hidden" style={{ minHeight: 300 }}>
             {loading && (
-              <div className="flex h-full flex-col items-center justify-center gap-2">
+              <div className="flex h-full items-center justify-center">
                 <Loader2 className="h-5 w-5 animate-spin text-muted-foreground/40" />
-                {kind === "office" && (
-                  <span className="text-xs text-muted-foreground/50">Converting document…</span>
-                )}
               </div>
             )}
 
@@ -289,9 +294,20 @@ const OverlayContent = memo(function OverlayContent({
               </div>
             )}
 
-            {/* Rendered document (PDF, or office converted to PDF) */}
-            {binaryUrl && !loading && (kind === "pdf" || kind === "office") && (
-              <embed src={binaryUrl} type="application/pdf" className="h-full w-full" />
+            {/* Documents rendered natively by dedicated JS libraries */}
+            {bytes && !loading && !error && (kind === "pdf" || kind === "docx" || kind === "xlsx" || kind === "pptx") && (
+              <Suspense
+                fallback={
+                  <div className="flex h-full items-center justify-center">
+                    <Loader2 className="h-5 w-5 animate-spin text-muted-foreground/40" />
+                  </div>
+                }
+              >
+                {kind === "pdf" && <PdfRenderer bytes={bytes} />}
+                {kind === "docx" && <DocxRenderer bytes={bytes} />}
+                {kind === "xlsx" && <XlsxRenderer bytes={bytes} />}
+                {kind === "pptx" && <PptxRenderer bytes={bytes} />}
+              </Suspense>
             )}
 
             {/* Image */}
@@ -356,10 +372,10 @@ const OverlayContent = memo(function OverlayContent({
               <span className="text-[11px] text-muted-foreground/50">{fileSize}</span>
             </div>
           )}
-          {binaryUrl !== null && !loading && kind !== "text" && (
+          {(binaryUrl !== null || bytes !== null) && !loading && kind !== "text" && (
             <div className="flex items-center gap-3 border-t border-foreground/[0.08] px-4 py-1.5">
-              <span className="text-[11px] text-muted-foreground/50">
-                {kind === "office" ? "Document (PDF preview)" : kind === "pdf" ? "PDF" : "Image"}
+              <span className="text-[11px] uppercase tracking-wide text-muted-foreground/50">
+                {kind === "docx" ? "Word" : kind === "xlsx" ? "Spreadsheet" : kind === "pptx" ? "Presentation" : kind === "pdf" ? "PDF" : "Image"}
               </span>
               {binarySize !== null && (
                 <>

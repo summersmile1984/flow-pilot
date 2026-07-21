@@ -10,9 +10,8 @@ import { getAppSetting } from "../lib/app-settings";
 import { captureEvent } from "../lib/posthog";
 import { reportError } from "../lib/error-utils";
 import { safeSend } from "../lib/safe-send";
-import { convertOfficeToPdf, resolveSoffice } from "../lib/office-preview";
 
-/** Max bytes returned as base64 by file:read-binary / office preview (25 MB). */
+/** Max bytes returned as base64 by file:read-binary for document previews (25 MB). */
 const MAX_PREVIEW_BYTES = 25 * 1024 * 1024;
 
 function listFilesGit(cwd: string): Promise<string[]> {
@@ -576,25 +575,6 @@ export function register(getMainWindow: () => BrowserWindow | null): void {
     }
   });
 
-  // Convert an office document to PDF (LibreOffice) and return it as base64.
-  ipcMain.handle("file:office-preview", async (_event, filePath: string) => {
-    try {
-      const absPath = path.resolve(filePath);
-      if (!absPath || absPath === path.sep) return { error: "Invalid file path" };
-      const pdfPath = await convertOfficeToPdf(absPath);
-      const stat = await fsPromises.stat(pdfPath);
-      if (stat.size > MAX_PREVIEW_BYTES) return { error: "Converted PDF too large to preview" };
-      const buf = await fsPromises.readFile(pdfPath);
-      return { base64: buf.toString("base64"), size: stat.size };
-    } catch (err) {
-      return { error: err instanceof Error ? err.message : String(err) };
-    }
-  });
-
-  // Whether LibreOffice is available (drives the office-preview fallback UI).
-  ipcMain.handle("file:has-office-converter", async () => {
-    return { available: !!(await resolveSoffice()) };
-  });
 
   ipcMain.handle("file:open-in-editor", async (_event, { filePath, line, editor: editorOverride }: { filePath: string; line?: number; editor?: string }) => {
     // Directories don't support --goto; just pass the path so the editor opens the folder
