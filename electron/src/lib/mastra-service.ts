@@ -9,6 +9,7 @@ import fs from 'fs';
 import { app } from 'electron';
 import { log } from './logger';
 import { createSupervisorAgent, createPassthroughAgent, createACPSupervisorAgent, type AgentMode } from './agent-factory';
+import { SkillManager } from './skill-manager';
 
 export type { AgentMode };
 
@@ -123,6 +124,21 @@ export async function initMastraService(projectPathOrOptions: string | InitOptio
   // instructions — architecture decisions, conventions, cross-session context.
   const projectMemory = readProjectMemory(options.projectPath);
 
+  // Skills catalog (.pilot/skills + ~/.pilot/skills): name, description, and
+  // path per skill so the supervisor knows what exists and where to read it.
+  let skillsCatalog: string | undefined;
+  try {
+    const skills = await new SkillManager(options.projectPath).discoverSkills();
+    if (skills.length > 0) {
+      skillsCatalog = 'Installed skills:\n' + skills
+        .map((s) => `- ${s.name} (${s.scope}): ${s.description || 'no description'} — ${s.path}`)
+        .join('\n');
+      log('mastra-service', `Discovered ${skills.length} skill(s)`);
+    }
+  } catch (err) {
+    log('mastra-service', `Skill discovery failed: ${err}`);
+  }
+
   // Conversation persistence: messages go to LibSQL so resumed sessions carry
   // their history and delegation sub-threads are recorded. Semantic recall and
   // working memory stay off (no embedder configured). The instance is shared:
@@ -184,6 +200,7 @@ export async function initMastraService(projectPathOrOptions: string | InitOptio
         projectPath: options.projectPath,
         agents,
         projectMemory,
+        skillsCatalog,
         model: supervisorModel,
       });
     }
