@@ -188,7 +188,7 @@ function SplitChatPaneInner({
 
   const openPanelTools = useMemo(() => {
     return new Set<ToolId>((
-      ["terminal", "browser", "git", "files", "project-files", "preview", "mcp"] as const
+      ["terminal", "browser", "git", "files", "project-files", "mcp"] as const
     ).filter((toolId) => !!splitView.getToolIslandForPane(sessionId, toolId)));
   }, [sessionId, splitView]);
 

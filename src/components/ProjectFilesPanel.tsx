@@ -17,8 +17,10 @@ import {
   FilePlus,
   FolderPlus,
   Type,
+  ChevronLeft,
 } from "lucide-react";
 import { ScrollArea } from "@/components/ui/scroll-area";
+import { FilePreviewContent } from "@/components/preview/FilePreviewContent";
 import {
   DropdownMenu,
   DropdownMenuContent,
@@ -97,6 +99,8 @@ export const ProjectFilesPanel = memo(function ProjectFilesPanel({
   const [expandedDirs, setExpandedDirs] = useState<Set<string>>(() => new Set());
   const [searchQuery, setSearchQuery] = useState("");
   const [debouncedQuery, setDebouncedQuery] = useState("");
+  // Master-detail: clicking a file swaps the tree for an inline preview of it.
+  const [previewPath, setPreviewPath] = useState<string | null>(null);
   const debounceRef = useRef<ReturnType<typeof setTimeout>>(undefined);
 
   // Inline creation state: { parentDir (relative), type }
@@ -143,13 +147,13 @@ export const ProjectFilesPanel = memo(function ProjectFilesPanel({
     });
   }, []);
 
-  // Handle file row click
+  // Handle file row click — preview inline within this panel (master-detail).
   const handleFileClick = useCallback(
     (node: FileTreeNode, event: React.MouseEvent<HTMLDivElement>) => {
-      if (!cwd || !onPreviewFile) return;
-      const rect = event.currentTarget.getBoundingClientRect();
+      if (!cwd) return;
       const absolutePath = `${cwd}/${node.path}`;
-      onPreviewFile(absolutePath, rect);
+      setPreviewPath(absolutePath);
+      onPreviewFile?.(absolutePath, event.currentTarget.getBoundingClientRect());
     },
     [cwd, onPreviewFile],
   );
@@ -198,6 +202,40 @@ export const ProjectFilesPanel = memo(function ProjectFilesPanel({
         <div className="flex flex-1 flex-col items-center justify-center gap-1">
           <FolderTree className="h-3.5 w-3.5 text-foreground/15" />
           <p className="text-[10px] text-foreground/30">No project selected</p>
+        </div>
+      </div>
+    );
+  }
+
+  // Inline preview (master-detail): the panel morphs to show the selected file
+  // with a back button, instead of opening a separate island or modal.
+  if (previewPath) {
+    const previewName = previewPath.split("/").pop() ?? previewPath;
+    return (
+      <div className="flex h-full flex-col">
+        <PanelHeader
+          iconNode={
+            <button
+              type="button"
+              onClick={() => setPreviewPath(null)}
+              title="Back to files"
+              className="inline-flex h-5 w-5 shrink-0 cursor-pointer items-center justify-center rounded-md
+                text-foreground/45 transition-colors hover:text-foreground/80 hover:bg-foreground/[0.06]"
+            >
+              <ChevronLeft className="h-3.5 w-3.5" />
+            </button>
+          }
+          label={previewName}
+          className="ps-1.5 pe-3 py-2"
+        >
+          <OpenInEditorButton
+            filePath={previewPath}
+            className="!text-muted-foreground/40 hover:!text-muted-foreground"
+          />
+          {headerControls}
+        </PanelHeader>
+        <div className="min-h-0 flex-1">
+          <FilePreviewContent key={previewPath} filePath={previewPath} />
         </div>
       </div>
     );

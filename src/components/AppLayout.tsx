@@ -141,7 +141,6 @@ export function AppLayout() {
     clearGrabbedElements,
     handleElementGrab,
     handleRemoveGrabbedElement,
-    previewFile,
     handlePreviewFile,
   } = layoutUI;
 
@@ -944,15 +943,6 @@ export function AppLayout() {
     }
   }, [isSplitActive, mainToolWorkspace, mainTopToolColumnCount, maxMainTopToolColumns]);
 
-  // Clicking a file in the project tree previews it in a docked "preview"
-  // island (opening it if needed) — not a modal, matching the panel system.
-  const handlePreviewFileInIsland = useCallback((filePath: string, rect: DOMRect) => {
-    handlePreviewFile(filePath, rect);
-    if (!mainToolWorkspace.getToolIsland("preview")) {
-      togglePanelTool(mainToolWorkspace, "preview", canFitToolAsNewColumn);
-    }
-  }, [handlePreviewFile, mainToolWorkspace, canFitToolAsNewColumn]);
-
   // ── Shared tool island context (terminal/MCP/git props common to all islands) ──
   const toolIslandCtx = useToolIslandContext({
     spaceId: spaceManager.activeSpaceId,
@@ -966,8 +956,7 @@ export function AppLayout() {
     resolvedTheme,
     onElementGrab: handleElementGrab,
     onScrollToToolCall: setScrollToMessageId,
-    onPreviewFile: handlePreviewFileInIsland,
-    previewFilePath: previewFile?.path ?? null,
+    onPreviewFile: handlePreviewFile,
     collapsedRepos: settings.collapsedRepos,
     onToggleRepoCollapsed: settings.toggleRepoCollapsed,
     mcpServerStatuses: manager.mcpServerStatuses,
@@ -1417,7 +1406,7 @@ export function AppLayout() {
                             handleFullRevert={manager.isConnected && manager.fullRevert ? handleFullRevert : undefined}
                             makePaneScrollCallback={makePaneScrollCallback}
                             setScrollToMessageId={setScrollToMessageId}
-                            handlePreviewFile={handlePreviewFileInIsland}
+                            handlePreviewFile={handlePreviewFile}
                             handleElementGrab={handleElementGrab}
                             handleCloseSplitPane={handleCloseSplitPane}
                             codexRawModels={manager.codexRawModels}

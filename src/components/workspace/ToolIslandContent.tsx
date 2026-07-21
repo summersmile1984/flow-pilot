@@ -14,7 +14,6 @@ import { BrowserPanel } from "@/components/BrowserPanel";
 import { GitPanel } from "@/components/git/GitPanel";
 import { FilesPanel } from "@/components/FilesPanel";
 import { ProjectFilesPanel } from "@/components/ProjectFilesPanel";
-import { PreviewPanel } from "@/components/PreviewPanel";
 import { McpPanel } from "@/components/McpPanel";
 import type { PanelToolId, EngineId, McpServerConfig, McpServerStatus, UIMessage, GrabbedElement } from "@/types";
 import type { TerminalTab } from "@/lib/terminal-tabs";
@@ -52,7 +51,6 @@ export interface ToolIslandContentProps {
   onElementGrab?: (element: GrabbedElement) => void;
   onScrollToToolCall?: (messageId: string) => void;
   onPreviewFile?: (path: string, rect: DOMRect) => void;
-  previewFilePath?: string | null;
   collapsedRepos: Set<string>;
   onToggleRepoCollapsed: (path: string) => void;
   // MCP panel
@@ -87,7 +85,6 @@ export function ToolIslandContent({
   onElementGrab,
   onScrollToToolCall,
   onPreviewFile,
-  previewFilePath,
   collapsedRepos,
   onToggleRepoCollapsed,
   mcpServerStatuses,
@@ -149,13 +146,6 @@ export function ToolIslandContent({
           cwd={projectPath}
           enabled={true}
           onPreviewFile={onPreviewFile}
-          headerControls={headerControls}
-        />
-      );
-    case "preview":
-      return (
-        <PreviewPanel
-          filePath={previewFilePath ?? null}
           headerControls={headerControls}
         />
       );

@@ -53,8 +53,6 @@ export interface ToolIslandContextProps {
   onElementGrab?: (element: GrabbedElement) => void;
   onScrollToToolCall?: (messageId: string) => void;
   onPreviewFile?: (path: string, rect: DOMRect) => void;
-  /** File currently shown in the Preview island (null = empty state). */
-  previewFilePath?: string | null;
   collapsedRepos: Set<string>;
   onToggleRepoCollapsed: (path: string) => void;
   mcpServerStatuses: McpServerStatus[];
