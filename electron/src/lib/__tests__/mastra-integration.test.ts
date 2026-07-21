@@ -45,13 +45,23 @@ async function parseConfigFromDir(dir: string) {
 describe('SkillManager', () => {
   let skillManager: SkillManager;
   let tmpDir: string;
+  let realHome: string | undefined;
 
   beforeEach(async () => {
     tmpDir = await fs.mkdtemp(path.join(os.tmpdir(), 'pilot-test-'));
+    // Isolate the global scope (~/.pilot/skills) from the real machine, and
+    // pre-write the seed marker so bundled starter skills don't get seeded
+    // into the fake home mid-test.
+    realHome = process.env.HOME;
+    process.env.HOME = path.join(tmpDir, '.pilot-home');
+    const globalSkills = path.join(process.env.HOME, '.pilot', 'skills');
+    await fs.mkdir(globalSkills, { recursive: true });
+    await fs.writeFile(path.join(globalSkills, '.builtin-seeded'), '999');
     skillManager = new SkillManager(tmpDir);
   });
 
   afterEach(async () => {
+    process.env.HOME = realHome;
     await fs.rm(tmpDir, { recursive: true, force: true });
   });
 

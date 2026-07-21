@@ -1,6 +1,7 @@
 import fs from 'fs/promises';
 import path from 'path';
 import { log } from './logger';
+import { seedBuiltinSkills } from './builtin-skills';
 
 export interface SkillInfo {
   name: string;
@@ -20,6 +21,9 @@ export class SkillManager {
   }
 
   async discoverSkills(): Promise<SkillInfo[]> {
+    // First discovery on a fresh install seeds the bundled starter skills
+    // into the global dir (idempotent; never overwrites or resurrects).
+    await seedBuiltinSkills();
     const skills: SkillInfo[] = [];
     if (this.projectPath) {
       skills.push(...await this.scanSkillDir(path.join(this.projectPath, '.pilot', 'skills'), 'project'));
