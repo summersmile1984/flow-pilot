@@ -33,6 +33,7 @@ import type { ToolId } from "@/types/tools";
 import { WelcomeScreen } from "./WelcomeScreen";
 import { WelcomeWizard } from "./welcome/WelcomeWizard";
 import { PanelDockPreview } from "./PanelDockPreview";
+import { PreviewPane } from "./PreviewPane";
 import { SettingsView } from "./SettingsView";
 import { CodexAuthDialog } from "./CodexAuthDialog";
 import { ACPAuthDialog } from "./ACPAuthDialog";
@@ -141,7 +142,9 @@ export function AppLayout() {
     clearGrabbedElements,
     handleElementGrab,
     handleRemoveGrabbedElement,
+    previewFile,
     handlePreviewFile,
+    handleClosePreview,
   } = layoutUI;
 
   const jiraBoard = useJiraBoard({
@@ -1090,6 +1093,9 @@ export function AppLayout() {
   // Options come from the saved LLM providers (Settings → Engines). Each entry
   // is a provider/model pair encoded as `providerId::model`, carried through
   // the existing model plumbing (session.model / mastra:start).
+  // Width of the right-anchored file preview pane (persisted for the session).
+  const [previewPaneWidth, setPreviewPaneWidth] = useState(640);
+
   const [mastraProviders, setMastraProviders] = useState<LlmProvider[]>([]);
   const reloadProviders = useCallback(() => {
     void window.pilot?.mastra?.listProviders().then((res) => {
@@ -1883,6 +1889,18 @@ export function AppLayout() {
             </motion.div>
           )}
           </>
+          )}
+          {/* Right-anchored, resizable file preview pane (opened from Project
+              Files) — large and dockable without covering the chat. */}
+          {previewFile && (
+            <PreviewPane
+              filePath={previewFile.path}
+              width={previewPaneWidth}
+              onWidthChange={setPreviewPaneWidth}
+              onClose={handleClosePreview}
+              minWidth={360}
+              maxWidth={Math.max(360, (topRowRef.current?.clientWidth ?? window.innerWidth) - 360)}
+            />
           )}
         </div>{/* end top row */}
 
