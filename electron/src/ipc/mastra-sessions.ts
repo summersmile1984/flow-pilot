@@ -1,6 +1,6 @@
 import { BrowserWindow, ipcMain } from "electron";
-import { initMastraService, destroyMastraService, getPilotConfig, DEFAULT_SUPERVISOR_MODELS, type AgentMode } from "../lib/mastra-service";
-import { loadLlmProviders, saveLlmProvider, deleteLlmProvider } from "../lib/llm-provider-store";
+import { initMastraService, destroyMastraService, getPilotConfig, loadEnvFile, DEFAULT_SUPERVISOR_MODELS, type AgentMode } from "../lib/mastra-service";
+import { loadLlmProviders, saveLlmProvider, deleteLlmProvider, fetchModelsFromEndpoint } from "../lib/llm-provider-store";
 import type { LlmProvider } from "@shared/types/llm-provider";
 import type { McpServerInput } from "@shared/lib/mcp-config";
 import { log } from "../lib/logger";
@@ -67,6 +67,22 @@ export function register(getMainWindow: () => BrowserWindow | null): void {
       return { success: false, error: String(err) };
     }
   });
+
+  // List models from a provider's OpenAI-compatible /models endpoint. A blank
+  // key falls back to the environment (.env) so the seeded DeepSeek can fetch.
+  ipcMain.handle(
+    "mastra:fetchProviderModels",
+    async (_e, { baseUrl, apiKey, providerId }: { baseUrl: string; apiKey: string; providerId?: string }) => {
+      try {
+        loadEnvFile();
+        const key = apiKey?.trim() || process.env.DEEPSEEK_API_KEY || process.env.OPENAI_API_KEY || "";
+        const models = await fetchModelsFromEndpoint(baseUrl, key, providerId);
+        return { success: true, models };
+      } catch (err) {
+        return { success: false, error: err instanceof Error ? err.message : String(err) };
+      }
+    },
+  );
 
   ipcMain.handle("mastra:abort", async () => {
     if (currentSession) currentSession.abort();

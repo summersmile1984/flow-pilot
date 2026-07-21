@@ -74,6 +74,38 @@ export function deleteLlmProvider(id: string): LlmProvider[] {
   return cached;
 }
 
+/** Well-known base URLs so a seeded provider can fetch models without one typed. */
+const KNOWN_BASE_URLS: Record<string, string> = {
+  deepseek: "https://api.deepseek.com",
+  openai: "https://api.openai.com/v1",
+  moonshot: "https://api.moonshot.cn/v1",
+  openrouter: "https://openrouter.ai/api/v1",
+};
+
+/**
+ * List models from an OpenAI-compatible `/models` endpoint. `providerId` only
+ * supplies a default base URL when `baseUrl` is blank (e.g. the seeded
+ * DeepSeek provider). Returns the model ids from the `data[]` array.
+ */
+export async function fetchModelsFromEndpoint(
+  baseUrl: string,
+  apiKey: string,
+  providerId?: string,
+): Promise<string[]> {
+  const base = (baseUrl.trim() || (providerId ? KNOWN_BASE_URLS[providerId] : "") || "").replace(/\/+$/, "");
+  if (!base) throw new Error("Enter a base URL to fetch models");
+  const url = base.endsWith("/models") ? base : `${base}/models`;
+  const res = await fetch(url, {
+    headers: apiKey ? { Authorization: `Bearer ${apiKey}` } : {},
+    signal: AbortSignal.timeout(15_000),
+  });
+  if (!res.ok) throw new Error(`HTTP ${res.status} ${res.statusText || ""}`.trim());
+  const json = (await res.json()) as { data?: Array<{ id?: string }> };
+  const ids = (json.data ?? []).map((m) => m.id).filter((x): x is string => !!x);
+  if (ids.length === 0) throw new Error("Endpoint returned no models");
+  return [...new Set(ids)].sort();
+}
+
 /**
  * Resolve a compound `providerId::modelId` selection to the provider and model.
  * Falls back to the first provider / its first model for unknown or bare input.

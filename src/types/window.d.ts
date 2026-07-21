@@ -474,6 +474,7 @@ declare global {
         listProviders: () => Promise<{ success: boolean; providers?: LlmProvider[]; error?: string }>;
         saveProvider: (provider: LlmProvider) => Promise<{ success: boolean; providers?: LlmProvider[]; error?: string }>;
         deleteProvider: (id: string) => Promise<{ success: boolean; providers?: LlmProvider[]; error?: string }>;
+        fetchProviderModels: (options: { baseUrl: string; apiKey: string; providerId?: string }) => Promise<{ success: boolean; models?: string[]; error?: string }>;
         onEvent: (callback: (event: unknown) => void) => () => void;
       };
       skills: {

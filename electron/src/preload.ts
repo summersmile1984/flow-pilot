@@ -441,6 +441,8 @@ contextBridge.exposeInMainWorld("pilot", {
     listProviders: () => ipcRenderer.invoke("mastra:listProviders"),
     saveProvider: (provider: unknown) => ipcRenderer.invoke("mastra:saveProvider", provider),
     deleteProvider: (id: string) => ipcRenderer.invoke("mastra:deleteProvider", id),
+    fetchProviderModels: (options: { baseUrl: string; apiKey: string; providerId?: string }) =>
+      ipcRenderer.invoke("mastra:fetchProviderModels", options),
     onEvent: (callback: (event: unknown) => void) => {
       const handler = (_event: IpcRendererEvent, data: unknown) => callback(data);
       ipcRenderer.on("mastra:event", handler);

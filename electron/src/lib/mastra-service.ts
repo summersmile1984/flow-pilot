@@ -78,7 +78,7 @@ function controllerKey(options: InitOptions): string {
 
 // Model API keys live in <app root>/.env (gitignored). The GUI-launched app
 // doesn't inherit shell env vars, so load them ourselves.
-function loadEnvFile(): void {
+export function loadEnvFile(): void {
   const envPath = path.join(app.getAppPath(), '.env');
   if (!fs.existsSync(envPath)) return;
   for (const line of fs.readFileSync(envPath, 'utf-8').split('\n')) {

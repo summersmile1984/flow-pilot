@@ -1,5 +1,5 @@
 import { useState, useEffect, useCallback } from "react";
-import { Plus, Trash2, Pencil, Check, X } from "lucide-react";
+import { Plus, Trash2, Pencil, Check, X, RefreshCw, Loader2 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import type { LlmProvider } from "@shared/types/llm-provider";
 
@@ -137,6 +137,30 @@ interface ProviderFormProps {
 }
 
 function ProviderForm({ draft, setDraft, onSave, onCancel, field }: ProviderFormProps) {
+  const [fetching, setFetching] = useState(false);
+  const [fetchError, setFetchError] = useState<string | null>(null);
+
+  const fetchModels = async () => {
+    setFetching(true);
+    setFetchError(null);
+    try {
+      const res = await window.pilot.mastra.fetchProviderModels({
+        baseUrl: draft.baseUrl,
+        apiKey: draft.apiKey,
+        providerId: draft.id || undefined,
+      });
+      if (res.success && res.models) {
+        setDraft({ ...draft, models: res.models.join("\n") });
+      } else {
+        setFetchError(res.error ?? "Failed to fetch models");
+      }
+    } catch (err) {
+      setFetchError(String(err));
+    } finally {
+      setFetching(false);
+    }
+  };
+
   return (
     <div className="flex flex-col gap-2.5">
       {field("Name", (
@@ -151,10 +175,20 @@ function ProviderForm({ draft, setDraft, onSave, onCancel, field }: ProviderForm
         <input className={INPUT_CLASS} type="password" value={draft.apiKey} placeholder="sk-… (uses .env if blank)" autoComplete="off" spellCheck={false}
           onChange={(e) => setDraft({ ...draft, apiKey: e.target.value })} />
       ))}
-      {field("Models", (
+      <div className="flex flex-col gap-1">
+        <div className="flex items-center justify-between">
+          <label className="text-xs font-medium text-foreground">Models</label>
+          <Button size="xs" variant="ghost" disabled={fetching} onClick={fetchModels} className="h-6 gap-1 text-[11px]">
+            {fetching ? <Loader2 className="h-3 w-3 animate-spin" /> : <RefreshCw className="h-3 w-3" />}
+            {fetching ? "Fetching…" : "Fetch from API"}
+          </Button>
+        </div>
         <textarea className={`${INPUT_CLASS} h-auto min-h-16 py-1.5`} value={draft.models} placeholder={"deepseek-chat\ndeepseek-reasoner"} spellCheck={false}
           onChange={(e) => setDraft({ ...draft, models: e.target.value })} />
-      ), "One model id per line.")}
+        {fetchError
+          ? <span className="text-[10px] text-red-500">{fetchError}</span>
+          : <span className="text-[10px] text-muted-foreground">One model id per line, or fetch from the provider's /models endpoint.</span>}
+      </div>
       <div className="flex justify-end gap-2 pt-0.5">
         <Button size="sm" variant="ghost" onClick={onCancel} className="h-8 gap-1 text-xs">
           <X className="h-3.5 w-3.5" /> Cancel
