@@ -78,6 +78,12 @@ export interface StreamingACPToolOptions {
   cwd: string;
   /** Model to select on the ACP session (session/set_model), when supported. */
   model?: string;
+  /**
+   * Prepended to every task before it reaches the ACP agent (e.g. the
+   * delegation-protocol header for a lead agent). Injected in code so the
+   * relay model doesn't have to reproduce it verbatim.
+   */
+  taskPrefix?: string;
 }
 
 /**
@@ -135,7 +141,8 @@ export function createStreamingACPTool(options: StreamingACPToolOptions) {
       };
 
       const chunks: string[] = [];
-      for await (const event of acpAgent.connection.promptStream(task, context?.abortSignal)) {
+      const fullTask = options.taskPrefix ? options.taskPrefix + task : task;
+      for await (const event of acpAgent.connection.promptStream(fullTask, context?.abortSignal)) {
         if (event.type === 'text') {
           chunks.push(event.text);
           await report({ kind: 'text', text: event.text });

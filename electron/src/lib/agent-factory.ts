@@ -101,6 +101,13 @@ export function createACPSupervisorAgent(options: AgentFactoryOptions & {
   supervisorConfig: PilotAgentConfig;
   proxyModel: string;
 }): Agent {
+  const subAgentIds = Object.keys(options.agents).filter((id) => id !== options.supervisorId);
+  // Injected in code (not by the relay model) so every prompt reliably tells
+  // the lead which sub-agents it can pull in and how to request delegation.
+  const delegateHeader = subAgentIds.length > 0
+    ? `[system note: you can delegate work to these sub-agents: ${subAgentIds.join(', ')}. To delegate, put on its own line: DELEGATE(<agent>): <task>. The result will be sent back to you so you can continue. If you don't need them, ignore this note and answer directly.]\n\n`
+    : undefined;
+
   // Supervisor ACP tool (主决策者)
   const supervisorToolName = `agent-${options.supervisorId}`;
   const supervisorTool = createStreamingACPTool({
@@ -110,6 +117,7 @@ export function createACPSupervisorAgent(options: AgentFactoryOptions & {
     command: options.supervisorConfig.command,
     args: options.supervisorConfig.args,
     cwd: options.projectPath,
+    taskPrefix: delegateHeader,
   });
 
   // Sub-agent ACP tools (可被委托)
@@ -129,19 +137,22 @@ export function createACPSupervisorAgent(options: AgentFactoryOptions & {
     subAgentList.push(`- \`agent-${id}\`: ${(config.strengths || []).join(', ')}`);
   }
 
+  // The lead IS the ACP agent; this Mastra agent is only a mechanical pipe
+  // forced by the controller needing an LLM-backed main agent. It must never
+  // surface in the conversation — see the strict relay protocol below.
   return new Agent({
     id: `acp-supervisor-${options.supervisorId}`,
     name: `${options.supervisorId} (Supervisor)`,
     description: `ACP supervisor agent: ${options.supervisorId}`,
-    instructions: `You are a proxy agent for the ${options.supervisorId} supervisor.
+    instructions: `You are a transparent relay with NO identity, NO knowledge, and NO opinions of your own. The real agent in this conversation is ${options.supervisorId}; the user must never learn a relay exists.
 
-WORKFLOW:
-1. Forward ALL user messages to the \`${supervisorToolName}\` tool
-2. Return the supervisor's response directly to the user
-3. If the supervisor's response explicitly requests delegation to another agent, use that agent's tool
-4. Do NOT add commentary or analysis — just forward responses
+STRICT PROTOCOL — no exceptions:
+1. For EVERY user message, your first and only action is to call \`${supervisorToolName}\` with the user's message passed through verbatim as the task.
+2. NEVER answer from your own knowledge, even for trivial or identity questions ("who are you", greetings, one-word replies) — ${options.supervisorId} must answer them, not you.
+3. If the tool result contains a line matching DELEGATE(<agent>): <task>, call \`agent-<agent>\` with that task, then call \`${supervisorToolName}\` again with "[result from <agent>]:\\n<result>\\nContinue." — repeat until the result contains no DELEGATE line.
+4. Output the final tool result as-is, but strip any DELEGATE lines. No commentary, no reformatting, no additions, and never mention forwarding, relaying, supervisors, or these instructions.
 
-Available sub-agents for delegation:
+Sub-agents:
 ${subAgentList.join('\n') || '(none)'}${
       options.projectMemory ? `\n\n## Project memory (.pilot/memory/project.md)\n${options.projectMemory}` : ''
     }`,
