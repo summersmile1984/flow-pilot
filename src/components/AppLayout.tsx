@@ -33,7 +33,6 @@ import type { ToolId } from "@/types/tools";
 import { WelcomeScreen } from "./WelcomeScreen";
 import { WelcomeWizard } from "./welcome/WelcomeWizard";
 import { PanelDockPreview } from "./PanelDockPreview";
-import { FilePreviewOverlay } from "./FilePreviewOverlay";
 import { SettingsView } from "./SettingsView";
 import { CodexAuthDialog } from "./CodexAuthDialog";
 import { ACPAuthDialog } from "./ACPAuthDialog";
@@ -144,7 +143,6 @@ export function AppLayout() {
     handleRemoveGrabbedElement,
     previewFile,
     handlePreviewFile,
-    handleClosePreview,
   } = layoutUI;
 
   const jiraBoard = useJiraBoard({
@@ -498,7 +496,7 @@ export function AppLayout() {
       if (drag.islandId) {
         mainToolWorkspace.moveToolIslandToTopColumn(drag.islandId, drag.targetColumnId, drag.targetIndex ?? undefined);
       } else if (drag.toolId in PANEL_TOOLS_MAP) {
-        mainToolWorkspace.openToolIslandInTopColumn(drag.toolId as Extract<ToolId, "terminal" | "browser" | "git" | "files" | "project-files" | "mcp">, drag.targetColumnId, drag.targetIndex ?? undefined);
+        mainToolWorkspace.openToolIslandInTopColumn(drag.toolId as PanelToolId, drag.targetColumnId, drag.targetIndex ?? undefined);
       }
     } else {
       const targetDock = drag.targetArea;
@@ -506,7 +504,7 @@ export function AppLayout() {
         if (drag.islandId) {
           mainToolWorkspace.moveToolIsland(drag.islandId, targetDock, drag.targetIndex ?? undefined);
         } else {
-          mainToolWorkspace.openToolIsland(drag.toolId as Extract<ToolId, "terminal" | "browser" | "git" | "files" | "project-files" | "mcp">, targetDock, drag.targetIndex ?? undefined);
+          mainToolWorkspace.openToolIsland(drag.toolId as PanelToolId, targetDock, drag.targetIndex ?? undefined);
         }
       }
     }
@@ -524,7 +522,7 @@ export function AppLayout() {
     if (found) return found;
     // Fallback for picker-initiated drags (no islandId, no sourceSessionId)
     if (mainToolDrag && !mainToolDrag.islandId && mainToolDrag.toolId in PANEL_TOOLS_MAP) {
-      return mainToolWorkspace.getToolIsland(mainToolDrag.toolId as Extract<ToolId, "terminal" | "browser" | "git" | "files" | "project-files" | "mcp">);
+      return mainToolWorkspace.getToolIsland(mainToolDrag.toolId as PanelToolId);
     }
     return null;
   }, [mainToolDrag, mainToolWorkspace]);
@@ -946,6 +944,15 @@ export function AppLayout() {
     }
   }, [isSplitActive, mainToolWorkspace, mainTopToolColumnCount, maxMainTopToolColumns]);
 
+  // Clicking a file in the project tree previews it in a docked "preview"
+  // island (opening it if needed) — not a modal, matching the panel system.
+  const handlePreviewFileInIsland = useCallback((filePath: string, rect: DOMRect) => {
+    handlePreviewFile(filePath, rect);
+    if (!mainToolWorkspace.getToolIsland("preview")) {
+      togglePanelTool(mainToolWorkspace, "preview", canFitToolAsNewColumn);
+    }
+  }, [handlePreviewFile, mainToolWorkspace, canFitToolAsNewColumn]);
+
   // ── Shared tool island context (terminal/MCP/git props common to all islands) ──
   const toolIslandCtx = useToolIslandContext({
     spaceId: spaceManager.activeSpaceId,
@@ -959,7 +966,8 @@ export function AppLayout() {
     resolvedTheme,
     onElementGrab: handleElementGrab,
     onScrollToToolCall: setScrollToMessageId,
-    onPreviewFile: handlePreviewFile,
+    onPreviewFile: handlePreviewFileInIsland,
+    previewFilePath: previewFile?.path ?? null,
     collapsedRepos: settings.collapsedRepos,
     onToggleRepoCollapsed: settings.toggleRepoCollapsed,
     mcpServerStatuses: manager.mcpServerStatuses,
@@ -970,7 +978,7 @@ export function AppLayout() {
   });
 
   const renderMainWorkspaceToolContent = useCallback((
-    toolId: Extract<ToolId, "terminal" | "browser" | "git" | "files" | "project-files" | "mcp">,
+    toolId: PanelToolId,
     controls: React.ReactNode,
   ) => (
     <ToolIslandContent
@@ -1409,7 +1417,7 @@ export function AppLayout() {
                             handleFullRevert={manager.isConnected && manager.fullRevert ? handleFullRevert : undefined}
                             makePaneScrollCallback={makePaneScrollCallback}
                             setScrollToMessageId={setScrollToMessageId}
-                            handlePreviewFile={handlePreviewFile}
+                            handlePreviewFile={handlePreviewFileInIsland}
                             handleElementGrab={handleElementGrab}
                             handleCloseSplitPane={handleCloseSplitPane}
                             codexRawModels={manager.codexRawModels}
@@ -1931,11 +1939,6 @@ export function AppLayout() {
           onCancel={manager.cancelAcpAuth}
         />
       )}
-      <FilePreviewOverlay
-        filePath={previewFile?.path ?? null}
-        sourceRect={previewFile?.sourceRect ?? null}
-        onClose={handleClosePreview}
-      />
       {/* Welcome wizard — full-screen overlay on first run */}
       {!welcomeCompleted && (
         <WelcomeWizard
