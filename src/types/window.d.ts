@@ -436,12 +436,13 @@ declare global {
           supervisorAgentId?: string;
           permissionMode?: string;
           mcpServers?: McpServerConfig[];
+          model?: string;
         }) => Promise<{ sessionId?: string; error?: string }>;
         send: (
           sessionId: string,
           content: string,
           cwd?: string,
-          resume?: { mode?: "supervisor" | "direct" | "acp-supervisor"; agentId?: string; permissionMode?: string; mcpServers?: McpServerConfig[] },
+          resume?: { mode?: "supervisor" | "direct" | "acp-supervisor"; agentId?: string; permissionMode?: string; mcpServers?: McpServerConfig[]; model?: string },
         ) => Promise<{ ok?: boolean; error?: string }>;
         abort: () => Promise<{ success: boolean }>;
         switchMode: (modeId: string) => Promise<{ success: boolean; error?: string }>;

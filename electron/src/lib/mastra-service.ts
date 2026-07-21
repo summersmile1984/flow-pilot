@@ -28,9 +28,14 @@ export interface PilotAgentConfig {
 export interface PilotConfig {
   supervisor?: {
     model?: string;
+    /** Selectable model list shown in the engine picker (config.yaml). */
+    models?: string[];
   };
   agents?: Record<string, PilotAgentConfig>;
 }
+
+/** Fallback picker list when config.yaml doesn't define supervisor.models. */
+export const DEFAULT_SUPERVISOR_MODELS = ['deepseek/deepseek-chat', 'deepseek/deepseek-reasoner'];
 
 function loadPilotConfig(projectPath: string): PilotConfig {
   try {
@@ -64,7 +69,9 @@ function controllerKey(options: InitOptions): string {
     : mode === 'acp-supervisor'
       ? options.supervisorAgentId || 'opencode'
       : '-';
-  return `${options.projectPath}::${mode}::${agentPart}`;
+  // Model is part of the identity: sessions on different supervisor models
+  // must not share a controller (its agent bakes the model in).
+  return `${options.projectPath}::${mode}::${agentPart}::${options.modelOverride || 'default'}`;
 }
 
 // Model API keys live in <app root>/.env (gitignored). The GUI-launched app
@@ -102,9 +109,17 @@ export async function initMastraService(projectPathOrOptions: string | InitOptio
 
   loadEnvFile();
 
-  // Load config.yaml and resolve supervisor model
+  // Load config.yaml and resolve supervisor model. Only honor a requested
+  // override that's a known supervisor model — this guards against a foreign
+  // value (e.g. a leftover Claude model in the mastra settings slot) reaching
+  // the deepseek provider and breaking the run.
   const config = loadPilotConfig(options.projectPath);
-  const supervisorModel = options.modelOverride || config.supervisor?.model || 'deepseek/deepseek-chat';
+  const allowedModels = config.supervisor?.models?.length ? config.supervisor.models : DEFAULT_SUPERVISOR_MODELS;
+  const defaultModel = config.supervisor?.model || allowedModels[0] || 'deepseek/deepseek-chat';
+  const requested = options.modelOverride;
+  const supervisorModel = (requested && (allowedModels.includes(requested) || requested === defaultModel))
+    ? requested
+    : defaultModel;
   const mode = options.mode || 'supervisor';
   log('mastra-service', `Initializing in ${mode} mode with model: ${supervisorModel}`);
 

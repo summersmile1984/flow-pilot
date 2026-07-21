@@ -87,6 +87,12 @@ export interface InputBarProps {
   mastraModeLoading?: boolean;
   /** True when picking a different mode opens a new chat (mode is per-chat). */
   mastraModeOpensNewChat?: boolean;
+  /** Selectable Pilot supervisor models (from .pilot/config.yaml). */
+  mastraModels?: string[];
+  /** Currently selected Pilot supervisor model. */
+  selectedMastraModel?: string;
+  /** Callback when the Pilot supervisor model changes. */
+  onMastraModelChange?: (model: string) => void;
   /** Slash commands available for the current engine session */
   slashCommands?: SlashCommand[];
   acpConfigOptions?: ACPConfigOption[];
@@ -148,6 +154,9 @@ export const InputBar = memo(function InputBar({
   onMastraModeChange,
   mastraModeLoading,
   mastraModeOpensNewChat,
+  mastraModels,
+  selectedMastraModel,
+  onMastraModelChange,
   slashCommands,
   acpConfigOptions,
   acpConfigOptionsLoading,
@@ -929,6 +938,9 @@ export const InputBar = memo(function InputBar({
               onMastraModeChange={onMastraModeChange}
               mastraModeLoading={mastraModeLoading}
               mastraModeOpensNewChat={mastraModeOpensNewChat}
+              mastraModels={mastraModels}
+              selectedMastraModel={selectedMastraModel}
+              onMastraModelChange={onMastraModelChange}
               selectedModelId={selectedModelId}
               selectedModelLabel={selectedModel?.label ?? ""}
               modelList={modelList}

@@ -69,6 +69,10 @@ export interface EnginePickerDropdownProps {
   mastraModeLoading?: boolean;
   /** True when picking a different mode opens a new chat (mode is per-chat). */
   mastraModeOpensNewChat?: boolean;
+  // Pilot supervisor model
+  mastraModels?: string[];
+  selectedMastraModel?: string;
+  onMastraModelChange?: (model: string) => void;
   // Model state
   selectedModelId: string;
   selectedModelLabel: string;
@@ -110,6 +114,9 @@ export const EnginePickerDropdown = memo(function EnginePickerDropdown({
   onMastraModeChange,
   mastraModeLoading,
   mastraModeOpensNewChat,
+  mastraModels,
+  selectedMastraModel,
+  onMastraModelChange,
   selectedModelId,
   selectedModelLabel,
   modelList,
@@ -289,6 +296,34 @@ export const EnginePickerDropdown = memo(function EnginePickerDropdown({
         </DropdownMenuItem>
       )}
 
+      {/* Pilot supervisor model list (from .pilot/config.yaml). */}
+      {isMastraAgent && mastraModels && mastraModels.length > 0 && onMastraModelChange && (
+        <>
+          <div className="px-2 py-1 text-[10px] font-medium text-muted-foreground">
+            Supervisor model
+          </div>
+          {mastraModels.map((m) => (
+            <DropdownMenuItem
+              key={m}
+              onClick={() => onMastraModelChange(m)}
+              className={m === selectedMastraModel ? "bg-accent" : ""}
+            >
+              <div>
+                <div className="flex items-center gap-2">
+                  <span>{m.split("/").pop()}</span>
+                  {m === selectedMastraModel && (
+                    <span className="text-[10px] text-muted-foreground">Current</span>
+                  )}
+                </div>
+                {m.includes("/") && (
+                  <div className="text-[10px] text-muted-foreground">{m}</div>
+                )}
+              </div>
+            </DropdownMenuItem>
+          ))}
+        </>
+      )}
+
       {/* Mastra mode options. With a single visible mode there is nothing to
           switch, so the whole section disappears (hidden entries are retired
           modes kept only for old chats' badges/resume). */}
@@ -364,6 +399,7 @@ export const EnginePickerDropdown = memo(function EnginePickerDropdown({
           · {mastraModeOptions?.find((o) => o.id === selectedMastraMode)?.short
             ?? mastraModeOptions?.find((o) => o.id === selectedMastraMode)?.label
             ?? "Supervisor"}
+          {selectedMastraModel && ` · ${selectedMastraModel.split("/").pop()}`}
         </span>
       )}
       {!isACPAgent && !isMastraAgent && !modelsLoading && selectedModelLabel && (
@@ -418,10 +454,11 @@ export const EnginePickerDropdown = memo(function EnginePickerDropdown({
     mastra: "DeepSeek routes work to OpenCode & Codex",
   };
 
-  // Pilot's submenu carries only the mode switcher; with a single live mode
-  // there is nothing to configure, so the current Pilot entry renders as a
-  // plain highlighted item instead of an empty submenu.
+  // Pilot's submenu carries the supervisor model list and (when more than one
+  // is live) the mode switcher. If neither offers a choice, the current Pilot
+  // entry renders as a plain highlighted item instead of an empty submenu.
   const mastraHasSubmenuContent =
+    (mastraModels?.length ?? 0) > 0 ||
     (mastraModeOptions?.filter((o) => !o.hidden).length ?? 0) > 1;
 
   const renderAgent = (agent: InstalledAgent, isCrossEngine: boolean) => {

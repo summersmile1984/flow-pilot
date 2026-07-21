@@ -568,6 +568,9 @@ export function useDraftMaterialization({
         if (options.permissionMode) {
           mastraStartOptions.permissionMode = options.permissionMode;
         }
+        if (options.model) {
+          mastraStartOptions.model = options.model;
+        }
         // Project MCP servers flow to the Pilot subagents, same as ACP chats
         try {
           const mcpServers = await window.claude.mcp.list(project.id);

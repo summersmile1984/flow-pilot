@@ -1,5 +1,11 @@
 supervisor:
+  # Default model for the Pilot supervisor.
   model: deepseek/deepseek-chat
+  # Models offered in the engine picker's Pilot submenu. Omit to fall back to
+  # the built-in list (deepseek-chat, deepseek-reasoner).
+  models:
+    - deepseek/deepseek-chat
+    - deepseek/deepseek-reasoner
 
 agents:
   opencode:

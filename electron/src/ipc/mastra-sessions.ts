@@ -1,5 +1,5 @@
 import { BrowserWindow, ipcMain } from "electron";
-import { initMastraService, destroyMastraService, getPilotConfig, type AgentMode } from "../lib/mastra-service";
+import { initMastraService, destroyMastraService, getPilotConfig, DEFAULT_SUPERVISOR_MODELS, type AgentMode } from "../lib/mastra-service";
 import type { McpServerInput } from "@shared/lib/mcp-config";
 import { log } from "../lib/logger";
 import { safeSend } from "../lib/safe-send";
@@ -57,6 +57,7 @@ export function register(getMainWindow: () => BrowserWindow | null): void {
     supervisorAgentId?: string,
     permissionMode?: string,
     mcpServers?: McpServerInput[],
+    model?: string,
   ): Promise<Session> {
     const existing = sessions.get(sessionId);
     if (existing) return existing;
@@ -72,6 +73,7 @@ export function register(getMainWindow: () => BrowserWindow | null): void {
       directAgentId: effectiveDirectAgentId,
       supervisorAgentId: effectiveSupervisorAgentId,
       mcpServers,
+      modelOverride: model,
     });
     const session = await ac.createSession({
       id: sessionId,
@@ -126,8 +128,9 @@ export function register(getMainWindow: () => BrowserWindow | null): void {
     supervisorAgentId?: string;
     permissionMode?: string;
     mcpServers?: McpServerInput[];
+    model?: string;
   }) => {
-    log("mastra-ipc", `mastra:start called with cwd=${options.cwd}, mode=${options.mode || 'supervisor'}`);
+    log("mastra-ipc", `mastra:start called with cwd=${options.cwd}, mode=${options.mode || 'supervisor'}${options.model ? `, model=${options.model}` : ''}`);
     try {
       const requestedId = `mastra-${Date.now()}-${Math.random().toString(36).slice(2, 8)}`;
       const session = await ensureSession(
@@ -138,6 +141,7 @@ export function register(getMainWindow: () => BrowserWindow | null): void {
         options.supervisorAgentId,
         options.permissionMode,
         options.mcpServers,
+        options.model,
       );
       const sessionId = session.identity.getId();
       log("mastra-ipc", `Session created: ${sessionId} (requested ${requestedId})`);
@@ -152,7 +156,7 @@ export function register(getMainWindow: () => BrowserWindow | null): void {
     sessionId: string;
     content: string;
     cwd?: string;
-    resume?: { mode?: AgentMode; agentId?: string; permissionMode?: string; mcpServers?: McpServerInput[] };
+    resume?: { mode?: AgentMode; agentId?: string; permissionMode?: string; mcpServers?: McpServerInput[]; model?: string };
   }) => {
     log("mastra-ipc", `mastra:send called with sessionId=${sessionId}, content=${content.substring(0, 50)}...`);
     let session = getSession(sessionId);
@@ -168,6 +172,7 @@ export function register(getMainWindow: () => BrowserWindow | null): void {
           resume?.mode === "acp-supervisor" ? resume?.agentId : undefined,
           resume?.permissionMode,
           resume?.mcpServers,
+          resume?.model,
         );
         log("mastra-ipc", `Session resumed: ${sessionId} (mode=${resume?.mode ?? currentMode})`);
       } catch (err) {
@@ -312,7 +317,19 @@ export function register(getMainWindow: () => BrowserWindow | null): void {
   ipcMain.handle("mastra:getConfig", async (_event, cwd: string) => {
     try {
       const config = getPilotConfig(cwd);
-      return { success: true, config };
+      // Resolve the selectable supervisor model list so the picker always has
+      // options even when config.yaml doesn't define supervisor.models.
+      const models = config.supervisor?.models?.length
+        ? config.supervisor.models
+        : DEFAULT_SUPERVISOR_MODELS;
+      const defaultModel = config.supervisor?.model || models[0];
+      return {
+        success: true,
+        config: {
+          ...config,
+          supervisor: { ...config.supervisor, model: defaultModel, models },
+        },
+      };
     } catch (err) {
       return { success: false, error: String(err) };
     }

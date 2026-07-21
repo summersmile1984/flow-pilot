@@ -456,6 +456,7 @@ export function useSessionLifecycle({
             mode: activeSession?.mastraMode,
             agentId: activeSession?.mastraAgentId,
             permissionMode: activeSession?.permissionMode,
+            model: activeSession?.model,
           };
           // MCP servers only matter when the backend session is being rebuilt
           // (post-restart); harmless extra payload otherwise.
