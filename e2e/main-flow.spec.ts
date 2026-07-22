@@ -13,7 +13,9 @@ test.beforeAll(async () => {
 
   electronApp = await electron.launch({
     args: [path.join(__dirname, '..')],
-    env: { ...process.env, PILOT_DEV_PORT: '5180' },
+    // Honor an ambient PILOT_DEV_PORT so this file and electron.spec.ts always
+    // target the same dev server; 5180 is the fallback for a standalone run.
+    env: { ...process.env, PILOT_DEV_PORT: process.env.PILOT_DEV_PORT || '5180' },
     timeout: 30000,
   });
   page = await electronApp.firstWindow();
@@ -243,9 +245,37 @@ test('should find and open engine picker', async () => {
 test('should have no Harnss references in UI', async () => {
   const bodyText = await page.locator('body').textContent() || '';
   const hasHarnss = bodyText.includes('Harnss');
-  
+
   console.log('Has Harnss in UI:', hasHarnss);
-  
+
   // Should not have Harnss
   expect(hasHarnss).toBe(false);
+});
+
+// ══════════════════════════════════════════════════════════
+// 8. Preload API surface
+// ══════════════════════════════════════════════════════════
+
+// Reads the real preload bridge — never stub window.pilot/window.claude here.
+// Asserting against an injected mock only proves the mock exists, which is how
+// the deleted mastra-*.spec.ts files managed to pass while testing nothing.
+test('preload should expose the pilot and claude bridges', async () => {
+  const api = await page.evaluate(() => {
+    const pilot = (window as globalThis.Window & { pilot?: Record<string, any> }).pilot;
+    const claude = (window as globalThis.Window & { claude?: Record<string, any> }).claude;
+    return {
+      mastraStart: typeof pilot?.mastra?.start,
+      mastraListProviders: typeof pilot?.mastra?.listProviders,
+      mastraRespondToApproval: typeof pilot?.mastra?.respondToApproval,
+      skillsList: typeof pilot?.skills?.list,
+      memoryRead: typeof pilot?.memory?.read,
+      settingsGet: typeof claude?.settings?.get,
+      convertToPdf: typeof claude?.convertToPdf,
+    };
+  });
+
+  console.log('Preload API:', api);
+  for (const [name, type] of Object.entries(api)) {
+    expect(type, `window bridge is missing ${name}`).toBe('function');
+  }
 });

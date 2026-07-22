@@ -158,6 +158,9 @@ pnpm start     # Run Electron with pre-built dist/
 pnpm test      # Run vitest unit tests
 pnpm test:watch    # Run vitest in watch mode
 pnpm test:e2e  # Run the Playwright specs in e2e/ (never run these under vitest)
+               # Needs a dev server: `npx vite --port 5180 --strictPort`, then
+               # `pnpm test:e2e:dev`. Stop `pnpm dev` first — its Electron holds
+               # the 9333 debugging port the test app also needs.
 ```
 
 **Dev logs**: Main process logs go to `logs/main-{timestamp}.log` (dev) or `{userData}/logs/main-{timestamp}.log` (packaged). Check the latest file with `ls -t logs/main-*.log | head -1 | xargs cat`.
