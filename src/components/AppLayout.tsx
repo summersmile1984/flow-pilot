@@ -70,6 +70,7 @@ import {
 } from "@/hooks/useMainToolWorkspace";
 import type { PanelToolId } from "@/types";
 import {
+  MIN_PREVIEW_PANE_WIDTH,
   MIN_TOOLS_PANEL_WIDTH,
   SPLIT_HANDLE_WIDTH,
 } from "@/lib/layout/constants";
@@ -772,6 +773,8 @@ export function AppLayout() {
     mainTopToolColumnCount,
     mainWorkspaceChatMinWidth,
     canDockPreview,
+    maxDockablePreviewWidth,
+    effectivePreviewWidth,
     mainCombinedWorkspaceWidth,
     mainToolAreaWidth,
     mainToolRelativeFractions,
@@ -1865,11 +1868,16 @@ export function AppLayout() {
               onSelectTab={selectPreviewTab}
               onCloseTab={closePreviewTab}
               onClose={handleClosePreview}
-              width={previewPaneWidth}
+              width={effectivePreviewWidth}
               onWidthChange={setPreviewPaneWidth}
               docked={canDockPreview}
-              minWidth={360}
-              maxWidth={Math.max(360, (topRowRef.current?.clientWidth ?? window.innerWidth) - 360)}
+              minWidth={MIN_PREVIEW_PANE_WIDTH}
+              // Capped by the workspace budget, so dragging stops at the widest
+              // the pane can be while chat and tools keep their minimums —
+              // rather than sailing past it and flipping to an overlay.
+              maxWidth={canDockPreview
+                ? Math.max(MIN_PREVIEW_PANE_WIDTH, maxDockablePreviewWidth)
+                : Math.max(MIN_PREVIEW_PANE_WIDTH, (topRowRef.current?.clientWidth ?? window.innerWidth) - 360)}
             />
           )}
         </div>{/* end top row */}

@@ -15,6 +15,8 @@ export const WINDOWS_FRAME_BUFFER_WIDTH = 16;
 
 export const MIN_RIGHT_PANEL_WIDTH = 200;
 export const MIN_TOOLS_PANEL_WIDTH = 280;
+/** Narrowest the file preview pane may be docked at before it falls back to an overlay. */
+export const MIN_PREVIEW_PANE_WIDTH = 360;
 
 /** Per-tool preferred pixel widths — used as default when a tool has no remembered width. */
 export const TOOL_PREFERRED_WIDTHS: Record<string, number> = {

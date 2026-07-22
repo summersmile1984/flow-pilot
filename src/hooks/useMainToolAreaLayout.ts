@@ -13,6 +13,7 @@ import type { PanelToolId, ToolId } from "@/types/tools";
 import {
   DEFAULT_TOOL_PREFERRED_WIDTH,
   getMinChatWidth,
+  MIN_PREVIEW_PANE_WIDTH,
   MIN_TOOLS_PANEL_WIDTH,
   SPLIT_HANDLE_WIDTH,
   TOOL_PREFERRED_WIDTHS,
@@ -48,6 +49,10 @@ export interface MainToolAreaLayout {
   mainWorkspaceChatMinWidth: number;
   /** True when the preview fits alongside the chat and tool columns. */
   canDockPreview: boolean;
+  /** Widest the preview may be dragged while staying docked. */
+  maxDockablePreviewWidth: number;
+  /** Preferred preview width clamped to what currently fits. */
+  effectivePreviewWidth: number;
   mainHasToolWorkspace: boolean;
   mainCombinedWorkspaceWidth: number;
   mainMaxToolAreaWidth: number;
@@ -155,24 +160,33 @@ export function useMainToolAreaLayout(input: MainToolAreaLayoutInput): MainToolA
   // ── File preview pane ──
   //
   // The preview is a right-side panel just like the right panel above, so it is
-  // reserved out of the workspace the same way — but only when the remainder can
-  // still seat the chat at its minimum plus whatever the tool columns require.
+  // reserved out of the workspace the same way — but only up to what is left
+  // after the chat keeps its minimum and the tool columns get what they require.
   //
-  // That check is what makes the behaviour responsive: on a wide window the
-  // preview docks and the three columns share the row; on a narrow one it stays
-  // an overlay rather than squeezing the chat past its floor or overflowing off
-  // screen. Reserving unconditionally is exactly the bug this replaces.
-  const previewReserveWidth = hasPreview ? previewPaneWidth + handleW : 0;
+  // Deriving a maximum (rather than testing the requested width and giving up)
+  // is what keeps this stable while dragging: past the limit the pane simply
+  // stops widening instead of flipping to an overlay mid-drag and swallowing the
+  // islands. `previewPaneWidth` stays the user's preferred width, so the pane
+  // re-expands to it when the window grows back.
   const baseReservedWidth =
     (showToolPicker ? pickerW : 0) +
     (hasRightPanel ? rightPanelWidth + handleW : 0) +
     (mainHasToolWorkspace ? handleW : 0);
   const workspaceWithoutPreview = Math.max(0, availableSplitWidth - baseReservedWidth);
-  const canDockPreview =
-    hasPreview &&
-    workspaceWithoutPreview - previewReserveWidth >= mainWorkspaceChatMinWidth + mainRequiredToolWidth;
 
-  const mainWorkspaceReservedWidth = baseReservedWidth + (canDockPreview ? previewReserveWidth : 0);
+  const maxDockablePreviewWidth = Math.max(
+    0,
+    workspaceWithoutPreview - mainWorkspaceChatMinWidth - mainRequiredToolWidth - handleW,
+  );
+  // Below its own minimum there is genuinely nowhere to dock — that is the one
+  // case that still falls back to overlaying the right edge.
+  const canDockPreview = hasPreview && maxDockablePreviewWidth >= MIN_PREVIEW_PANE_WIDTH;
+  const effectivePreviewWidth = canDockPreview
+    ? Math.min(previewPaneWidth, maxDockablePreviewWidth)
+    : previewPaneWidth;
+
+  const mainWorkspaceReservedWidth =
+    baseReservedWidth + (canDockPreview ? effectivePreviewWidth + handleW : 0);
 
   const mainCombinedWorkspaceWidth = Math.max(0, availableSplitWidth - mainWorkspaceReservedWidth);
 
@@ -360,6 +374,8 @@ export function useMainToolAreaLayout(input: MainToolAreaLayoutInput): MainToolA
     mainTopToolColumnCount,
     mainWorkspaceChatMinWidth,
     canDockPreview,
+    maxDockablePreviewWidth,
+    effectivePreviewWidth,
     mainHasToolWorkspace,
     mainCombinedWorkspaceWidth,
     mainMaxToolAreaWidth,
