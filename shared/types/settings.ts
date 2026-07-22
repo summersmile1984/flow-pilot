@@ -63,6 +63,16 @@ export interface AppSettings {
   pilotSupervisorApiKey: string;
   /** Pilot supervisor LLM: custom base URL for an OpenAI-compatible endpoint */
   pilotSupervisorBaseUrl: string;
+  /**
+   * Default supervisor model for new Pilot chats, as a compound
+   * `providerId::modelId`. Blank falls back to the first provider's first model.
+   */
+  pilotSupervisorModel: string;
+  /**
+   * Output-token cap for supervisor replies. Too low truncates mid-answer;
+   * the ceiling is model-specific (deepseek-chat maxes at 8192).
+   */
+  pilotSupervisorMaxOutputTokens: number;
   /** Enable anonymous analytics to help improve the app (default: true) */
   analyticsEnabled: boolean;
   /** Anonymous user ID for analytics (auto-generated) */

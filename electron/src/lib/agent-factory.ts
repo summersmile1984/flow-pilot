@@ -14,7 +14,12 @@ export interface AgentFactoryOptions {
   skillsCatalog?: string;
   /** MCP servers (ACP wire format) advertised to every subagent session. */
   mcpServers?: unknown[];
+  /** Output-token cap for supervisor replies (Settings → Pilot). */
+  maxOutputTokens?: number;
 }
+
+/** Fallback output cap — deepseek-chat's maximum. */
+export const DEFAULT_MAX_OUTPUT_TOKENS = 8192;
 
 /**
  * 模式 1: Supervisor Agent (Mastra 做决策)
@@ -64,10 +69,10 @@ ${options.skillsCatalog || 'No skills are currently installed.'}${
     model: options.model,
     tools: { ...acpTools, web_fetch: webFetchTool },
     // deepseek-chat defaults to a 4k output cap and errors the run when a
-    // reply hits it — raise to the model's 8k maximum. The instructions
+    // reply hits it — raise to the model's maximum. The instructions
     // additionally steer long documents into files instead of the reply.
     defaultOptions: {
-      modelSettings: { maxOutputTokens: 8192 },
+      modelSettings: { maxOutputTokens: options.maxOutputTokens ?? DEFAULT_MAX_OUTPUT_TOKENS },
     },
   });
 }

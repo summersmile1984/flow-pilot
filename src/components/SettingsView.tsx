@@ -12,6 +12,7 @@ import {
   Users,
   BarChart3,
   PanelLeft,
+  Compass,
 } from "lucide-react";
 import type { LucideIcon } from "lucide-react";
 import { Button } from "@/components/ui/button";
@@ -22,6 +23,7 @@ import { NotificationsSettings } from "@/components/settings/NotificationsSettin
 import { McpSettings } from "@/components/settings/McpSettings";
 import { AdvancedSettings } from "@/components/settings/AdvancedSettings";
 import { EngineSettings } from "@/components/settings/EngineSettings";
+import { PilotSettings } from "@/components/settings/PilotSettings";
 import { PlaceholderSection } from "@/components/settings/PlaceholderSection";
 import { SkillManager } from "@/components/settings/SkillManager";
 import { AboutSettings } from "@/components/settings/AboutSettings";
@@ -33,7 +35,7 @@ import { useAgentContext } from "./AgentContext";
 
 // ── Section definitions ──
 
-export type SettingsSection = "general" | "appearance" | "notifications" | "analytics" | "agents" | "mcp" | "engines" | "skills" | "custom-agents" | "advanced" | "about";
+export type SettingsSection = "general" | "appearance" | "notifications" | "analytics" | "pilot" | "agents" | "mcp" | "engines" | "skills" | "custom-agents" | "advanced" | "about";
 
 interface NavItem {
   id: SettingsSection;
@@ -48,6 +50,7 @@ const NAV_ITEMS: NavItem[] = [
   { id: "appearance", label: "Appearance", icon: Palette },
   { id: "notifications", label: "Notifications", icon: Bell },
   { id: "analytics", label: "Analytics", icon: BarChart3 },
+  { id: "pilot", label: "Pilot", icon: Compass },
   { id: "agents", label: "ACP Agents", icon: Bot },
   { id: "mcp", label: "MCP Servers", icon: Plug },
   { id: "engines", label: "Engines", icon: Cpu },
@@ -140,6 +143,13 @@ export const SettingsView = memo(function SettingsView({
       case "analytics":
         return (
           <AnalyticsSettings
+            appSettings={appSettings}
+            onUpdateAppSettings={updateAppSettings}
+          />
+        );
+      case "pilot":
+        return (
+          <PilotSettings
             appSettings={appSettings}
             onUpdateAppSettings={updateAppSettings}
           />

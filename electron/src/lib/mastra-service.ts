@@ -12,6 +12,7 @@ import { log } from './logger';
 import { createSupervisorAgent, createPassthroughAgent, createACPSupervisorAgent, type AgentMode } from './agent-factory';
 import { SkillManager } from './skill-manager';
 import { resolveProviderModel } from './llm-provider-store';
+import { getAppSettings } from './app-settings';
 import { buildAcpMcpServers } from '../ipc/acp-sessions';
 import type { McpServerInput } from '@shared/lib/mcp-config';
 
@@ -119,7 +120,12 @@ export async function initMastraService(projectPathOrOptions: string | InitOptio
   // carries its own base URL and API key. When either is set we pass the model
   // as an OpenAI-compatible config so the provider's values win; otherwise the
   // bare `provider/model` id lets the model router resolve it from the env.
-  const { provider, modelId } = resolveProviderModel(options.modelOverride);
+  // Per-chat pick wins; otherwise the Settings → Pilot default; otherwise the
+  // first provider's first model (resolveProviderModel's own fallback).
+  const appSettings = getAppSettings();
+  const { provider, modelId } = resolveProviderModel(
+    options.modelOverride || appSettings.pilotSupervisorModel,
+  );
   const providerPrefix = provider?.id || 'deepseek';
   const fullModelId = `${providerPrefix}/${modelId}`;
   const apiKey = provider?.apiKey?.trim();
@@ -244,6 +250,7 @@ export async function initMastraService(projectPathOrOptions: string | InitOptio
         skillsCatalog,
         mcpServers: acpMcpServers,
         model: supervisorModel,
+        maxOutputTokens: appSettings.pilotSupervisorMaxOutputTokens,
       });
     }
   }

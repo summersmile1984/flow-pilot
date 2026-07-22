@@ -5,6 +5,8 @@ import type { LlmProvider } from "@shared/types/llm-provider";
 import type { McpServerInput } from "@shared/lib/mcp-config";
 import { log } from "../lib/logger";
 import { safeSend } from "../lib/safe-send";
+import { getAppSettings } from "../lib/app-settings";
+import { onSettingsChanged } from "./settings";
 import type { Session } from "@mastra/core/agent-controller";
 
 // One Mastra session per Pilot chat. `createSession` resumes persisted
@@ -34,7 +36,25 @@ function getSession(sessionId?: string): Session | null {
   return currentSession;
 }
 
+/** Identity of the Pilot settings that get baked into a controller. */
+function pilotDefaultsKey(): string {
+  const s = getAppSettings();
+  return `${s.pilotSupervisorModel}::${s.pilotSupervisorMaxOutputTokens}`;
+}
+
 export function register(getMainWindow: () => BrowserWindow | null): void {
+  // The supervisor's default model and output cap are baked into each
+  // controller at build time, so editing them in Settings → Pilot has to
+  // rebuild the cached controllers the same way a provider edit does.
+  let lastPilotDefaults = pilotDefaultsKey();
+  onSettingsChanged(() => {
+    const next = pilotDefaultsKey();
+    if (next === lastPilotDefaults) return;
+    lastPilotDefaults = next;
+    log("mastra-ipc", `Pilot supervisor defaults changed (${next}) — resetting controllers`);
+    void resetMastraState();
+  });
+
   // ── Supervisor LLM provider CRUD ──
   // Providers carry the API key and base URL, which get baked into each
   // controller's agent, so any change rebuilds cached controllers.

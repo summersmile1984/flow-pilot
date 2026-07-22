@@ -23,7 +23,7 @@ function slugify(name: string): string {
 }
 
 /** Add / edit / delete the saved LLM providers used by the Pilot supervisor. */
-export function LlmProviderManager() {
+export function LlmProviderManager({ onProvidersChange }: { onProvidersChange?: () => void } = {}) {
   const [providers, setProviders] = useState<LlmProvider[]>([]);
   const [editing, setEditing] = useState<Draft | null>(null);
   const [isNew, setIsNew] = useState(false);
@@ -61,13 +61,13 @@ export function LlmProviderManager() {
       models,
     };
     const res = await window.pilot.mastra.saveProvider(provider);
-    if (res.success) { setProviders(res.providers ?? []); cancel(); }
+    if (res.success) { setProviders(res.providers ?? []); cancel(); onProvidersChange?.(); }
     else setError(res.error ?? "Failed to save");
   };
 
   const remove = async (id: string) => {
     const res = await window.pilot.mastra.deleteProvider(id);
-    if (res.success) setProviders(res.providers ?? []);
+    if (res.success) { setProviders(res.providers ?? []); onProvidersChange?.(); }
     else setError(res.error ?? "Failed to delete");
   };
 

@@ -1,8 +1,7 @@
 import { memo, useState, useCallback, useEffect } from "react";
-import { Server, Bot } from "lucide-react";
+import { Server } from "lucide-react";
 import { ScrollArea } from "@/components/ui/scroll-area";
 import { SettingRow, SettingsSelect, SettingsHeader, SettingsSection } from "@/components/settings/shared";
-import { LlmProviderManager } from "./LlmProviderManager";
 import type { AppSettings } from "@/types";
 
 const INPUT_CLASS =
@@ -149,13 +148,6 @@ export const EngineSettings = memo(function EngineSettings({
                 />
               </SettingRow>
             )}
-          </SettingsSection>
-
-          <SettingsSection icon={Bot} label="Pilot supervisor (LLM providers)">
-            <p className="px-1 pb-1 text-xs text-muted-foreground">
-              API providers for the Pilot supervisor. Each carries its own key, base URL, and models. Pick a provider + model in the engine picker (Pilot → Supervisor model). Changes rebuild active Pilot chats.
-            </p>
-            <LlmProviderManager />
           </SettingsSection>
         </div>
       </ScrollArea>

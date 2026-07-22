@@ -39,6 +39,8 @@ const DEFAULTS: AppSettings = {
   macBackgroundEffect: "liquid-glass",
   pilotSupervisorApiKey: "",
   pilotSupervisorBaseUrl: "",
+  pilotSupervisorModel: "",
+  pilotSupervisorMaxOutputTokens: 8192,
   analyticsEnabled: true,
 };
 

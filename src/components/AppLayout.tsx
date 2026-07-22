@@ -1100,9 +1100,14 @@ export function AppLayout() {
   const [previewPaneWidth, setPreviewPaneWidth] = useState(640);
 
   const [mastraProviders, setMastraProviders] = useState<LlmProvider[]>([]);
+  // Settings → Pilot's default model, as a compound `providerId::modelId`.
+  const [mastraConfiguredDefault, setMastraConfiguredDefault] = useState("");
   const reloadProviders = useCallback(() => {
     void window.pilot?.mastra?.listProviders().then((res) => {
       if (res?.success) setMastraProviders(res.providers ?? []);
+    });
+    void window.claude.settings.get().then((s) => {
+      setMastraConfiguredDefault(s?.pilotSupervisorModel ?? "");
     });
   }, []);
   useEffect(() => { reloadProviders(); }, [reloadProviders, showSettings]);
@@ -1113,7 +1118,14 @@ export function AppLayout() {
     ),
     [mastraProviders],
   );
-  const mastraDefaultModelId = mastraModelOptions[0]?.id ?? "";
+  // Settings' default wins over "first available", but only while it still
+  // names a provider/model that exists.
+  const mastraDefaultModelId = useMemo(() => {
+    if (mastraConfiguredDefault && mastraModelOptions.some((o) => o.id === mastraConfiguredDefault)) {
+      return mastraConfiguredDefault;
+    }
+    return mastraModelOptions[0]?.id ?? "";
+  }, [mastraConfiguredDefault, mastraModelOptions]);
 
   // The active chat's model wins (baked in at creation); drafts follow the
   // setting; both fall back to the first available option. Only honor a
