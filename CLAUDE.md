@@ -860,3 +860,116 @@ See `.agents/skills/vercel-react-best-practices/` for 62 rules across 8 categori
 - `js-index-maps` / `js-set-map-lookups` — Map/Set for O(1) lookups
 - `js-combine-iterations` — single-pass row building
 - `advanced-event-handler-refs` — callback refs to avoid effect re-subscription
+## Gotchas
+
+Things that cost real time to rediscover. Read this before packaging, before
+touching the workspace width math, and before adding user-facing copy.
+
+### Packaging: pnpm's layout breaks electron-builder's dependency collection
+
+`.npmrc` sets `node-linker=hoisted` for a reason. With pnpm's default symlinked
+layout, electron-builder mishandles **aliased** packages: `@mastra/core` pins
+several ai-sdk majors side by side (`@ai-sdk/provider-utils-v5` →
+`npm:@ai-sdk/provider-utils@3.0.25`, ~15 more). It copies the aliased directory
+into the asar but resolves that package's dependencies under the *alias* name,
+so everything nested below is silently dropped. The packaged app then dies at
+startup with `Cannot find module '@standard-schema/spec'`.
+
+`@standard-schema/spec` needs a second workaround on top: it is types-only
+(`main` is a 0-byte file, the CJS entry is `module.exports = {}`), and the
+collector skips it as having no runtime content **even when declared as a direct
+dependency**. `@ai-sdk/provider-utils` still requires it unconditionally at the
+top of its index.js, so the `afterPack` hook in `electron-builder.config.js`
+force-includes it and throws if the source is missing.
+
+**A build that exits 0 is not a working app.** Always launch the packaged binary
+before shipping. After the hoisted fix the app booted fine and still had a latent
+crash — the failing require had only moved off the startup path and would have
+fired the first time a Pilot agent ran. What surfaced it: compare every bare
+`require()` in the asar against what was actually packaged.
+
+Other packaging notes:
+- Playwright **cannot** attach to a signed hardened-runtime build (the debugger
+  is blocked without `get-task-allow`). Verify packaged apps by launching the
+  binary and reading stderr, or by extracting the asar and requiring modules
+  with plain node.
+- Notarization is skipped when `APPLE_ID` / `APPLE_APP_SPECIFIC_PASSWORD` are
+  unset (`scripts/notarize.js`). Unnotarized builds are signed but Gatekeeper
+  still warns; `xattr -dr com.apple.quarantine` clears it locally.
+- After switching node-linker, `node_modules/electron/path.txt` may be missing
+  and `install.js` silently no-ops. Symptom: 9 unit tests fail with "Electron
+  failed to install correctly". Fix: extract the cached zip from
+  `~/Library/Caches/electron` into `node_modules/electron/dist` and write
+  `path.txt` containing `Electron.app/Contents/MacOS/Electron`.
+
+### Workspace width budget: derive limits, don't test-and-give-up
+
+`useMainToolAreaLayout` owns the width budget — it reserves space for the tool
+picker, the right panel, and the file preview, then clamps the rest against the
+chat's minimum (`MIN_SINGLE_CHAT_PANE_WIDTH`, 704) and what the tool columns
+require. Anything occupying horizontal space in the top row must be reserved
+there, or it will overflow off screen: the chat island carries an explicit
+`minWidth` and will not yield.
+
+Two failure modes, both hit while making the preview pane dock:
+
+1. **Reserving unconditionally** — on a narrow window there is nothing to give,
+   so the pane rendered at x=1318..1958 inside a 1328px viewport. Invisible, and
+   it looked like "clicking a file does nothing".
+2. **Testing the requested width and giving up** — dragging the pane wider
+   crossed a threshold where it stopped docking and flipped to an overlay
+   mid-drag, burying the tool islands it was supposed to sit beside.
+
+The shape that works: derive a *maximum* (`maxDockablePreviewWidth`), clamp the
+pane and its drag handle to it, and keep the user's preferred width in state so
+it re-expands when the window grows. Reserve a fallback mode only for the case
+that genuinely has nowhere to go — less room than the pane's own minimum.
+
+**Measure, don't reason about CSS.** Every wrong turn above typechecked and
+looked right in the diff. Read `getBoundingClientRect()` for the pane and each
+`.island`, and assert on overlap and on staying inside the viewport.
+
+### i18n: what is copy and what is data
+
+Locale bundles live in `src/locales/{en,zh-CN}.json`; `src/lib/i18n.ts`
+initializes the singleton before `createRoot` so the first paint is already in
+the right language. `src/test-setup.ts` initializes i18next for component tests
+and deliberately avoids `@/lib/i18n` (that pulls in the settings store, which
+needs localStorage — unavailable in the `node` test environment).
+
+- **Module-scope constants freeze at the boot language.** Anything evaluated at
+  import time (`NAV_ITEMS`, `TRIGGER_OPTIONS`, `THEME_OPTIONS`,
+  `PERMISSION_MODES`, `SHOWCASE_*`, the welcome-screen messages) must keep only
+  ids and icons; resolve the copy with `t()` at render. Where the constant is
+  `as const` and its `id` union is used as a `Record` key, this is mandatory —
+  converting it to a function breaks the literal-type inference.
+- **Some English strings are data, not copy.** `NEW_CHAT_TITLE` ("New Chat") is
+  persisted with every session and compared on read; translating the write sites
+  would orphan sessions already on disk. It is localized at display time only
+  (`displaySessionTitle`). Same category: slash-command names, LLM prompts, file
+  templates, agent-registry entries.
+- English verb-form schemas do not survive translation. `tool-metadata.ts` used
+  to store past/active/infinitive triples so callers could build
+  `Failed to ${verb}`; Chinese has no equivalent, so "failed" now resolves to a
+  complete sentence.
+- Check parity and resolution, not just that it compiles — every `t()` key must
+  exist in **both** bundles (plural keys as `_one`/`_other` pairs).
+
+### E2E: a passing spec is not a covering spec
+
+Four specs were deleted in 2def600 for asserting against their own injected
+mocks. The same class of bug was still present in the survivors: selectors
+matched English copy and were wrapped in `.catch(() => false)`, so under a
+translated UI they silently took the "not found" branch and passed while testing
+nothing.
+
+- Select by `data-testid`, never by visible copy.
+- Reserve `.catch(() => false)` for genuinely conditional state, and make the
+  miss visible — `test.skip()` reports honestly where a silent branch does not.
+- Assert a post-condition. `should open and navigate settings` pressed `Meta+,`
+  for months; the app registers no comma shortcut (`useKeyboardShortcuts` binds
+  only Shift+Tab and Cmd/Ctrl+F), so settings never opened and the test logged
+  its way to green.
+- The dev app exposes CDP on **9333**, which is the fastest way to inspect a
+  running session: `chromium.connectOverCDP('http://127.0.0.1:9333')`, find the
+  page with `#root`, then evaluate against the live DOM.
