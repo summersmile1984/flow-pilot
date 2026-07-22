@@ -27,8 +27,9 @@ export function useAppOrchestrator() {
   const splitView = useSplitView();
   const projectManager = useProjectManager();
   const spaceManager = useSpaceManager();
-  // Read ACP permission behavior early — it's a global setting (same localStorage key as useSettings)
-  // so we can read it before useSettings which depends on manager.activeSession for per-project scoping
+  // Read ACP permission behavior straight from its persisted key — it's global,
+  // and the settings hook below needs manager.activeSession for project scoping,
+  // which isn't available yet at this point.
   const acpPermissionBehavior = (localStorage.getItem("pilot-acp-permission-behavior") ?? "ask") as AcpPermissionBehavior;
   const manager = useSessionManager(
     projectManager.projects,

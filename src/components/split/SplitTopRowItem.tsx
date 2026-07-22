@@ -8,7 +8,7 @@
 
 import React from "react";
 import { motion } from "motion/react";
-import { normalizeRatios } from "@/hooks/useSettings";
+import { normalizeRatios } from "@/stores/settings-store";
 import { equalWidthFractions, MIN_TOOLS_PANEL_WIDTH } from "@/lib/layout/constants";
 import { getChatPaneMinWidthPx } from "@/lib/layout/workspace-constraints";
 import { getStoredProjectGitCwd } from "@/lib/session/space-projects";

@@ -1,17 +1,18 @@
 /**
- * Compatibility shim: provides the same interface as the legacy useSettings hook
- * but reads from the Zustand settings store internally.
+ * Assembles the flat `Settings` object components consume from the Zustand
+ * settings store, resolving project-scoped values for the active project.
  *
- * Allows gradual migration — existing consumers call useSettingsCompat() with the
- * same signature and get the same return shape. Once all consumers move to direct
- * store selectors, this file can be deleted.
+ * This is the remaining half of the localStorage-hook migration: the legacy
+ * `useSettings` hook is gone, but consumers still take one wide object rather
+ * than subscribing to the store directly. Moving them to fine-grained store
+ * selectors would let this file go too.
  */
 
 import { useCallback, useEffect, useMemo, useRef } from "react";
 import { useShallow } from "zustand/shallow";
 import type { ToolId } from "@/types/tools";
 import type { EngineId, MacBackgroundEffect } from "@/types";
-import type { Settings } from "@/hooks/useSettings";
+import type { Settings } from "@/stores/settings-store";
 import {
   useSettingsStore,
   selectProjectSettings,
@@ -29,10 +30,8 @@ function hasSameOrderedValues<T>(left: readonly T[], right: readonly T[]): boole
 }
 
 /**
- * Drop-in replacement for the legacy `useSettings` hook.
- *
- * Internally subscribes to the Zustand store with fine-grained selectors,
- * then reassembles the same `Settings` object that consumers expect.
+ * Subscribes to the Zustand store with fine-grained selectors, then reassembles
+ * the single `Settings` object consumers expect.
  */
 export function useSettingsCompat(projectId: string | null, engine: EngineId = "claude"): Settings {
   const pid = projectId ?? "__none__";
@@ -124,7 +123,7 @@ export function useSettingsCompat(projectId: string | null, engine: EngineId = "
   const suppressedPanels = useMemo(() => new Set(projectSettings.suppressedPanels), [projectSettings.suppressedPanels]);
   const bottomTools = useMemo(() => new Set(projectSettings.bottomTools), [projectSettings.bottomTools]);
 
-  // ── Bound callbacks (match old useSettings signatures) ──
+  // ── Bound callbacks (project id pre-applied for consumers) ──
 
   const setPermissionMode = useCallback(
     (mode: string) => storeSetPermissionMode(mode),

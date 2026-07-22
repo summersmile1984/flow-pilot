@@ -701,3 +701,93 @@ export function deriveMacBackgroundEffect(state: Pick<GlobalSettingsState, "tran
   }
   return state.transparency ? state.macNativeBackgroundEffect : "off";
 }
+
+// ── Consumer-facing shape ──
+
+/**
+ * The flat settings object components consume, assembled by `useSettingsCompat`
+ * from this store. Project-scoped values are already resolved for the active
+ * project, so consumers never pass a project id.
+ */
+export interface Settings {
+  // Global
+  theme: ThemeOption;
+  setTheme: (t: ThemeOption) => void;
+  islandLayout: boolean;
+  setIslandLayout: (enabled: boolean) => void;
+  islandShine: boolean;
+  setIslandShine: (enabled: boolean) => void;
+  macBackgroundEffect: MacBackgroundEffect;
+  setMacBackgroundEffect: (effect: MacBackgroundEffect) => void;
+  transparency: boolean;
+  setTransparency: (enabled: boolean) => void;
+  planMode: boolean;
+  setPlanMode: (enabled: boolean) => void;
+  permissionMode: string;
+  setPermissionMode: (mode: string) => void;
+  acpPermissionBehavior: AcpPermissionBehavior;
+  setAcpPermissionBehavior: (b: AcpPermissionBehavior) => void;
+  thinking: boolean;
+  setThinking: (on: boolean) => void;
+  claudeEffort: ClaudeEffort;
+  setClaudeEffort: (effort: ClaudeEffort) => void;
+  autoGroupTools: boolean;
+  setAutoGroupTools: (on: boolean) => void;
+  avoidGroupingEdits: boolean;
+  setAvoidGroupingEdits: (on: boolean) => void;
+  autoExpandTools: boolean;
+  setAutoExpandTools: (on: boolean) => void;
+  expandEditToolCallsByDefault: boolean;
+  setExpandEditToolCallsByDefault: (on: boolean) => void;
+  transparentToolPicker: boolean;
+  setTransparentToolPicker: (on: boolean) => void;
+  coloredSidebarIcons: boolean;
+  setColoredSidebarIcons: (on: boolean) => void;
+  showToolIcons: boolean;
+  setShowToolIcons: (on: boolean) => void;
+  coloredToolIcons: boolean;
+  setColoredToolIcons: (on: boolean) => void;
+
+  // Per-project
+  model: string;
+  setModel: (m: string) => void;
+  getModelForEngine: (engine: EngineId) => string;
+  setModelForEngine: (engine: EngineId, model: string) => void;
+  gitCwd: string | null;
+  setGitCwd: (path: string | null) => void;
+  activeTools: Set<ToolId>;
+  setActiveTools: (updater: Set<ToolId> | ((prev: Set<ToolId>) => Set<ToolId>)) => void;
+  rightPanelWidth: number;
+  setRightPanelWidth: (w: number) => void;
+  saveRightPanelWidth: () => void;
+  /** Display order of panel tools in the tools column */
+  toolOrder: ToolId[];
+  setToolOrder: (updater: ToolId[] | ((prev: ToolId[]) => ToolId[])) => void;
+  /** Vertical split ratio between Tasks and Agents in the right panel (0.2–0.8) */
+  rightSplitRatio: number;
+  setRightSplitRatio: (r: number) => void;
+  saveRightSplitRatio: () => void;
+  collapsedRepos: Set<string>;
+  toggleRepoCollapsed: (path: string) => void;
+  suppressedPanels: Set<ToolId>;
+  suppressPanel: (id: ToolId) => void;
+  unsuppressPanel: (id: ToolId) => void;
+  /** Tools placed in the bottom row instead of the right column */
+  bottomTools: Set<ToolId>;
+  bottomToolsHeight: number;
+  setBottomToolsHeight: (h: number) => void;
+  saveBottomToolsHeight: () => void;
+  bottomToolsSplitRatios: number[];
+  setBottomToolsSplitRatios: (r: number[]) => void;
+  saveBottomToolsSplitRatios: () => void;
+  /** Whether to group sidebar chats by git branch (per-project, default false). */
+  organizeByChatBranch: boolean;
+  setOrganizeByChatBranch: (on: boolean) => void;
+  /** Mastra agent mode: supervisor (default), direct, or acp-supervisor */
+  mastraMode: string;
+  setMastraMode: (mode: string) => void;
+  /** For direct/acp-supervisor modes: which ACP agent to use (e.g. opencode or codex) */
+  mastraAgentId: string;
+  setMastraAgentId: (agentId: string) => void;
+}
+

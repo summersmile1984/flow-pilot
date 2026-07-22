@@ -1,6 +1,6 @@
 import React, { type Dispatch, type MutableRefObject, type ReactNode, type SetStateAction } from "react";
 import { motion } from "motion/react";
-import { normalizeRatios } from "@/hooks/useSettings";
+import { normalizeRatios } from "@/stores/settings-store";
 import type { MainToolWorkspaceState } from "@/hooks/useMainToolWorkspace";
 import { equalWidthFractions } from "@/lib/layout/constants";
 import { getHorizontalInsertSide, getToolColumnDropIntent } from "@/lib/workspace/drag";

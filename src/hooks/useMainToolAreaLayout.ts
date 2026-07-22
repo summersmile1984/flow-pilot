@@ -6,7 +6,7 @@
  */
 
 import { useCallback, useMemo } from "react";
-import { normalizeRatios } from "@/hooks/useSettings";
+import { normalizeRatios } from "@/stores/settings-store";
 import type { MainToolWorkspaceState } from "@/hooks/useMainToolWorkspace";
 import type { ToolDragState, ToolIsland } from "@/types";
 import type { PanelToolId, ToolId } from "@/types/tools";

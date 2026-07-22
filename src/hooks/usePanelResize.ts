@@ -1,6 +1,6 @@
 import { useCallback, useEffect, useRef, useState } from "react";
 import { useDocumentDrag } from "@/hooks/useDocumentDrag";
-import type { Settings } from "@/hooks/useSettings";
+import type { Settings } from "@/stores/settings-store";
 import {
   MIN_RIGHT_PANEL_WIDTH,
   getMinChatWidth,
