@@ -1,3 +1,4 @@
+import { useTranslation } from "react-i18next";
 import { memo, useMemo, useCallback } from "react";
 import { FileDiff, Pencil, Plus, ChevronRight, ChevronDown } from "lucide-react";
 import { DiffViewer } from "./DiffViewer";
@@ -96,6 +97,7 @@ interface TurnChangesSummaryProps {
 export const TurnChangesSummary = memo(function TurnChangesSummary({
   summary,
 }: TurnChangesSummaryProps) {
+  const { t } = useTranslation();
   const [isOpen, setIsOpen] = useChatPersistedState(
     `turn-summary:${summary.userMessageId}`,
     false,
@@ -155,7 +157,7 @@ export const TurnChangesSummary = memo(function TurnChangesSummary({
 
           <span className="flex-1 min-w-0 truncate">
             <span className="font-medium text-foreground/80">
-              {summary.fileCount} file{summary.fileCount !== 1 ? "s" : ""} changed
+              {t("count.filesChanged", { count: summary.fileCount })}
             </span>
             <span className="ms-1.5 text-xs text-muted-foreground/60">
               {compactFileList}

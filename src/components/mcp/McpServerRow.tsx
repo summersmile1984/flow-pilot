@@ -1,3 +1,4 @@
+import { useTranslation } from "react-i18next";
 import { memo } from "react";
 import { Trash2, RefreshCw } from "lucide-react";
 import { Button } from "@/components/ui/button";
@@ -38,6 +39,7 @@ export const McpServerRow = memo(function McpServerRow({
   onReconnect,
   onRestartWithServers,
 }: McpServerRowProps) {
+  const { t } = useTranslation();
   const Icon = TRANSPORT_ICON[server.transport];
   const color = TRANSPORT_COLOR[server.transport];
   const statusCfg = runtimeStatus ? STATUS_CONFIG[runtimeStatus.status] : null;
@@ -65,7 +67,7 @@ export const McpServerRow = memo(function McpServerRow({
                 )}
                 {runtimeStatus?.tools && runtimeStatus.tools.length > 0 && (
                   <p className="text-xs text-background/60 mt-0.5">
-                    {runtimeStatus.tools.length} tool{runtimeStatus.tools.length !== 1 ? "s" : ""}
+                    {t("count.tools", { count: runtimeStatus.tools.length })}
                   </p>
                 )}
               </TooltipContent>
@@ -81,7 +83,7 @@ export const McpServerRow = memo(function McpServerRow({
         {/* Environment variable count */}
         {server.env && Object.keys(server.env).length > 0 && (
           <p className="text-[10px] text-muted-foreground/60 mt-0.5">
-            {Object.keys(server.env).length} env var{Object.keys(server.env).length !== 1 ? "s" : ""}
+            {t("count.envVars", { count: Object.keys(server.env).length })}
           </p>
         )}
 

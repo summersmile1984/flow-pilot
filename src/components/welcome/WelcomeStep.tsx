@@ -1,3 +1,4 @@
+import { useTranslation } from "react-i18next";
 import { motion } from "motion/react";
 import { ArrowRight } from "lucide-react";
 import type { WizardStepProps } from "./shared";
@@ -5,6 +6,7 @@ import type { WizardStepProps } from "./shared";
 const DISPLAY_FONT = "'Instrument Serif', Georgia, serif";
 
 export function WelcomeStep({ onNext }: WizardStepProps) {
+  const { t } = useTranslation();
   return (
     <div className="flex flex-1 flex-col items-center justify-center overflow-y-auto px-8">
       <motion.p
@@ -13,7 +15,7 @@ export function WelcomeStep({ onNext }: WizardStepProps) {
         animate={{ opacity: 1, y: 0 }}
         transition={{ duration: 0.5, delay: 0.0 }}
       >
-        Welcome to
+        {t("welcome.step.welcomeTo")}
       </motion.p>
 
       <motion.h1
@@ -37,19 +39,20 @@ export function WelcomeStep({ onNext }: WizardStepProps) {
         animate={{ opacity: 1, y: 0 }}
         transition={{ duration: 0.5, delay: 0.2 }}
       >
-        The workspace where you and AI
+        {t("welcome.step.tagline")}
         <br />
-        build software together.
+        {t("welcome.step.tagline2")}
       </motion.p>
 
       <motion.button
+        data-testid="welcome-get-started"
         onClick={onNext}
         className="mt-14 flex items-center gap-2.5 rounded-full bg-foreground px-9 py-4 text-base font-semibold text-background transition-opacity hover:opacity-85"
         initial={{ opacity: 0, y: 14 }}
         animate={{ opacity: 1, y: 0 }}
         transition={{ duration: 0.5, delay: 0.34 }}
       >
-        Get Started
+        {t("welcome.step.getStarted")}
         <ArrowRight className="h-4.5 w-4.5" />
       </motion.button>
     </div>

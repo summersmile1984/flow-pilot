@@ -51,28 +51,15 @@ export interface ReadyStepProps {
 
 // ── Permission mode data ──
 
+// Ids and icons only. Labels come from `chat.permissionMode.<id>` (shared with
+// the chat header, so the two never drift), descriptions from
+// `welcome.permission.<id>` — both resolved at render, since anything held here
+// would freeze at the boot language. `as const` is preserved because the `id`
+// union is relied on downstream.
 export const PERMISSION_MODES = [
-  {
-    id: "default",
-    label: "Ask Before Edits",
-    description:
-      "Claude asks for approval before making file changes or running commands.",
-    icon: "Shield" as const,
-  },
-  {
-    id: "acceptEdits",
-    label: "Accept Edits",
-    description:
-      "File edits are auto-approved, commands still require confirmation.",
-    icon: "ShieldCheck" as const,
-  },
-  {
-    id: "bypassPermissions",
-    label: "Allow All",
-    description:
-      "Everything runs automatically with no prompts.",
-    icon: "ShieldOff" as const,
-  },
+  { id: "default", icon: "Shield" as const },
+  { id: "acceptEdits", icon: "ShieldCheck" as const },
+  { id: "bypassPermissions", icon: "ShieldOff" as const },
 ] as const;
 
 // ── Animation ──
@@ -87,34 +74,34 @@ export const springTransition = {
 // ── Space color showcase data ──
 
 export interface SpaceShowcase {
-  name: string;
+  /** Translation key suffix under `welcome.tour.space`. */
+  id: string;
   emoji: string;
   hue: number;
   chroma: number;
 }
 
 export const SHOWCASE_SPACES: SpaceShowcase[] = [
-  { name: "Frontend", emoji: "🎨", hue: 260, chroma: 0.15 },
-  { name: "API", emoji: "⚡", hue: 150, chroma: 0.15 },
-  { name: "Mobile", emoji: "📱", hue: 340, chroma: 0.15 },
-  { name: "DevOps", emoji: "🚀", hue: 45, chroma: 0.15 },
+  { id: "frontend", emoji: "🎨", hue: 260, chroma: 0.15 },
+  { id: "api", emoji: "⚡", hue: 150, chroma: 0.15 },
+  { id: "mobile", emoji: "📱", hue: 340, chroma: 0.15 },
+  { id: "devops", emoji: "🚀", hue: 45, chroma: 0.15 },
 ];
 
 // ── Tool panel showcase data ──
 
 export interface ToolShowcase {
+  /** Also the translation key suffix under `welcome.tour.tool`. */
   id: string;
-  label: string;
   icon: string;
-  description: string;
 }
 
 export const SHOWCASE_TOOLS: ToolShowcase[] = [
-  { id: "terminal", label: "Terminal", icon: "Terminal", description: "Run commands and scripts" },
-  { id: "git", label: "Source Control", icon: "GitBranch", description: "Commits, branches, diffs" },
-  { id: "browser", label: "Browser", icon: "Globe", description: "Preview and inspect" },
-  { id: "files", label: "Open Files", icon: "FileText", description: "Track accessed files" },
-  { id: "project-files", label: "Project", icon: "FolderTree", description: "Browse file tree" },
+  { id: "terminal", icon: "Terminal" },
+  { id: "git", icon: "GitBranch" },
+  { id: "browser", icon: "Globe" },
+  { id: "files", icon: "FileText" },
+  { id: "project-files", icon: "FolderTree" },
 ];
 
 /** Preview background for a space color swatch. */

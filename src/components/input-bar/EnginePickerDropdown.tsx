@@ -442,14 +442,14 @@ export const EnginePickerDropdown = memo(function EnginePickerDropdown({
     if (isCurrent) {
       if (agent.engine === "mastra" && !mastraHasSubmenuContent) {
         return (
-          <DropdownMenuItem key={agent.id} className="bg-accent">
+          <DropdownMenuItem key={agent.id} data-testid={`engine-option-${agent.engine}`} className="bg-accent">
             {agentLabel}
           </DropdownMenuItem>
         );
       }
       return (
         <DropdownMenuSub key={agent.id}>
-          <DropdownMenuSubTrigger className="bg-accent">
+          <DropdownMenuSubTrigger data-testid={`engine-option-${agent.engine}`} className="bg-accent">
             {agentLabel}
           </DropdownMenuSubTrigger>
           <DropdownMenuSubContent className="w-56">
@@ -462,6 +462,7 @@ export const EnginePickerDropdown = memo(function EnginePickerDropdown({
     return (
       <DropdownMenuItem
         key={agent.id}
+        data-testid={`engine-option-${agent.engine}`}
         onClick={() =>
           onAgentChange(agent.engine === "claude" ? null : agent)
         }
@@ -484,6 +485,7 @@ export const EnginePickerDropdown = memo(function EnginePickerDropdown({
     <DropdownMenu>
       <DropdownMenuTrigger asChild>
         <Button
+          data-testid="engine-picker-trigger"
           variant="ghost"
           size="xs"
           className={TOOLBAR_BTN}

@@ -7,6 +7,7 @@ import { useAppOrchestrator } from "@/hooks/useAppOrchestrator";
 import { useSpaceTheme } from "@/hooks/useSpaceTheme";
 import { useGlassTheme } from "@/hooks/useGlassTheme";
 import { ThemeProvider } from "@/hooks/useTheme";
+import { LanguageProvider } from "@/hooks/useLanguage";
 import { usePaneController, type PaneControllerContext } from "@/hooks/usePaneController";
 import { useToolIslandContext } from "@/hooks/useToolIslandContext";
 import { usePanelResize } from "@/hooks/usePanelResize";
@@ -88,7 +89,7 @@ export function AppLayout() {
   const o = useAppOrchestrator();
   const { managers, agentState, state, ui, actions } = o;
   const {
-    sidebar, projectManager, spaceManager, manager, settings, resolvedTheme, spaceTerminals, activeSpaceTerminals, splitView,
+    sidebar, projectManager, spaceManager, manager, settings, resolvedTheme, resolvedLanguage, spaceTerminals, activeSpaceTerminals, splitView,
   } = managers;
   const {
     agents, selectedAgent, saveAgent, deleteAgent, handleAgentChange, lockedEngine, lockedAgentId,
@@ -1112,6 +1113,7 @@ export function AppLayout() {
 
   return (
     <ThemeProvider value={resolvedTheme}>
+    <LanguageProvider value={resolvedLanguage}>
     <AgentProvider value={agentContextValue}>
     <div
       className={`relative flex h-screen overflow-hidden bg-sidebar text-foreground${settings.islandLayout ? "" : " no-islands"}${settings.islandShine ? "" : " no-island-shine"}`}
@@ -1921,6 +1923,7 @@ export function AppLayout() {
       )}
     </div>
     </AgentProvider>
+    </LanguageProvider>
     </ThemeProvider>
   );
 }

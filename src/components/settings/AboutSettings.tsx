@@ -1,4 +1,5 @@
 import { memo, useState, useEffect } from "react";
+import { useTranslation } from "react-i18next";
 import { Heart } from "lucide-react";
 import { ScrollArea } from "@/components/ui/scroll-area";
 import { SettingsHeader } from "@/components/settings/shared";
@@ -30,6 +31,7 @@ function HarnssLogo({ className }: { className?: string }) {
 // ── Component ──
 
 export const AboutSettings = memo(function AboutSettings() {
+  const { t } = useTranslation();
   const [version, setVersion] = useState<string>("");
 
   useEffect(() => {
@@ -38,7 +40,10 @@ export const AboutSettings = memo(function AboutSettings() {
 
   return (
     <div className="flex h-full flex-col">
-      <SettingsHeader title="About" description="Version info, links & credits" />
+      <SettingsHeader
+        title={t("settings.about.title")}
+        description={t("settings.about.description")}
+      />
 
       <ScrollArea className="min-h-0 flex-1">
         <div className="px-6 py-5">
@@ -50,9 +55,9 @@ export const AboutSettings = memo(function AboutSettings() {
                 Pilot
               </h3>
               <p className="mt-0.5 text-[13px] leading-relaxed text-muted-foreground">
-                Open-source desktop client for AI coding agents.
+                {t("settings.about.tagline1")}
                 <br />
-                One app for Claude Code, Codex, and any ACP agent.
+                {t("settings.about.tagline2")}
               </p>
               {version && (
                 <span className="mt-2 inline-flex items-center rounded-md bg-foreground/[0.05] px-2 py-0.5 text-xs font-medium text-muted-foreground">
@@ -65,19 +70,18 @@ export const AboutSettings = memo(function AboutSettings() {
           {/* ── Credits ── */}
           <div className="mt-4 border-t border-foreground/[0.06] pt-4">
             <span className="text-[11px] font-medium uppercase tracking-wide text-muted-foreground">
-              Credits
+              {t("settings.about.creditsTitle")}
             </span>
 
             <div className="mt-3 rounded-xl border border-foreground/[0.06] bg-muted/20 px-4 py-3.5">
               <div className="flex items-center gap-2">
                 <Heart className="h-3.5 w-3.5 text-muted-foreground/70" />
                 <span className="text-[13px] font-medium text-foreground/90">
-                  Built by OpenSource
+                  {t("settings.about.builtBy")}
                 </span>
               </div>
               <p className="mt-1.5 text-xs leading-relaxed text-muted-foreground">
-                Pilot is open-source under the MIT License. Contributions, bug reports,
-                and feature requests are welcome on GitHub.
+                {t("settings.about.license")}
               </p>
             </div>
           </div>
@@ -85,9 +89,10 @@ export const AboutSettings = memo(function AboutSettings() {
           {/* ── Tech acknowledgments ── */}
           <div className="mt-4 border-t border-foreground/[0.06] pt-4 pb-2">
             <span className="text-[11px] font-medium uppercase tracking-wide text-muted-foreground">
-              Built with
+              {t("settings.about.builtWith")}
             </span>
             <div className="mt-2 flex flex-wrap gap-1.5">
+              {/* Technology names — product names, never translated. */}
               {[
                 "Electron",
                 "React",

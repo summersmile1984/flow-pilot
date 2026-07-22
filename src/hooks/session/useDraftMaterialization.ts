@@ -1,3 +1,4 @@
+import { NEW_CHAT_TITLE } from "@/lib/session-title";
 import { useCallback } from "react";
 import { toast } from "sonner";
 import type { UIMessage, ChatSession, McpServerConfig, Project, ImageAttachment, EngineId } from "../../types";
@@ -357,7 +358,7 @@ export function useDraftMaterialization({
         setSessions(prev => [{
           id: DRAFT_ID,
           projectId: project.id,
-          title: "New Chat",
+          title: NEW_CHAT_TITLE,
           createdAt: Date.now(),
           lastMessageAt: Date.now(),
           totalCost: 0,
@@ -410,7 +411,7 @@ export function useDraftMaterialization({
             window.claude.sessions.save({
               id: failedId,
               projectId: project.id,
-              title: "New Chat",
+              title: NEW_CHAT_TITLE,
               createdAt: Date.now(),
               messages: errorMessages,
               effort: options.effort,
@@ -460,7 +461,7 @@ export function useDraftMaterialization({
         setSessions(prev => [{
           id: DRAFT_ID,
           projectId: project.id,
-          title: "New Chat",
+          title: NEW_CHAT_TITLE,
           createdAt: Date.now(),
           lastMessageAt: Date.now(),
           totalCost: 0,
@@ -503,7 +504,7 @@ export function useDraftMaterialization({
           window.claude.sessions.save({
             id: failedId,
             projectId: project.id,
-            title: "New Chat",
+            title: NEW_CHAT_TITLE,
             createdAt: Date.now(),
             messages: errorMessages,
             effort: options.effort,
@@ -552,7 +553,7 @@ export function useDraftMaterialization({
         setSessions(prev => [{
           id: DRAFT_ID,
           projectId: project.id,
-          title: "New Chat",
+          title: NEW_CHAT_TITLE,
           createdAt: Date.now(),
           lastMessageAt: Date.now(),
           totalCost: 0,
@@ -651,7 +652,7 @@ export function useDraftMaterialization({
       const newSession: ChatSession = {
         id: sessionId,
         projectId: project.id,
-        title: "New Chat",
+        title: NEW_CHAT_TITLE,
         createdAt: now,
         lastMessageAt: now,
         model: sessionModel,

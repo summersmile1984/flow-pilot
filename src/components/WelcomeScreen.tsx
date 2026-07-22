@@ -1,4 +1,5 @@
 import { memo, useEffect, useRef, useState } from "react";
+import { useTranslation } from "react-i18next";
 import { motion } from "motion/react";
 import { ArrowRight, FolderOpen } from "lucide-react";
 import {
@@ -91,6 +92,7 @@ interface SidebarArrowProps {
 }
 
 function SidebarArrow({ anchorElement }: SidebarArrowProps) {
+  const { t } = useTranslation();
   const containerRef = useRef<HTMLDivElement | null>(null);
   const [metrics, setMetrics] = useState({ svgWidth: 900, tailX: 660 });
 
@@ -219,7 +221,7 @@ function SidebarArrow({ anchorElement }: SidebarArrowProps) {
           className="italic text-foreground/[0.16]"
           style={{ fontFamily: DISPLAY_FONT, fontSize: "17px" }}
         >
-          your threads are in the sidebar
+          {t("welcome.sidebarHint")}
         </span>
       </motion.div>
 
@@ -278,6 +280,7 @@ export const WelcomeScreen = memo(function WelcomeScreen({
   hasProjects,
   onCreateProject,
 }: WelcomeScreenProps) {
+  const { t } = useTranslation();
   const [subtitleElement, setSubtitleElement] = useState<HTMLParagraphElement | null>(null);
   const [continueMessage, setContinueMessage] = useState<ContinueMessage>(() =>
     getContinueMessage(),
@@ -354,10 +357,10 @@ export const WelcomeScreen = memo(function WelcomeScreen({
               className="text-5xl italic"
               style={{ fontFamily: DISPLAY_FONT, color: "oklch(0.65 0.22 25)" }}
             >
-              Open a project
+              {t("welcome.openProject")}
             </h1>
             <p className="max-w-[300px] text-center text-base leading-relaxed text-muted-foreground">
-              Choose a folder to anchor your sessions, tools, and file context.
+              {t("welcome.openProjectSubtitle")}
             </p>
           </motion.div>
 
@@ -371,7 +374,7 @@ export const WelcomeScreen = memo(function WelcomeScreen({
             whileTap={{ scale: 0.97 }}
           >
             <FolderOpen className="h-4 w-4" />
-            Choose folder
+            {t("welcome.chooseFolder")}
             <ArrowRight className="h-4 w-4 transition-transform group-hover:translate-x-0.5" />
           </motion.button>
         </motion.div>
@@ -400,25 +403,28 @@ export const WelcomeScreen = memo(function WelcomeScreen({
             animate={{ opacity: 1 }}
             transition={{ delay: 0.1, duration: 0.5 }}
           >
+            {/* Keyed by id, not by copy — the id is stable across languages, so
+                switching language re-renders in place instead of replaying the
+                entrance animation. */}
             <motion.h1
-              key={continueMessage.headline}
+              key={continueMessage.id}
               className="text-5xl italic"
               style={{ fontFamily: DISPLAY_FONT, color: continueMessage.accent }}
               initial={{ opacity: 0, y: 10, filter: "blur(4px)" }}
               animate={{ opacity: 1, y: 0, filter: "blur(0px)" }}
               transition={{ duration: 0.45, ease: EASE_OUT }}
             >
-              {continueMessage.headline}
+              {t(`welcome.continue.${continueMessage.id}.headline`)}
             </motion.h1>
             <motion.p
-              key={continueMessage.subtitle}
+              key={`${continueMessage.id}-subtitle`}
               ref={setSubtitleElement}
               className="max-w-[min(92vw,640px)] text-center text-base leading-relaxed text-muted-foreground"
               initial={{ opacity: 0, y: 6 }}
               animate={{ opacity: 1, y: 0 }}
               transition={{ duration: 0.4, delay: 0.05, ease: EASE_OUT }}
             >
-              {continueMessage.subtitle}
+              {t(`welcome.continue.${continueMessage.id}.subtitle`)}
             </motion.p>
           </motion.div>
         </motion.div>

@@ -1,0 +1,834 @@
+{
+  "settings": {
+    "title": "设置",
+    "nav": {
+      "general": "通用",
+      "appearance": "外观",
+      "notifications": "通知",
+      "analytics": "数据统计",
+      "pilot": "Pilot",
+      "agents": "ACP 智能体",
+      "mcp": "MCP 服务器",
+      "engines": "引擎",
+      "skills": "技能",
+      "advanced": "高级",
+      "about": "关于"
+    },
+    "general": {
+      "title": "通用",
+      "description": "应用级偏好设置",
+      "section": {
+        "updates": "更新",
+        "sidebar": "侧边栏",
+        "editor": "编辑器",
+        "voiceDictation": "语音输入"
+      },
+      "prerelease": {
+        "label": "接收预发布版本",
+        "description": "获取包含最新功能的测试版。关闭后只接收稳定版。"
+      },
+      "chatLimit": {
+        "label": "每个项目显示的近期对话数",
+        "description": "每个项目默认显示的对话数量。点击侧边栏的「显示更多」可加载更多对话。"
+      },
+      "editor": {
+        "label": "默认编辑器",
+        "description": "选择点击「在编辑器中打开」时使用的编辑器。「自动」会依次尝试 Cursor、VS Code、Zed。",
+        "auto": "自动"
+      },
+      "dictation": {
+        "label": "听写模式",
+        "description": "「系统原生」使用操作系统的听写功能（仅限 macOS）。「Whisper」在本地运行 AI 模型完成语音转文字，全平台可用（首次使用需下载约 40 MB）。",
+        "native": "系统原生",
+        "whisper": "Whisper（本地 AI）"
+      }
+    },
+    "advanced": {
+      "title": "高级",
+      "description": "协议行为与服务端通信的底层设置",
+      "clientName": {
+        "label": "客户端名称",
+        "description": "握手时本应用向 Codex 服务端表明的身份标识。修改后在新会话中生效。"
+      },
+      "devFill": {
+        "label": "在对话标题栏显示 Dev Fill",
+        "description": "在当前对话标题栏启用开发用的数据填充操作。默认隐藏。"
+      },
+      "jiraBoard": {
+        "label": "启用 Jira 看板",
+        "description": "在项目侧边栏和对话中显示 Jira 看板界面。此为开发者预览功能。"
+      },
+      "replayWelcome": {
+        "label": "重新播放欢迎向导",
+        "description": "重置引导标记并重新启动欢迎向导。",
+        "action": "重新播放"
+      }
+    },
+    "notifications": {
+      "title": "通知",
+      "description": "配置不同事件何时触发系统通知和提示音。",
+      "osNotification": "系统通知",
+      "sound": "提示音",
+      "trigger": {
+        "always": "始终",
+        "unfocused": "窗口未聚焦时",
+        "never": "从不"
+      },
+      "event": {
+        "sessionComplete": {
+          "label": "会话完成",
+          "description": "Claude 处理完毕、会话进入空闲状态时。"
+        },
+        "exitPlanMode": {
+          "label": "退出计划模式",
+          "description": "Claude 规划完成、准备开始实施时。"
+        },
+        "permissions": {
+          "label": "权限请求",
+          "description": "Claude 需要你批准执行命令、编辑文件等操作时。"
+        },
+        "askUserQuestion": {
+          "label": "向你提问",
+          "description": "Claude 就工作方向向你提问时。"
+        }
+      }
+    },
+    "analytics": {
+      "title": "数据统计",
+      "description": "分享匿名使用数据，帮助改进 Pilot",
+      "section": "使用数据统计",
+      "toggle": {
+        "label": "发送匿名使用数据",
+        "description": "分享匿名使用数据，帮助我们了解用户如何使用 Pilot 并改进产品。我们收集应用版本、平台和基本功能使用情况，不收集任何代码、提示词或个人数据。"
+      },
+      "userId": {
+        "label": "匿名用户 ID",
+        "note": "这是随机生成的 ID，仅用于统计独立用户数，不会用于识别你的身份。"
+      },
+      "collectTitle": "我们收集什么",
+      "collect": {
+        "platform": "应用版本与平台（macOS、Windows、Linux）",
+        "activeUsers": "日活跃用户数（用于衡量使用活跃度）",
+        "featureUsage": "基本功能使用情况（例如使用了哪些引擎）"
+      },
+      "notCollectTitle": "我们不收集什么",
+      "notCollect": {
+        "code": "你的代码、提示词，或与 AI 的对话内容",
+        "paths": "文件路径、项目名称或仓库地址",
+        "personal": "任何个人信息或身份识别信息",
+        "credentials": "API 密钥或凭据"
+      }
+    },
+    "about": {
+      "title": "关于",
+      "description": "版本信息、相关链接与致谢",
+      "tagline1": "面向 AI 编程智能体的开源桌面客户端。",
+      "tagline2": "一个应用统管 Claude Code、Codex 及各类 ACP 智能体。",
+      "creditsTitle": "致谢",
+      "builtBy": "由开源社区打造",
+      "license": "Pilot 基于 MIT 许可证开源。欢迎在 GitHub 上贡献代码、反馈问题或提出功能建议。",
+      "builtWith": "技术栈"
+    },
+    "mcp": {
+      "title": "MCP 服务器",
+      "managedFromPrefix": "MCP 服务器在右侧工具栏的",
+      "managedFromSuffix": "面板中管理。",
+      "panelName": "MCP 服务器",
+      "whyToolbar": "为什么放在工具栏？",
+      "perProject": {
+        "term": "按项目配置",
+        "desc": "每个项目都有各自的 MCP 服务器，因此它们与项目工作区放在一起。"
+      },
+      "liveStatus": {
+        "term": "实时状态监控",
+        "desc": "服务器可能在会话中途断开。工具栏面板会实时显示连接状态，便于及时发现和排查问题。"
+      },
+      "accessible": {
+        "term": "随时可用",
+        "desc": "无需离开对话即可添加、移除、认证和重连服务器。"
+      }
+    },
+    "pilot": {
+      "title": "Pilot",
+      "description": "负责把任务分派给 ACP 子智能体的 Mastra 主控",
+      "section": {
+        "supervisorModel": "主控模型",
+        "providers": "LLM 服务商"
+      },
+      "defaultModel": {
+        "label": "默认模型",
+        "descriptionReady": "新建的 Pilot 对话默认使用该模型。可在引擎选择器中为单个对话切换。",
+        "descriptionEmpty": "请先在下方添加服务商，然后才能选择模型。"
+      },
+      "maxTokens": {
+        "label": "最大输出 token 数",
+        "description": "单次主控回复的上限。设得过低会导致回答中途截断；上限因模型而异（deepseek-chat 最高 8192）。"
+      },
+      "providersIntro": "主控可调用的 API 服务商。每个服务商有各自的密钥、Base URL 和模型列表。修改后会重建进行中的 Pilot 对话。",
+      "provider": {
+        "name": "名称",
+        "baseUrl": "Base URL",
+        "baseUrlHint": "可选。兼容 OpenAI 的接口地址。留空则使用服务商默认值。",
+        "apiKey": "API 密钥",
+        "apiKeyPlaceholder": "sk-…（留空则使用 .env）",
+        "models": "模型",
+        "fetching": "获取中…",
+        "fetchFromApi": "从 API 获取",
+        "modelsHint": "每行一个模型 id，也可从服务商的 /models 接口获取。",
+        "defaultEndpoint": "默认接口地址",
+        "keySet": "已设置密钥",
+        "usesEnv": "使用 .env",
+        "edit": "编辑",
+        "save": "保存",
+        "add": "添加服务商",
+        "error": {
+          "load": "加载服务商失败",
+          "nameRequired": "名称不能为空",
+          "modelRequired": "请至少添加一个模型",
+          "save": "保存失败",
+          "delete": "删除失败",
+          "fetchModels": "获取模型列表失败"
+        }
+      }
+    },
+    "engines": {
+      "title": "引擎",
+      "description": "配置引擎级运行行为与可执行文件的选择方式",
+      "binarySource": {
+        "auto": "自动检测",
+        "managedInstall": "托管安装",
+        "managedDownload": "托管下载",
+        "custom": "自定义路径"
+      },
+      "claude": {
+        "sourceLabel": "Claude 可执行文件来源",
+        "sourceDescription": "选择 Pilot 定位 Claude 可执行文件的方式。",
+        "pathLabel": "自定义 Claude 路径",
+        "pathDescription": "claude 可执行文件的绝对路径（claude 或 claude.exe）。",
+        "pathPlaceholder": "claude 可执行文件的绝对路径"
+      },
+      "codex": {
+        "sourceLabel": "Codex 可执行文件来源",
+        "sourceDescription": "选择 Pilot 定位 Codex 可执行文件的方式。",
+        "pathLabel": "自定义 Codex 路径",
+        "pathDescription": "codex 可执行文件的绝对路径（codex 或 codex.exe）。",
+        "pathPlaceholder": "codex 可执行文件的绝对路径"
+      }
+    },
+    "skills": {
+      "title": "技能",
+      "description": "管理本项目的智能体技能",
+      "add": "添加技能",
+      "createTitle": "创建新技能",
+      "namePlaceholder": "技能名称（例如 my-custom-skill）",
+      "scopeProject": "项目级",
+      "scopeGlobal": "全局",
+      "create": "创建",
+      "editTitle": "编辑技能",
+      "save": "保存",
+      "empty": "还没有技能。创建第一个技能开始使用。",
+      "noDescription": "暂无描述",
+      "confirmDelete": "确定要删除这个技能吗？",
+      "error": {
+        "load": "加载技能失败",
+        "create": "创建技能失败",
+        "delete": "删除技能失败",
+        "save": "保存技能失败"
+      }
+    },
+    "agents": {
+      "title": "ACP 智能体",
+      "description": "浏览智能体商店，或管理已安装的智能体",
+      "tabStore": "智能体商店",
+      "tabMine": "我的智能体",
+      "builtIn": "内置",
+      "add": "添加智能体",
+      "edit": "编辑智能体",
+      "empty": "尚未配置任何智能体",
+      "emptyHint": "从商店添加 ACP 智能体，或手动添加",
+      "pasteJson": "粘贴 JSON",
+      "pasteHint": "从 agents.json 粘贴智能体定义即可自动填充表单",
+      "field": {
+        "id": "ID",
+        "idPlaceholder": "my-agent",
+        "name": "名称",
+        "namePlaceholder": "我的自定义智能体",
+        "binary": "可执行文件",
+        "binaryPlaceholder": "npx",
+        "binaryHint": "用于启动 ACP 智能体进程的命令",
+        "args": "参数",
+        "argsPlaceholder": "@scope/package --flag",
+        "argsHint": "以空格分隔的命令行参数",
+        "env": "环境变量",
+        "envKeyPlaceholder": "KEY",
+        "envValuePlaceholder": "值",
+        "addVariable": "添加变量"
+      },
+      "saving": "保存中…",
+      "saveChanges": "保存更改",
+      "deleteTitle": "删除智能体",
+      "deleteWarning": "此操作无法撤销。",
+      "delete": "删除",
+      "store": {
+        "searchPlaceholder": "搜索智能体…",
+        "refresh": "刷新注册表",
+        "viewRepo": "查看代码仓库",
+        "install": "添加",
+        "installing": "添加中…",
+        "update": "更新",
+        "updating": "更新中…",
+        "download": "下载",
+        "setup": "配置",
+        "empty": "未找到智能体",
+        "emptyHint": "换个关键词试试"
+      },
+      "error": {
+        "idRequired": "ID 不能为空",
+        "idReserved": "该 ID 为系统保留",
+        "idDuplicate": "已存在使用该 ID 的智能体",
+        "nameRequired": "名称不能为空",
+        "binaryRequired": "可执行命令不能为空",
+        "save": "保存智能体失败",
+        "clipboardInvalid": "剪贴板中不是有效的智能体 JSON",
+        "clipboardRead": "无法读取剪贴板"
+      }
+    },
+    "appearance": {
+      "title": "外观",
+      "description": "自定义界面的外观与质感",
+      "section": {
+        "theme": "主题",
+        "language": "语言",
+        "tools": "工具",
+        "layout": "布局",
+        "transparency": "透明度"
+      },
+      "colorTheme": {
+        "label": "配色主题",
+        "description": "选择浅色或深色外观，也可以跟随系统设置。",
+        "dark": "深色",
+        "light": "浅色",
+        "system": "跟随系统"
+      },
+      "language": {
+        "label": "界面语言",
+        "description": "选择界面使用的语言，也可以跟随系统设置。",
+        "system": "跟随系统"
+      },
+      "autoGroupTools": {
+        "label": "自动折叠工具调用",
+        "description": "把连续的工具调用合并为一组。关闭后，每次工具调用及其间的思考过程都会单独显示。"
+      },
+      "avoidGroupingEdits": {
+        "label": "编辑操作不参与折叠",
+        "description": "即使开启了自动折叠，Edit 和 Write 工具调用仍单独成行。编辑前后的读取会各自成组。"
+      },
+      "autoExpandTools": {
+        "label": "自动展开工具结果",
+        "description": "工具调用完成后短暂展开，稍后自动收起。关闭后，工具行将保持收起，除非你手动展开。"
+      },
+      "expandEditWrite": {
+        "label": "默认展开 Edit 与 Write 工具",
+        "description": "Edit 和 Write 工具调用出现时即为展开状态。关闭后默认保持收起，直到你手动展开。"
+      },
+      "showToolIcons": {
+        "label": "显示工具图标",
+        "description": "在工具调用名称旁显示图标。关闭后为纯文本视图。"
+      },
+      "coloredToolIcons": {
+        "label": "工具图标着色",
+        "description": "按工具类型为图标着色。关闭后为单色图标。"
+      },
+      "windowLayout": {
+        "label": "窗口布局",
+        "description": "选择窗口内各面板的排列方式。",
+        "islands": "浮岛",
+        "flat": "平铺"
+      },
+      "coloredSidebarIcons": {
+        "label": "侧边栏图标着色",
+        "description": "按工具类型为工具选择器和面板标题图标着色。关闭后为中性单色图标。"
+      },
+      "islandShine": {
+        "label": "浮岛边框高光",
+        "description": "在浮岛面板边框上显示细微的斜向反光。仅在浮岛布局下可见。"
+      },
+      "backgroundEffect": {
+        "labelMac": "窗口背景效果",
+        "labelOther": "窗口透明度",
+        "descriptionMacLiquidGlass": "选择 macOS 原生背景材质。「关闭模糊」会让窗口保持不透明；从「液态玻璃」切换到「毛玻璃」需要重启。",
+        "descriptionMacNoLiquidGlass": "选择 macOS 原生背景材质。本机不支持液态玻璃，可选「毛玻璃」或「关闭」。",
+        "descriptionGlassSupported": "让桌面透过窗口背景显示。在 Windows 上启用时使用 Mica 材质。",
+        "descriptionGlassUnsupported": "当前平台不支持窗口透明。",
+        "liquidGlass": "液态玻璃",
+        "vibrancy": "毛玻璃",
+        "off": "关闭模糊"
+      },
+      "transparentToolPicker": {
+        "label": "工具选择器透明",
+        "description": "移除右侧工具选择器条的背景，让图标直接浮在窗口之上。"
+      }
+    }
+  },
+  "sidebar": {
+    "addProject": "添加项目",
+    "searchChats": "搜索对话…",
+    "showMore": "显示更多",
+    "showMoreCount": "（{{shown}} / 共 {{total}}）",
+    "emptyNoProjects": "添加一个项目开始使用",
+    "emptyInSpace": "此空间中还没有项目",
+    "earlyBeta": "Pilot 处于早期测试阶段",
+    "openSettings": "设置",
+    "space": {
+      "createTitle": "创建空间",
+      "createSubtitle": "把工作、生活等不同场景的项目分开管理。",
+      "namePlaceholder": "空间名称…",
+      "chooseTheme": "选择主题",
+      "create": "创建空间"
+    },
+    "session": {
+      "generatingTitle": "正在生成标题…",
+      "pin": "置顶",
+      "unpin": "取消置顶",
+      "moveToFolder": "移动到文件夹",
+      "removeFromFolder": "移出文件夹",
+      "openInSplitView": "在分屏中打开",
+      "rename": "重命名",
+      "delete": "删除"
+    }
+  },
+  "chat": {
+    "header": {
+      "model": "模型",
+      "plan": "计划模式",
+      "permissions": "权限",
+      "cost": "费用",
+      "session": "会话",
+      "on": "开",
+      "off": "关",
+      "closePane": "关闭面板",
+      "newChat": "新对话"
+    },
+    "permissionMode": {
+      "plan": "计划",
+      "default": "编辑前询问",
+      "acceptEdits": "自动接受编辑",
+      "bypassPermissions": "全部允许"
+    },
+    "acpPermissionBehavior": {
+      "ask": "询问",
+      "auto_accept": "自动接受",
+      "allow_all": "全部允许"
+    }
+  },
+  "common": {
+    "cancel": "取消"
+  },
+  "updater": {
+    "error": {
+      "manual-install-failed": "自动安装失败，请手动安装此更新。",
+      "download-failed": "更新下载失败，请手动下载最新版本。"
+    }
+  },
+  "welcome": {
+    "openProject": "打开一个项目",
+    "openProjectSubtitle": "选择一个文件夹，作为会话、工具和文件上下文的落脚点。",
+    "chooseFolder": "选择文件夹",
+    "step": {
+      "welcomeTo": "欢迎使用",
+      "tagline": "你和 AI 一起",
+      "tagline2": "构建软件的工作空间。",
+      "getStarted": "开始使用",
+      "skip": "跳过",
+      "back": "返回",
+      "permissionsTitle": "由你定规则",
+      "permissionsSubtitle": "设定给 Claude 多大的自由度。随时可以修改。",
+      "projectTitle": "你的第一个项目",
+      "projectSubtitle": "把 Pilot 指向任意文件夹，开始动手。",
+      "skipForNow": "暂时跳过",
+      "agentsTitle": "接入智能体",
+      "agentsSubtitle": "浏览商店，一键添加 ACP 智能体。",
+      "agentsBuiltIn": "Claude Code 和 Codex 已内置。",
+      "readyTitle": "一切就绪",
+      "readyThemeChip": "{{theme}}主题",
+      "startBuilding": "开始构建",
+      "appearanceTitle": "打造你的风格",
+      "appearanceSubtitle": "选个顺眼的搭配，改动即时生效。",
+      "sectionTheme": "主题",
+      "sectionLayout": "布局",
+      "sectionToolBehavior": "工具行为",
+      "autoGroupTools": "自动折叠工具调用",
+      "autoGroupToolsDesc": "把连续的工具调用合并为一组。",
+      "autoExpandTools": "自动展开工具结果",
+      "autoExpandToolsDesc": "工具调用完成后短暂展开，随后自动收起。",
+      "expandEditWrite": "默认展开 Edit 与 Write 工具",
+      "expandEditWriteDesc": "文件编辑类工具调用出现时即为展开状态。",
+      "transparency": "窗口透明",
+      "transparencyOn": "让桌面透过窗口显示",
+      "transparencyOff": "当前平台不支持",
+      "layoutIslands": "浮岛",
+      "layoutIslandsDesc": "圆角、相互分离",
+      "layoutFlat": "平铺",
+      "layoutFlatDesc": "边到边铺满",
+      "tourSubtitle": "几个让 Pilot 与众不同的地方。",
+      "next": "下一步"
+    },
+    "permission": {
+      "default": "修改文件或执行命令前，Claude 会先征求你的同意。",
+      "acceptEdits": "文件编辑自动通过，执行命令仍需确认。",
+      "bypassPermissions": "全部自动执行，不再询问。"
+    },
+    "tour": {
+      "title": "有哪些功能",
+      "spacesDesc": "把项目归类到彩色的工作空间中。每个空间会用自己的色调为整个界面着色。",
+      "toolsDesc": "终端、源码管理、浏览器等工具都集成在侧边栏中，可随时开关。",
+      "space": {
+        "frontend": "前端",
+        "api": "API",
+        "mobile": "移动端",
+        "devops": "运维"
+      },
+      "tool": {
+        "terminal": {
+          "label": "终端",
+          "description": "运行命令和脚本"
+        },
+        "git": {
+          "label": "源码管理",
+          "description": "提交、分支、差异对比"
+        },
+        "browser": {
+          "label": "浏览器",
+          "description": "预览与检查"
+        },
+        "files": {
+          "label": "已打开文件",
+          "description": "跟踪访问过的文件"
+        },
+        "project-files": {
+          "label": "项目",
+          "description": "浏览文件树"
+        }
+      },
+      "spacesTitle": "空间",
+      "toolsTitle": "工具面板"
+    },
+    "continue": {
+      "continueBuilding": {
+        "headline": "继续开工",
+        "subtitle": "线程还热着，挑一个接着往下推。"
+      },
+      "welcomeBack": {
+        "headline": "欢迎回来",
+        "subtitle": "仓库想你了，整整想了好几秒。"
+      },
+      "backAtIt": {
+        "headline": "又来搞事了",
+        "subtitle": "挑个线程，制造点有品位的混乱。"
+      },
+      "oneMoreChange": {
+        "headline": "就再改一小点",
+        "subtitle": "这话你说过很多次了。线程都等着呢。"
+      },
+      "nightOwl": {
+        "headline": "夜猫子，你好",
+        "subtitle": "最好的点子和最烂的提交信息，都产自此刻。"
+      },
+      "midnightDebug": {
+        "headline": "午夜调试俱乐部",
+        "subtitle": "堆栈跟踪在黑暗里静静发着光。"
+      },
+      "moonlightMerge": {
+        "headline": "月光下待合并",
+        "subtitle": "趁鸟儿还没上班，接着上次的进度继续。"
+      },
+      "goodMorning": {
+        "headline": "早安，建造者",
+        "subtitle": "新标签页，新咖啡，还是那份长得离谱的待办。"
+      },
+      "riseAndRefactor": {
+        "headline": "起床重构",
+        "subtitle": "你的线程比某些同事醒得还早。"
+      },
+      "morningCommit": {
+        "headline": "清晨提交时刻",
+        "subtitle": "趁会议还没找上门，先拿个容易的胜利。"
+      },
+      "welcomeSunshine": {
+        "headline": "欢迎回来，阳光",
+        "subtitle": "把半成品点子变成功能的黄金时段。"
+      },
+      "afternoonSprint": {
+        "headline": "午后冲刺模式",
+        "subtitle": "代码正热，线程也排好队了。"
+      },
+      "postLunchPatch": {
+        "headline": "午饭后打补丁",
+        "subtitle": "挑个线程，让路线图看起来更靠谱一点。"
+      },
+      "eveningShift": {
+        "headline": "晚班已启动",
+        "subtitle": "安静时段，专注力拉满，外加一点点作妖的冲动。"
+      },
+      "twilightBuild": {
+        "headline": "暮色构建时间",
+        "subtitle": "适合发布一些既聪明又没什么必要的东西。"
+      },
+      "afterHours": {
+        "headline": "下班后又回来了",
+        "subtitle": "线程已就绪，等你那个「肯定很快」的小改动。"
+      }
+    },
+    "sidebarHint": "你的会话都在侧边栏里"
+  },
+  "count": {
+    "files_one": "{{count}} 个文件",
+    "files_other": "{{count}} 个文件",
+    "lines_one": "{{count}} 行",
+    "lines_other": "{{count}} 行",
+    "tools_one": "{{count}} 个工具",
+    "tools_other": "{{count}} 个工具",
+    "envVars_one": "{{count}} 个环境变量",
+    "envVars_other": "{{count}} 个环境变量",
+    "steps_one": "{{count}} 步",
+    "steps_other": "{{count}} 步",
+    "snippets_one": "{{count}} 个片段",
+    "snippets_other": "{{count}} 个片段",
+    "types_one": "{{count}} 种类型",
+    "types_other": "{{count}} 种类型",
+    "filesChanged_one": "{{count}} 个文件有改动",
+    "filesChanged_other": "{{count}} 个文件有改动",
+    "moreResults_one": "另有 {{count}} 条结果",
+    "moreResults_other": "另有 {{count}} 条结果",
+    "linesInFiles": "{{files}}中的 {{lines}}",
+    "arrowFiles_one": " → {{count}} 个文件",
+    "arrowFiles_other": " → {{count}} 个文件",
+    "arrowLines_one": " → {{count}} 行",
+    "arrowLines_other": " → {{count}} 行",
+    "planSteps_one": "计划：{{count}} 步",
+    "planSteps_other": "计划：{{count}} 步",
+    "searchedWebQueries_one": "已用 {{count}} 个查询搜索网页",
+    "searchedWebQueries_other": "已用 {{count}} 个查询搜索网页"
+  },
+  "toolGroup": {
+    "edited_one": "编辑了 {{count}} 个文件",
+    "edited_other": "编辑了 {{count}} 个文件",
+    "read_one": "读取了 {{count}} 个文件",
+    "read_other": "读取了 {{count}} 个文件",
+    "ran_one": "运行了 {{count}} 条命令",
+    "ran_other": "运行了 {{count}} 条命令",
+    "searched_one": "执行了 {{count}} 次搜索",
+    "searched_other": "执行了 {{count}} 次搜索",
+    "used_one": "使用了 {{count}} 个工具",
+    "used_other": "使用了 {{count}} 个工具",
+    "join": "、",
+    "joinTwo": "、",
+    "joinLast": "、"
+  },
+  "tool": {
+    "fallback": {
+      "running": "运行中",
+      "tool": "工具",
+      "failedGeneric": "工具执行失败",
+      "failedNamed": "{{tool}} 执行失败",
+      "calledServer": "已调用 {{server}}",
+      "callingServer": "正在调用 {{server}}",
+      "failedCallServer": "调用 {{server}} 失败"
+    },
+    "native": {
+      "Bash": {
+        "past": "已运行命令",
+        "active": "正在运行命令",
+        "failed": "运行命令失败"
+      },
+      "Read": {
+        "past": "已读取文件",
+        "active": "正在读取文件",
+        "failed": "读取文件失败"
+      },
+      "Write": {
+        "past": "已写入文件",
+        "active": "正在写入文件",
+        "failed": "写入文件失败"
+      },
+      "Edit": {
+        "past": "已编辑文件",
+        "active": "正在编辑文件",
+        "failed": "编辑文件失败"
+      },
+      "Grep": {
+        "past": "已搜索",
+        "active": "正在搜索",
+        "failed": "搜索失败"
+      },
+      "Glob": {
+        "past": "已查找文件",
+        "active": "正在查找文件",
+        "failed": "查找文件失败"
+      },
+      "WebSearch": {
+        "past": "已搜索网页",
+        "active": "正在搜索网页",
+        "failed": "网页搜索失败"
+      },
+      "WebFetch": {
+        "past": "已获取",
+        "active": "正在获取",
+        "failed": "获取失败"
+      },
+      "TodoWrite": {
+        "past": "已更新任务",
+        "active": "正在更新任务",
+        "failed": "更新任务失败"
+      },
+      "Think": {
+        "past": "已思考",
+        "active": "正在思考",
+        "failed": "思考失败"
+      },
+      "EnterPlanMode": {
+        "past": "已进入计划模式",
+        "active": "正在进入计划模式",
+        "failed": "进入计划模式失败"
+      },
+      "ExitPlanMode": {
+        "past": "已提交计划",
+        "active": "正在准备计划",
+        "failed": "准备计划失败"
+      },
+      "AskUserQuestion": {
+        "past": "已提问",
+        "active": "正在提问",
+        "failed": "提问失败"
+      },
+      "ToolSearch": {
+        "past": "已加载工具",
+        "active": "正在加载工具",
+        "failed": "加载工具失败"
+      },
+      "Skill": {
+        "past": "已加载技能",
+        "active": "正在加载技能",
+        "failed": "加载技能失败"
+      }
+    },
+    "mcp": {
+      "jiraSearch": {
+        "past": "已搜索 Jira",
+        "active": "正在搜索 Jira",
+        "failed": "搜索 Jira 失败"
+      },
+      "jiraGetIssue": {
+        "past": "已获取问题",
+        "active": "正在获取问题",
+        "failed": "获取问题失败"
+      },
+      "jiraListProjects": {
+        "past": "已列出项目",
+        "active": "正在列出项目",
+        "failed": "列出项目失败"
+      },
+      "jiraCreateIssue": {
+        "past": "已创建问题",
+        "active": "正在创建问题",
+        "failed": "创建问题失败"
+      },
+      "jiraEditIssue": {
+        "past": "已更新问题",
+        "active": "正在更新问题",
+        "failed": "更新问题失败"
+      },
+      "jiraTransitionIssue": {
+        "past": "已流转问题状态",
+        "active": "正在流转问题状态",
+        "failed": "流转问题状态失败"
+      },
+      "jiraAddComment": {
+        "past": "已添加评论",
+        "active": "正在添加评论",
+        "failed": "添加评论失败"
+      },
+      "jiraGetTransitions": {
+        "past": "已获取状态流转",
+        "active": "正在获取状态流转",
+        "failed": "获取状态流转失败"
+      },
+      "jiraLookupUser": {
+        "past": "已查找用户",
+        "active": "正在查找用户",
+        "failed": "查找用户失败"
+      },
+      "confluenceGetPage": {
+        "past": "已获取页面",
+        "active": "正在获取页面",
+        "failed": "获取页面失败"
+      },
+      "confluenceSearch": {
+        "past": "已搜索 Confluence",
+        "active": "正在搜索 Confluence",
+        "failed": "搜索 Confluence 失败"
+      },
+      "confluenceListSpaces": {
+        "past": "已列出空间",
+        "active": "正在列出空间",
+        "failed": "列出空间失败"
+      },
+      "confluenceListDescendants": {
+        "past": "已列出子页面",
+        "active": "正在列出子页面",
+        "failed": "列出子页面失败"
+      },
+      "confluenceListPages": {
+        "past": "已列出页面",
+        "active": "正在列出页面",
+        "failed": "列出页面失败"
+      },
+      "confluenceCreatePage": {
+        "past": "已创建页面",
+        "active": "正在创建页面",
+        "failed": "创建页面失败"
+      },
+      "confluenceUpdatePage": {
+        "past": "已更新页面",
+        "active": "正在更新页面",
+        "failed": "更新页面失败"
+      },
+      "atlassianResources": {
+        "past": "已获取资源",
+        "active": "正在获取资源",
+        "failed": "获取资源失败"
+      },
+      "atlassianUserInfo": {
+        "past": "已获取用户信息",
+        "active": "正在获取用户信息",
+        "failed": "获取用户信息失败"
+      },
+      "atlassianSearch": {
+        "past": "已搜索 Atlassian",
+        "active": "正在搜索 Atlassian",
+        "failed": "搜索 Atlassian 失败"
+      },
+      "atlassianFetch": {
+        "past": "已获取资源",
+        "active": "正在获取资源",
+        "failed": "获取资源失败"
+      },
+      "context7ResolveLibrary": {
+        "past": "已解析库",
+        "active": "正在解析库",
+        "failed": "解析库失败"
+      },
+      "context7QueryDocs": {
+        "past": "已查询文档",
+        "active": "正在查询文档",
+        "failed": "查询文档失败"
+      }
+    }
+  },
+  "time": {
+    "justNow": "刚刚",
+    "minutesAgo": "{{count}} 分钟前",
+    "hoursAgo": "{{count}} 小时前",
+    "daysAgo": "{{count}} 天前"
+  }
+}

@@ -1,4 +1,5 @@
 import { memo, useCallback, useEffect, useMemo, useState } from "react";
+import { useTranslation } from "react-i18next";
 import { Bot, Cpu } from "lucide-react";
 import { ScrollArea } from "@/components/ui/scroll-area";
 import { SettingRow, SettingsSelect, SettingsHeader, SettingsSection } from "@/components/settings/shared";
@@ -29,6 +30,7 @@ export const PilotSettings = memo(function PilotSettings({
   appSettings,
   onUpdateAppSettings,
 }: PilotSettingsProps) {
+  const { t } = useTranslation();
   const [providers, setProviders] = useState<LlmProvider[]>([]);
   const [maxTokens, setMaxTokens] = useState(String(DEFAULT_MAX_OUTPUT_TOKENS));
 
@@ -81,19 +83,19 @@ export const PilotSettings = memo(function PilotSettings({
   return (
     <div className="flex h-full flex-col">
       <SettingsHeader
-        title="Pilot"
-        description="The Mastra supervisor that routes your work to ACP subagents"
+        title={t("settings.pilot.title")}
+        description={t("settings.pilot.description")}
       />
 
       <ScrollArea className="min-h-0 flex-1">
         <div className="px-6 py-2">
-          <SettingsSection icon={Cpu} label="Supervisor model" first>
+          <SettingsSection icon={Cpu} label={t("settings.pilot.section.supervisorModel")} first>
             <SettingRow
-              label="Default model"
+              label={t("settings.pilot.defaultModel.label")}
               description={
                 modelOptions.length > 0
-                  ? "New Pilot chats start here. Switch per chat in the engine picker."
-                  : "Add a provider below to choose a model."
+                  ? t("settings.pilot.defaultModel.descriptionReady")
+                  : t("settings.pilot.defaultModel.descriptionEmpty")
               }
             >
               <SettingsSelect
@@ -105,8 +107,8 @@ export const PilotSettings = memo(function PilotSettings({
             </SettingRow>
 
             <SettingRow
-              label="Max output tokens"
-              description="Cap on a single supervisor reply. Too low truncates mid-answer; the ceiling is model-specific (deepseek-chat maxes at 8192)."
+              label={t("settings.pilot.maxTokens.label")}
+              description={t("settings.pilot.maxTokens.description")}
             >
               <input
                 type="number"
@@ -124,10 +126,9 @@ export const PilotSettings = memo(function PilotSettings({
             </SettingRow>
           </SettingsSection>
 
-          <SettingsSection icon={Bot} label="LLM providers">
+          <SettingsSection icon={Bot} label={t("settings.pilot.section.providers")}>
             <p className="px-1 pb-1 text-xs text-muted-foreground">
-              API providers the supervisor can reach. Each carries its own key, base URL, and
-              model list. Changes rebuild active Pilot chats.
+              {t("settings.pilot.providersIntro")}
             </p>
             <LlmProviderManager onProvidersChange={reloadProviders} />
           </SettingsSection>

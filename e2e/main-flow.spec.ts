@@ -127,9 +127,13 @@ test('welcome screen should show Pilot branding', async () => {
 // ══════════════════════════════════════════════════════════
 
 test('should dismiss welcome screen if present', async () => {
-  const skip = page.locator('button:has-text("Skip")');
-  const getStarted = page.locator('button:has-text("Get Started")');
-  
+  // Selected by test id, not visible copy. A `has-text("Skip")` selector stops
+  // matching the moment the UI is translated, and the old `.catch(() => false)`
+  // guards turned that miss into a silent pass.
+  const wizard = page.getByTestId('welcome-wizard');
+  const skip = page.getByTestId('welcome-skip');
+  const getStarted = page.getByTestId('welcome-get-started');
+
   if (await skip.isVisible({ timeout: 2000 }).catch(() => false)) {
     console.log('Found Skip button, clicking...');
     await skip.click();
@@ -141,8 +145,12 @@ test('should dismiss welcome screen if present', async () => {
   } else {
     console.log('No welcome screen visible, already on main interface');
   }
-  
+
   await takeScreenshot('03-after-welcome');
+
+  // Post-condition the original test lacked: however we got here, the wizard
+  // must be gone. Without this the test passed even when nothing was clicked.
+  await expect(wizard).toBeHidden();
 });
 
 // ══════════════════════════════════════════════════════════
@@ -168,36 +176,41 @@ test('should show main interface elements', async () => {
 // ══════════════════════════════════════════════════════════
 
 test('should open and navigate settings', async () => {
-  // Try keyboard shortcut first
-  await page.keyboard.press('Meta+,');
+  // Click the sidebar gear. This test used to press Meta+, — but the app
+  // registers no comma shortcut (see src/hooks/useKeyboardShortcuts.ts, which
+  // binds only Shift+Tab and Cmd/Ctrl+F), so settings never actually opened.
+  // The old body-text check was logged and never asserted, so it passed anyway.
+  await page.getByTestId('open-settings').click();
   await page.waitForTimeout(1500);
-  
+
   await takeScreenshot('05-settings-opened');
-  
-  // Check if settings opened
-  const bodyText = await page.locator('body').textContent() || '';
-  console.log('Settings visible:', bodyText.includes('General') || bodyText.includes('Settings'));
+
+  await expect(page.getByTestId('settings-tab-general')).toBeVisible();
 });
 
 test('should navigate settings tabs', async () => {
-  const tabs = ['General', 'Appearance', 'Engines', 'Skills', 'About'];
-  
+  // Section ids from NAV_ITEMS in src/components/SettingsView.tsx — stable
+  // identifiers rather than the translated labels rendered next to the icon.
+  const tabs = ['general', 'appearance', 'engines', 'skills', 'about'];
+
   for (const tab of tabs) {
-    const tabEl = page.locator(`text=${tab}`).first();
-    if (await tabEl.isVisible({ timeout: 1000 }).catch(() => false)) {
-      await tabEl.click();
-      await page.waitForTimeout(500);
-      await takeScreenshot(`06-settings-${tab.toLowerCase()}`);
-      console.log(`✓ ${tab} tab`);
-    } else {
-      console.log(`✗ ${tab} tab not found`);
-    }
+    const tabEl = page.getByTestId(`settings-tab-${tab}`);
+    // Settings is open at this point, so every tab is expected to exist. The
+    // previous conditional logged "✗ not found" and still passed.
+    await expect(tabEl).toBeVisible();
+    await tabEl.click();
+    await page.waitForTimeout(500);
+    await takeScreenshot(`06-settings-${tab}`);
+    console.log(`✓ ${tab} tab`);
   }
 });
 
 test('should close settings', async () => {
   await page.keyboard.press('Escape');
   await page.waitForTimeout(500);
+  // Previously this test only screenshotted, so it passed whether or not
+  // Escape did anything.
+  await expect(page.getByTestId('settings-tab-general')).toBeHidden();
   await takeScreenshot('07-settings-closed');
 });
 
@@ -206,35 +219,25 @@ test('should close settings', async () => {
 // ══════════════════════════════════════════════════════════
 
 test('should find and open engine picker', async () => {
-  const selectors = [
-    'button:has-text("Claude Code")',
-    'button:has-text("Pilot")',
-    'button:has-text("Codex")',
-    'button:has-text("Claude")',
-  ];
-  
-  let picker = null;
-  for (const sel of selectors) {
-    const el = page.locator(sel).first();
-    if (await el.isVisible({ timeout: 1000 }).catch(() => false)) {
-      picker = el;
-      console.log('Found engine picker:', sel);
-      break;
-    }
-  }
-  
-  if (picker) {
-    await picker.click();
-    await page.waitForTimeout(500);
-    await takeScreenshot('08-engine-dropdown');
-    
-    // Check for Pilot option
-    const pilotOption = page.locator('[role="menuitem"]').filter({ hasText: 'Pilot' });
-    if (await pilotOption.isVisible({ timeout: 1000 }).catch(() => false)) {
-      console.log('✓ Pilot engine option found');
-    }
-  } else {
-    console.log('Engine picker not visible (need to open a project first?)');
+  // One test id replaces the four-way guess at the trigger's English label.
+  // The picker only renders once a chat is open, so absence is a legitimate
+  // state — but it is reported as a skip rather than a pass, so it can never
+  // quietly stand in for a real regression.
+  const picker = page.getByTestId('engine-picker-trigger');
+  const present = await picker.isVisible({ timeout: 1000 }).catch(() => false);
+  test.skip(!present, 'Engine picker not rendered — no chat open in this run');
+
+  await picker.click();
+  await page.waitForTimeout(500);
+  await takeScreenshot('08-engine-dropdown');
+
+  // Which engines are offered depends on configured agents; that the menu opens
+  // does not. Assert the deterministic half by role, which is locale-independent.
+  await expect(page.locator('[role="menu"]').first()).toBeVisible();
+
+  const pilotOption = page.getByTestId('engine-option-mastra');
+  if (await pilotOption.isVisible({ timeout: 1000 }).catch(() => false)) {
+    console.log('✓ Pilot engine option found');
   }
 });
 

@@ -1,3 +1,4 @@
+import { NEW_CHAT_TITLE } from "@/lib/session-title";
 import { useState, useCallback, useEffect, useRef } from "react";
 import type { ChatSession, UIMessage, PermissionRequest, McpServerStatus, McpServerConfig, ModelInfo, AcpPermissionBehavior, EngineId, Project, ACPAuthenticateResult, ACPConfigOption, ACPPermissionEvent } from "@/types";
 import { toMcpStatusState } from "../lib/mcp-utils";
@@ -448,7 +449,7 @@ export function useSessionManager(
           {
             id: acpSessionId,
             projectId: project.id,
-            title: "New Chat",
+            title: NEW_CHAT_TITLE,
             createdAt: now,
             lastMessageAt: now,
             totalCost: 0,

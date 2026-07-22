@@ -1,4 +1,5 @@
 import { memo, useState, useEffect, useLayoutEffect, useRef, useMemo, type CSSProperties } from "react";
+import { useTranslation } from "react-i18next";
 import { ChevronRight, AlertCircle } from "lucide-react";
 import {
   Collapsible,
@@ -8,7 +9,7 @@ import {
 import type { UIMessage } from "@/types";
 import { ToolCall } from "./ToolCall";
 import { ThinkingBlock } from "./ThinkingBlock";
-import { getToolLabel, getToolIcon, getToolColor } from "@/components/lib/tool-metadata";
+import { toolLabel, getToolIcon, getToolColor } from "@/components/lib/tool-metadata";
 import { formatCompactSummary } from "@/components/lib/tool-formatting";
 import { useChatPersistedState } from "@/components/chat-ui-state";
 import { ToolGlyph } from "@/components/lib/ToolGlyph";
@@ -81,6 +82,7 @@ export const ToolGroupBlock = memo(function ToolGroupBlock({
   disableCollapseAnimation = false,
   animate,
 }: ToolGroupBlockProps) {
+  const { t } = useTranslation();
   // Lock animation decision at mount. Parent re-renders may flip `animate` to false
   // after first paint; we still want one morph animation for newly formed groups.
   const animateOnMount = useRef(animate).current;
@@ -158,6 +160,10 @@ export const ToolGroupBlock = memo(function ToolGroupBlock({
   }, [isMorphing, morphDurationMs]);
 
   // Build categorized summary: "Edited 3 files, read 2 files, ran 1 command, ran 2 searches, and used 1 tool"
+  //
+  // Each fragment is its own plural-aware key rather than `count !== 1 ? "s" : ""`,
+  // and the separators are translated too — English joins with ", and", Chinese
+  // with a single "、" and no conjunction.
   const toolSummary = useMemo(() => {
     const EDIT_TOOLS = new Set(["Edit", "Write", "NotebookEdit"]);
     const READ_TOOLS = new Set(["Read"]);
@@ -170,8 +176,8 @@ export const ToolGroupBlock = memo(function ToolGroupBlock({
     let searchCount = 0;
     let otherCount = 0;
 
-    for (const t of tools) {
-      const name = t.toolName ?? "";
+    for (const tool of tools) {
+      const name = tool.toolName ?? "";
       if (EDIT_TOOLS.has(name)) editCount++;
       else if (READ_TOOLS.has(name)) readCount++;
       else if (COMMAND_TOOLS.has(name)) commandCount++;
@@ -180,32 +186,33 @@ export const ToolGroupBlock = memo(function ToolGroupBlock({
     }
 
     const parts: string[] = [];
-    if (editCount > 0) parts.push(`edited ${editCount} file${editCount !== 1 ? "s" : ""}`);
-    if (readCount > 0) parts.push(`read ${readCount} file${readCount !== 1 ? "s" : ""}`);
-    if (commandCount > 0) parts.push(`ran ${commandCount} command${commandCount !== 1 ? "s" : ""}`);
-    if (searchCount > 0) parts.push(`ran ${searchCount} search${searchCount !== 1 ? "es" : ""}`);
-    if (otherCount > 0) parts.push(`used ${otherCount} tool${otherCount !== 1 ? "s" : ""}`);
+    if (editCount > 0) parts.push(t("toolGroup.edited", { count: editCount }));
+    if (readCount > 0) parts.push(t("toolGroup.read", { count: readCount }));
+    if (commandCount > 0) parts.push(t("toolGroup.ran", { count: commandCount }));
+    if (searchCount > 0) parts.push(t("toolGroup.searched", { count: searchCount }));
+    if (otherCount > 0) parts.push(t("toolGroup.used", { count: otherCount }));
 
     if (parts.length === 0) return "";
     let result: string;
     if (parts.length === 1) result = parts[0];
-    else if (parts.length === 2) result = `${parts[0]} and ${parts[1]}`;
-    else result = `${parts.slice(0, -1).join(", ")}, and ${parts[parts.length - 1]}`;
+    else if (parts.length === 2) result = parts.join(t("toolGroup.joinTwo"));
+    else result = parts.slice(0, -1).join(t("toolGroup.join")) + t("toolGroup.joinLast") + parts[parts.length - 1];
 
+    // No-op for CJK, which has no letter case.
     return result.charAt(0).toUpperCase() + result.slice(1);
-  }, [tools]);
+  }, [tools, t]);
 
   const toolIcons = useMemo(() => {
     if (!showToolIcons) return null;
     const seen = new Set<typeof AlertCircle>();
     const unique: Array<{ Icon: typeof AlertCircle; color: string }> = [];
-    for (const t of tools) {
-      const Icon = t.toolError ? AlertCircle : getToolIcon(t.toolName ?? "");
+    for (const tool of tools) {
+      const Icon = tool.toolError ? AlertCircle : getToolIcon(tool.toolName ?? "");
       if (seen.has(Icon)) continue;
       seen.add(Icon);
       unique.push({
         Icon,
-        color: t.toolError ? "text-red-400/70" : (coloredToolIcons ? getToolColor(t.toolName ?? "") : "text-foreground/40"),
+        color: tool.toolError ? "text-red-400/70" : (coloredToolIcons ? getToolColor(tool.toolName ?? "") : "text-foreground/40"),
       });
     }
     return unique;
@@ -218,12 +225,14 @@ export const ToolGroupBlock = memo(function ToolGroupBlock({
       const isRunning = !tool.toolResult && !isError;
       const Icon = isError ? AlertCircle : getToolIcon(toolName);
       const label = isError
-        ? `Failed to ${getToolLabel(toolName, "failure") ?? "run tool"}`
-        : ((getToolLabel(toolName, isRunning ? "active" : "past") ?? toolName) || (isRunning ? "Running" : "Tool"));
+        ? (toolLabel(t, toolName, "failed") ?? t("tool.fallback.failedGeneric"))
+        : ((toolLabel(t, toolName, isRunning ? "active" : "past") ?? toolName)
+          || (isRunning ? t("tool.fallback.running") : t("tool.fallback.tool")));
       const summary = formatCompactSummary(tool);
       return { id: tool.id, Icon, toolName, label, summary, isError };
     });
-  }, [tools]);
+    // `t` is a dep so labels re-resolve when the language changes.
+  }, [tools, t]);
 
   const groupedRows = useMemo(() => {
     return messages.filter((message) => {

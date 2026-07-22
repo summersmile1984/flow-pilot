@@ -1,4 +1,5 @@
 import { useState, useRef, useEffect, useCallback, memo } from "react";
+import { useTranslation } from "react-i18next";
 import { useClickOutside } from "@/hooks/useClickOutside";
 import { Search, MessageSquare, Hash, X } from "lucide-react";
 import type { SearchMessageResult, SearchSessionResult } from "@/types";
@@ -14,6 +15,7 @@ export const SidebarSearch = memo(function SidebarSearch({
   onNavigateToMessage,
   onSelectSession,
 }: SidebarSearchProps) {
+  const { t } = useTranslation();
   const [query, setQuery] = useState("");
   const [isOpen, setIsOpen] = useState(false);
   const [messageResults, setMessageResults] = useState<SearchMessageResult[]>([]);
@@ -102,7 +104,7 @@ export const SidebarSearch = memo(function SidebarSearch({
           }}
           onFocus={() => setIsOpen(true)}
           onKeyDown={handleKeyDown}
-          placeholder="Search chats..."
+          placeholder={t("sidebar.searchChats")}
           className="w-full bg-black/5 py-1.5 pe-8 ps-9 text-[13px] text-sidebar-foreground placeholder:text-sidebar-foreground/40 outline-none transition-colors focus:bg-black/10 dark:bg-white/5 dark:focus:bg-white/10"
         />
         {query && (

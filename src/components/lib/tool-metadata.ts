@@ -42,85 +42,99 @@ export function getToolIcon(toolName: string) {
 
 // ── Tool labels ──
 
-export type ToolLabelType = "past" | "active" | "failure";
-type ToolLabels = Record<ToolLabelType, string>;
+/**
+ * "failed" resolves to a COMPLETE sentence ("Failed to run command"), not a bare
+ * verb. The old shape stored English verb forms — past participle / present
+ * participle / infinitive — and callers built `Failed to ${verb}` by hand. That
+ * only works for English: Chinese has no verb morphology to hang the pattern on.
+ */
+export type ToolLabelType = "past" | "active" | "failed";
 
-export const TOOL_LABELS: Record<string, ToolLabels> = {
-  Bash: { past: "Ran", active: "Running", failure: "run" },
-  Read: { past: "Read", active: "Reading", failure: "read" },
-  Write: { past: "Wrote", active: "Writing", failure: "write" },
-  Edit: { past: "Edited", active: "Editing", failure: "edit" },
-  Grep: { past: "Searched", active: "Searching", failure: "search" },
-  Glob: { past: "Found", active: "Finding", failure: "find" },
-  WebSearch: { past: "Searched web", active: "Searching web", failure: "search web" },
-  WebFetch: { past: "Fetched", active: "Fetching", failure: "fetch" },
-  TodoWrite: { past: "Updated tasks", active: "Updating tasks", failure: "update tasks" },
-  Think: { past: "Thought", active: "Thinking", failure: "think" },
-  EnterPlanMode: { past: "Entered plan mode", active: "Entering plan mode", failure: "enter plan mode" },
-  ExitPlanMode: { past: "Presented plan", active: "Preparing plan", failure: "prepare plan" },
-  AskUserQuestion: { past: "Asked", active: "Asking", failure: "ask" },
-  ToolSearch: { past: "Loaded tools", active: "Loading tools", failure: "load tools" },
-  Skill: { past: "Loaded skill", active: "Loading skill", failure: "load skill" },
-};
+/** A translation key plus any interpolation it needs, resolved by the caller. */
+export interface ToolLabelRef {
+  key: string;
+  params?: Record<string, string>;
+}
 
-// MCP tool friendly names — pattern-matched for different server name prefixes
-export const MCP_TOOL_LABELS: Array<{ pattern: RegExp; labels: ToolLabels }> = [
-  { pattern: /searchJiraIssuesUsingJql$/, labels: { past: "Searched Jira", active: "Searching Jira", failure: "search Jira" } },
-  { pattern: /getJiraIssue$/, labels: { past: "Fetched issue", active: "Fetching issue", failure: "fetch issue" } },
-  { pattern: /getVisibleJiraProjects$/, labels: { past: "Listed projects", active: "Listing projects", failure: "list projects" } },
-  { pattern: /createJiraIssue$/, labels: { past: "Created issue", active: "Creating issue", failure: "create issue" } },
-  { pattern: /editJiraIssue$/, labels: { past: "Updated issue", active: "Updating issue", failure: "update issue" } },
-  { pattern: /transitionJiraIssue$/, labels: { past: "Transitioned issue", active: "Transitioning issue", failure: "transition issue" } },
-  { pattern: /addCommentToJiraIssue$/, labels: { past: "Added comment", active: "Adding comment", failure: "add comment" } },
-  { pattern: /getTransitionsForJiraIssue$/, labels: { past: "Got transitions", active: "Getting transitions", failure: "get transitions" } },
-  { pattern: /lookupJiraAccountId$/, labels: { past: "Looked up user", active: "Looking up user", failure: "look up user" } },
-  { pattern: /getConfluencePage$/, labels: { past: "Fetched page", active: "Fetching page", failure: "fetch page" } },
-  { pattern: /searchConfluenceUsingCql$/, labels: { past: "Searched Confluence", active: "Searching Confluence", failure: "search Confluence" } },
-  { pattern: /getConfluenceSpaces$/, labels: { past: "Listed spaces", active: "Listing spaces", failure: "list spaces" } },
-  { pattern: /getConfluencePageDescendants$/, labels: { past: "Listed descendants", active: "Listing descendants", failure: "list descendants" } },
-  { pattern: /getPagesInConfluenceSpace$/, labels: { past: "Listed pages", active: "Listing pages", failure: "list pages" } },
-  { pattern: /createConfluencePage$/, labels: { past: "Created page", active: "Creating page", failure: "create page" } },
-  { pattern: /updateConfluencePage$/, labels: { past: "Updated page", active: "Updating page", failure: "update page" } },
-  { pattern: /getAccessibleAtlassianResources$/, labels: { past: "Got resources", active: "Getting resources", failure: "get resources" } },
-  { pattern: /atlassianUserInfo$/, labels: { past: "Got user info", active: "Getting user info", failure: "get user info" } },
-  { pattern: /Atlassian[/_]+search$/, labels: { past: "Searched Atlassian", active: "Searching Atlassian", failure: "search Atlassian" } },
-  { pattern: /Atlassian[/_]+fetch$/, labels: { past: "Fetched resource", active: "Fetching resource", failure: "fetch resource" } },
+/** Native tools that have their own phrasing, keyed by `tool.native.<name>`. */
+const NATIVE_TOOL_NAMES = new Set([
+  "Bash", "Read", "Write", "Edit", "Grep", "Glob", "WebSearch", "WebFetch",
+  "TodoWrite", "Think", "EnterPlanMode", "ExitPlanMode", "AskUserQuestion",
+  "ToolSearch", "Skill",
+]);
+
+// MCP tool friendly names — pattern-matched for different server name prefixes.
+// Only the id lives here; the copy is in `tool.mcp.<id>` in the locale bundles.
+export const MCP_TOOL_LABELS: Array<{ pattern: RegExp; id: string }> = [
+  { pattern: /searchJiraIssuesUsingJql$/, id: "jiraSearch" },
+  { pattern: /getJiraIssue$/, id: "jiraGetIssue" },
+  { pattern: /getVisibleJiraProjects$/, id: "jiraListProjects" },
+  { pattern: /createJiraIssue$/, id: "jiraCreateIssue" },
+  { pattern: /editJiraIssue$/, id: "jiraEditIssue" },
+  { pattern: /transitionJiraIssue$/, id: "jiraTransitionIssue" },
+  { pattern: /addCommentToJiraIssue$/, id: "jiraAddComment" },
+  { pattern: /getTransitionsForJiraIssue$/, id: "jiraGetTransitions" },
+  { pattern: /lookupJiraAccountId$/, id: "jiraLookupUser" },
+  { pattern: /getConfluencePage$/, id: "confluenceGetPage" },
+  { pattern: /searchConfluenceUsingCql$/, id: "confluenceSearch" },
+  { pattern: /getConfluenceSpaces$/, id: "confluenceListSpaces" },
+  { pattern: /getConfluencePageDescendants$/, id: "confluenceListDescendants" },
+  { pattern: /getPagesInConfluenceSpace$/, id: "confluenceListPages" },
+  { pattern: /createConfluencePage$/, id: "confluenceCreatePage" },
+  { pattern: /updateConfluencePage$/, id: "confluenceUpdatePage" },
+  { pattern: /getAccessibleAtlassianResources$/, id: "atlassianResources" },
+  { pattern: /atlassianUserInfo$/, id: "atlassianUserInfo" },
+  { pattern: /Atlassian[/_]+search$/, id: "atlassianSearch" },
+  { pattern: /Atlassian[/_]+fetch$/, id: "atlassianFetch" },
   // Context7
-  { pattern: /resolve-library-id$/, labels: { past: "Resolved library", active: "Resolving library", failure: "resolve library" } },
-  { pattern: /query-docs$/, labels: { past: "Queried docs", active: "Querying docs", failure: "query docs" } },
+  { pattern: /resolve-library-id$/, id: "context7ResolveLibrary" },
+  { pattern: /query-docs$/, id: "context7QueryDocs" },
 ];
 
-export function getMcpToolLabel(toolName: string, type: ToolLabelType): string | null {
-  for (const { pattern, labels } of MCP_TOOL_LABELS) {
-    if (pattern.test(toolName)) return labels[type];
+/** Server name for the generic "Called <server>" fallback, or null if not MCP-shaped. */
+function mcpServerName(toolName: string): string | null {
+  if (toolName.startsWith("mcp__")) return toolName.split("__")[1] ?? "MCP";
+  if (toolName.startsWith("Tool: ")) return toolName.slice(6).split("/")[0] ?? "MCP";
+  return null;
+}
+
+export function getMcpToolLabel(toolName: string, type: ToolLabelType): ToolLabelRef | null {
+  for (const { pattern, id } of MCP_TOOL_LABELS) {
+    if (pattern.test(toolName)) return { key: `tool.mcp.${id}.${type}` };
   }
-  // Generic fallback for any MCP tool (mcp__Server__tool) or ACP tool (Tool: Server/tool)
-  if (toolName.startsWith("mcp__")) {
-    const parts = toolName.split("__");
-    const server = parts[1] ?? "MCP";
-    if (type === "past") return `Called ${server}`;
-    if (type === "active") return `Calling ${server}`;
-    return `call ${server}`;
-  }
-  if (toolName.startsWith("Tool: ")) {
-    const server = toolName.slice(6).split("/")[0] ?? "MCP";
-    if (type === "past") return `Called ${server}`;
-    if (type === "active") return `Calling ${server}`;
-    return `call ${server}`;
+  const server = mcpServerName(toolName);
+  if (server) {
+    const key = type === "past" ? "calledServer" : type === "active" ? "callingServer" : "failedCallServer";
+    return { key: `tool.fallback.${key}`, params: { server } };
   }
   return null;
 }
 
-export function getToolLabel(toolName: string, type: ToolLabelType): string | null {
-  if (!toolName) return type === "failure" ? "run tool" : null;
+/**
+ * Resolve a tool name to a translation key. Kept free of `t` so it stays a pure,
+ * testable mapping — use `toolLabel()` when you have a `t` in hand.
+ */
+export function getToolLabel(toolName: string, type: ToolLabelType): ToolLabelRef | null {
+  if (!toolName) return type === "failed" ? { key: "tool.fallback.failedGeneric" } : null;
 
-  const native = TOOL_LABELS[toolName];
-  if (native) return native[type];
+  if (NATIVE_TOOL_NAMES.has(toolName)) return { key: `tool.native.${toolName}.${type}` };
 
   const mcp = getMcpToolLabel(toolName, type);
   if (mcp) return mcp;
 
-  return type === "failure" ? `run ${toolName.toLowerCase()}` : null;
+  return type === "failed"
+    ? { key: "tool.fallback.failedNamed", params: { tool: toolName } }
+    : null;
+}
+
+/** `getToolLabel` with the key already resolved against the active language. */
+export function toolLabel(
+  t: (key: string, params?: Record<string, string>) => string,
+  toolName: string,
+  type: ToolLabelType,
+): string | null {
+  const ref = getToolLabel(toolName, type);
+  return ref ? t(ref.key, ref.params) : null;
 }
 
 // ── Tool colors ──

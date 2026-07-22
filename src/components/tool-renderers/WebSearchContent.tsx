@@ -1,3 +1,4 @@
+import { useTranslation } from "react-i18next";
 import { ExternalLink, Globe, Search } from "lucide-react";
 import ReactMarkdown from "react-markdown";
 import remarkGfm from "remark-gfm";
@@ -29,6 +30,7 @@ function getActionLabel(actionType: string): string {
 }
 
 export function WebSearchContent({ message }: { message: UIMessage }) {
+  const { t } = useTranslation();
   const input = message.toolInput ?? {};
   const resultText = extractResultText(message.toolResult);
   const query = readString(input.query);
@@ -123,7 +125,7 @@ export function WebSearchContent({ message }: { message: UIMessage }) {
           })}
           {overflow > 0 && (
             <div className="border-t border-foreground/[0.06] px-3 py-1 text-[11px] text-foreground/30">
-              +{overflow} more result{overflow !== 1 ? "s" : ""}
+              {t("count.moreResults", { count: overflow })}
             </div>
           )}
         </div>

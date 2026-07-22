@@ -158,7 +158,10 @@ export function initAutoUpdater(
         } catch (err) {
           reportError("UPDATER_ERR", err, { context: "manual-mac-install" });
           const win = getMainWindow();
+          // `code` is what the renderer translates; `message` stays as an English
+          // fallback for logs and for any client that does not know the code.
           win?.webContents.send("updater:install-error", {
+            code: "manual-install-failed",
             message: "Automatic install failed. Please install the update manually.",
           });
         }
@@ -173,6 +176,7 @@ export function initAutoUpdater(
         log("UPDATER_ERR", "Cannot install: no update has been downloaded yet");
         const win = getMainWindow();
         win?.webContents.send("updater:install-error", {
+          code: "download-failed",
           message: "Update failed to download. Try downloading the latest version manually.",
         });
         return;

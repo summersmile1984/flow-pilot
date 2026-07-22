@@ -1,3 +1,6 @@
+// Uses the i18next singleton rather than `@/lib/i18n`: this module is imported
+// by unit tests, and @/lib/i18n pulls in the settings store (and localStorage).
+import i18n from "i18next";
 import type { CodexSessionEvent } from "@/types";
 import type { InternalState } from "./session-store";
 import { codexItemToToolName, codexItemToToolInput, codexItemToToolResult, codexPlanToTodos } from "@/lib/engine/codex-adapter";
@@ -213,7 +216,7 @@ export function handleCodexEvent(
       const todos = codexPlanToTodos(plan);
       const planMsgId = `codex-plan-update-${state.codexPlanTurnCounter}`;
       const toolInput = { todos, ...(explanation ? { explanation } : {}) };
-      const toolResult = { content: `Plan: ${plan.length} step${plan.length !== 1 ? "s" : ""}` };
+      const toolResult = { content: i18n.t("count.planSteps", { count: plan.length }) };
       const existingMsg = state.messages.find(m => m.id === planMsgId);
       if (existingMsg) {
         existingMsg.toolInput = toolInput;

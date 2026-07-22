@@ -1,3 +1,4 @@
+import { useTranslation } from "react-i18next";
 import ReactMarkdown from "react-markdown";
 import {
   Library,
@@ -185,6 +186,7 @@ function parseContext7Docs(text: string): Context7DocSnippet[] {
 }
 
 function Context7DocsResultView({ rawText, toolInput }: { rawText: string; toolInput: Record<string, unknown> }) {
+  const { t } = useTranslation();
   const snippets = parseContext7Docs(rawText);
   const query = String(toolInput.query ?? "");
   const libraryId = String(toolInput.libraryId ?? "");
@@ -205,7 +207,7 @@ function Context7DocsResultView({ rawText, toolInput }: { rawText: string; toolI
       {/* Header */}
       <div className="flex items-center gap-2">
         <span className="text-[10px] text-foreground/40 uppercase tracking-wider font-medium">
-          {snippets.length} snippet{snippets.length !== 1 ? "s" : ""}
+          {t("count.snippets", { count: snippets.length })}
         </span>
         {libraryId && (
           <span className="text-[10px] font-mono text-foreground/30">{libraryId}</span>

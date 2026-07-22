@@ -1,4 +1,5 @@
 import { useState, useMemo, useEffect, useRef } from "react";
+import { useTranslation } from "react-i18next";
 import { useInlineRename } from "@/hooks/useInlineRename";
 import { useContextMenuPosition } from "@/hooks/useContextMenuPosition";
 import {
@@ -102,6 +103,7 @@ export function ProjectSection({
   isDraggingProject: boolean;
   agents?: InstalledAgent[];
 }) {
+  const { t } = useTranslation();
   const {
     selectSession,
     deleteSession,
@@ -464,9 +466,9 @@ export function ProjectSection({
             >
               <ChevronDown className="h-3 w-3 shrink-0 transition-transform group-hover/more:translate-y-0.5" />
               <span>
-                Show more
+                {t("sidebar.showMore")}
                 <span className="ms-1 text-sidebar-foreground/35">
-                  ({Math.min(20, remainingCount)} of {remainingCount})
+                  {t("sidebar.showMoreCount", { shown: Math.min(20, remainingCount), total: remainingCount })}
                 </span>
               </span>
             </button>

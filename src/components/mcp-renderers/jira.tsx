@@ -1,3 +1,4 @@
+import { useTranslation } from "react-i18next";
 import ReactMarkdown from "react-markdown";
 import {
   LayoutGrid,
@@ -283,6 +284,7 @@ interface JiraProject {
 type JiraProjectListData = { values?: JiraProject[]; total?: number } | JiraProject[];
 
 function JiraProjectListView({ data }: { data: JiraProjectListData }) {
+  const { t } = useTranslation();
   const isArray = Array.isArray(data);
   const projects = isArray ? data : (data.values ?? []);
   const total = isArray ? undefined : data.total;
@@ -310,7 +312,7 @@ function JiraProjectListView({ data }: { data: JiraProjectListData }) {
           </Badge>
           {project.issueTypes && (
             <span className="shrink-0 text-[10px] text-foreground/30">
-              {project.issueTypes.length} type{project.issueTypes.length !== 1 ? "s" : ""}
+              {t("count.types", { count: project.issueTypes.length })}
             </span>
           )}
         </div>

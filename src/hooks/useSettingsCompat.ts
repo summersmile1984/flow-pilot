@@ -41,6 +41,7 @@ export function useSettingsCompat(projectId: string | null, engine: EngineId = "
   const globalState = useSettingsStore(
     useShallow((s) => ({
       theme: s.theme,
+      language: s.language,
       islandLayout: s.islandLayout,
       islandShine: s.islandShine,
       macNativeBackgroundEffect: s.macNativeBackgroundEffect,
@@ -66,6 +67,7 @@ export function useSettingsCompat(projectId: string | null, engine: EngineId = "
   // ── Global setters (stable references from the store) ──
 
   const setTheme = useSettingsStore((s) => s.setTheme);
+  const setLanguage = useSettingsStore((s) => s.setLanguage);
   const setIslandLayout = useSettingsStore((s) => s.setIslandLayout);
   const setIslandShine = useSettingsStore((s) => s.setIslandShine);
   const setMacBackgroundEffect = useSettingsStore((s) => s.setMacBackgroundEffect);
@@ -251,6 +253,8 @@ export function useSettingsCompat(projectId: string | null, engine: EngineId = "
     // Global
     theme: globalState.theme,
     setTheme,
+    language: globalState.language,
+    setLanguage,
     islandLayout: globalState.islandLayout,
     setIslandLayout,
     islandShine: globalState.islandShine,

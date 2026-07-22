@@ -1,4 +1,5 @@
 import { memo, useState, useCallback, useRef, useEffect, useMemo } from "react";
+import { useTranslation } from "react-i18next";
 import { Plus, Settings, ChevronLeft, ChevronRight, Trash2, Pencil } from "lucide-react";
 import {
   Tooltip,
@@ -66,6 +67,7 @@ export const SpaceBar = memo(function SpaceBar({
   onOpenSettings,
   draftSpace,
 }: SpaceBarProps) {
+  const { t } = useTranslation();
   const isCreatingSpace = draftSpace != null;
   const sorted = [...spaces].sort((a, b) => a.order - b.order);
   const [contextSpace, setContextSpace] = useState<Space | null>(null);
@@ -168,6 +170,7 @@ export const SpaceBar = memo(function SpaceBar({
       <Tooltip>
         <TooltipTrigger asChild>
           <button
+            data-testid="open-settings"
             onClick={onOpenSettings}
             className="mb-1.5 flex h-9 w-9 shrink-0 items-center justify-center rounded-xl text-sidebar-foreground/40 transition-all hover:bg-black/5 hover:text-sidebar-foreground dark:hover:bg-white/10"
           >
@@ -175,7 +178,7 @@ export const SpaceBar = memo(function SpaceBar({
           </button>
         </TooltipTrigger>
         <TooltipContent side="top" className="text-xs">
-          Settings
+          {t("sidebar.openSettings")}
         </TooltipContent>
       </Tooltip>
 

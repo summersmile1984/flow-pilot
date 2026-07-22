@@ -1,4 +1,5 @@
 import { useState, useEffect, useMemo, useRef, useCallback, memo, type DragEvent } from "react";
+import { useTranslation } from "react-i18next";
 import { PanelLeft, Plus, Paintbrush } from "lucide-react";
 import { isMac } from "@/lib/utils";
 import { Button } from "@/components/ui/button";
@@ -153,6 +154,7 @@ export const AppSidebar = memo(function AppSidebar({
   spaceActions,
   sessionActions,
 }: AppSidebarProps) {
+  const { t } = useTranslation();
   const {
     isOpen,
     islandLayout,
@@ -510,7 +512,7 @@ export const AppSidebar = memo(function AppSidebar({
             className="no-drag flex items-center gap-1.5 rounded-full px-3 py-1.5 text-[13px] font-medium text-sidebar-foreground/70 transition-all hover:bg-black/5 hover:text-sidebar-foreground dark:hover:bg-white/10"
           >
             <Plus className="h-3.5 w-3.5 shrink-0" />
-            <span>Add project</span>
+            <span>{t("sidebar.addProject")}</span>
           </button>
         )}
       </div>
@@ -524,10 +526,10 @@ export const AppSidebar = memo(function AppSidebar({
             </div>
 
             <h2 className="mt-4 text-base font-semibold text-sidebar-foreground">
-              Create a Space
+              {t("sidebar.space.createTitle")}
             </h2>
             <p className="mt-1 text-center text-xs text-sidebar-foreground/50 leading-relaxed">
-              Separate your projects for work, life, and more.
+              {t("sidebar.space.createSubtitle")}
             </p>
 
             {/* Name input */}
@@ -543,7 +545,7 @@ export const AppSidebar = memo(function AppSidebar({
                     if (e.key === "Enter" && draftSpace.name.trim()) onConfirmCreateSpace();
                     if (e.key === "Escape") onCancelCreateSpace();
                   }}
-                  placeholder="Space name..."
+                  placeholder={t("sidebar.space.namePlaceholder")}
                   className="h-9 ps-8 text-sm bg-sidebar-accent/40 border-sidebar-border"
                   autoFocus
                 />
@@ -555,7 +557,7 @@ export const AppSidebar = memo(function AppSidebar({
               <PopoverTrigger asChild>
                 <button className="mt-3 flex w-full items-center gap-2.5 rounded-lg px-3 py-2.5 text-start text-sm font-medium text-sidebar-foreground/80 transition-colors hover:bg-sidebar-accent/60">
                   <Paintbrush className="h-4 w-4 text-sidebar-foreground/40" />
-                  Choose a Theme
+                  {t("sidebar.space.chooseTheme")}
                 </button>
               </PopoverTrigger>
               <PopoverContent
@@ -584,13 +586,13 @@ export const AppSidebar = memo(function AppSidebar({
               onClick={onConfirmCreateSpace}
               disabled={!draftSpace.name.trim()}
             >
-              Create Space
+              {t("sidebar.space.create")}
             </Button>
             <button
               onClick={onCancelCreateSpace}
               className="w-full py-1.5 text-center text-sm text-sidebar-foreground/50 hover:text-sidebar-foreground transition-colors"
             >
-              Cancel
+              {t("common.cancel")}
             </button>
           </div>
         </div>
@@ -662,8 +664,8 @@ export const AppSidebar = memo(function AppSidebar({
                 {filteredProjects.length === 0 && (
                   <p className="px-2 py-8 text-center text-xs text-sidebar-foreground/50">
                     {projects.length === 0
-                      ? "Add a project to get started"
-                      : "No projects in this space"}
+                      ? t("sidebar.emptyNoProjects")
+                      : t("sidebar.emptyInSpace")}
                   </p>
                 )}
               </div>
@@ -674,7 +676,7 @@ export const AppSidebar = memo(function AppSidebar({
           <PreReleaseBanner onOpenSettings={onOpenSettings} />
 
           <div className="flex items-center justify-center gap-1.5 px-3 py-1.5 text-[11px] text-sidebar-foreground/40">
-            <span>Pilot is in early beta</span>
+            <span>{t("sidebar.earlyBeta")}</span>
           </div>
         </div>
         </SidebarActionsProvider>

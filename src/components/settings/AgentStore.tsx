@@ -1,4 +1,5 @@
 import { memo, useState, useCallback, useMemo } from "react";
+import { useTranslation } from "react-i18next";
 import {
   Search,
   RefreshCw,
@@ -114,6 +115,7 @@ const StoreAgentCard = memo(function StoreAgentCard({
   onInstall: () => void;
   onUninstall: () => void;
 }) {
+  const { t } = useTranslation();
   return (
     <div className="group relative flex flex-col rounded-lg border border-foreground/[0.06] bg-background p-4 transition-colors hover:border-foreground/[0.1]">
       {/* Header: icon + name + version */}
@@ -160,7 +162,7 @@ const StoreAgentCard = memo(function StoreAgentCard({
                 </a>
               </TooltipTrigger>
               <TooltipContent side="top" className="text-xs">
-                View repository
+                {t("settings.agents.store.viewRepo")}
               </TooltipContent>
             </Tooltip>
           )}
@@ -179,7 +181,7 @@ const StoreAgentCard = memo(function StoreAgentCard({
             ) : (
               <Download className="h-3 w-3" />
             )}
-            {isInstalling ? "Adding..." : "Add"}
+            {isInstalling ? t("settings.agents.store.installing") : t("settings.agents.store.install")}
           </Button>
         )}
 
@@ -218,7 +220,7 @@ const StoreAgentCard = memo(function StoreAgentCard({
             ) : (
               <RefreshCw className="h-3 w-3" />
             )}
-            {isInstalling ? "Updating..." : "Update"}
+            {isInstalling ? t("settings.agents.store.updating") : t("settings.agents.store.update")}
           </Button>
         )}
 
@@ -246,6 +248,7 @@ export const AgentStore = memo(function AgentStore({
   onInstall,
   onUninstall,
 }: AgentStoreProps) {
+  const { t } = useTranslation();
   const { registryAgents, isLoading, error, binaryPaths, platformKeys, refresh } = useAgentStore();
   const [search, setSearch] = useState("");
   const [installing, setInstalling] = useState<Set<string>>(new Set());
@@ -318,7 +321,7 @@ export const AgentStore = memo(function AgentStore({
           <Input
             value={search}
             onChange={(e) => setSearch(e.target.value)}
-            placeholder="Search agents..."
+            placeholder={t("settings.agents.store.searchPlaceholder")}
             className="h-8 ps-8 text-xs"
           />
         </div>
@@ -336,7 +339,7 @@ export const AgentStore = memo(function AgentStore({
             </Button>
           </TooltipTrigger>
           <TooltipContent side="top" className="text-xs">
-            Refresh registry
+            {t("settings.agents.store.refresh")}
           </TooltipContent>
         </Tooltip>
       </div>
@@ -375,7 +378,7 @@ export const AgentStore = memo(function AgentStore({
                   status={status}
                   isInstalling={installing.has(agent.id)}
                   setupUrl={setupUrl}
-                  setupLabel={hasPlatformArchive ? "Download" : "Setup"}
+                  setupLabel={hasPlatformArchive ? t("settings.agents.store.download") : t("settings.agents.store.setup")}
                   onInstall={() => handleInstall(agent)}
                   onUninstall={() => handleUninstall(agent.id)}
                 />
@@ -387,9 +390,9 @@ export const AgentStore = memo(function AgentStore({
           {filtered.length === 0 && !error && (
             <div className="flex flex-col items-center justify-center py-12 text-center">
               <Search className="h-8 w-8 text-muted-foreground/30" />
-              <p className="mt-3 text-sm text-muted-foreground">No agents found</p>
+              <p className="mt-3 text-sm text-muted-foreground">{t("settings.agents.store.empty")}</p>
               <p className="mt-1 text-xs text-muted-foreground/60">
-                Try a different search term
+                {t("settings.agents.store.emptyHint")}
               </p>
             </div>
           )}

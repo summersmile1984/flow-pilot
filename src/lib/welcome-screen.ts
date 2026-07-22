@@ -1,102 +1,43 @@
 export type TimeBucket = "lateNight" | "morning" | "afternoon" | "evening";
 
+/**
+ * Only the id and accent colour live here. The copy is idiomatic and jokey —
+ * it is transcreated per language rather than translated, so it lives in the
+ * locale bundles under `welcome.continue.<id>.{headline,subtitle}` and is
+ * resolved at render time.
+ */
 export interface ContinueMessage {
-  headline: string;
-  subtitle: string;
+  id: string;
   accent: string;
 }
 
 const ANYTIME_CONTINUE_MESSAGES: readonly ContinueMessage[] = [
-  {
-    headline: "Continue building",
-    subtitle: "Your threads are warm. Pick one and keep shipping.",
-    accent: "oklch(0.62 0.18 185)",
-  },
-  {
-    headline: "Welcome back",
-    subtitle: "The repo missed you for several whole seconds.",
-    accent: "oklch(0.66 0.16 32)",
-  },
-  {
-    headline: "Back at it, menace",
-    subtitle: "Choose a thread and apply tasteful chaos.",
-    accent: "oklch(0.7 0.17 145)",
-  },
-  {
-    headline: "One more tiny change",
-    subtitle: "Famous last words. Your threads are waiting.",
-    accent: "oklch(0.72 0.14 260)",
-  },
+  { id: "continueBuilding", accent: "oklch(0.62 0.18 185)" },
+  { id: "welcomeBack", accent: "oklch(0.66 0.16 32)" },
+  { id: "backAtIt", accent: "oklch(0.7 0.17 145)" },
+  { id: "oneMoreChange", accent: "oklch(0.72 0.14 260)" },
 ];
 
 const TIME_AWARE_CONTINUE_MESSAGES: Record<TimeBucket, readonly ContinueMessage[]> = {
   lateNight: [
-    {
-      headline: "Hello, night owl",
-      subtitle: "Your best ideas and worst commit messages happen now.",
-      accent: "oklch(0.7 0.15 250)",
-    },
-    {
-      headline: "Midnight debug club",
-      subtitle: "The stack trace is glowing gently in the dark.",
-      accent: "oklch(0.68 0.18 290)",
-    },
-    {
-      headline: "Moonlight merge pending",
-      subtitle: "Pick up where you left off before the birds clock in.",
-      accent: "oklch(0.74 0.13 215)",
-    },
+    { id: "nightOwl", accent: "oklch(0.7 0.15 250)" },
+    { id: "midnightDebug", accent: "oklch(0.68 0.18 290)" },
+    { id: "moonlightMerge", accent: "oklch(0.74 0.13 215)" },
   ],
   morning: [
-    {
-      headline: "Good morning, builder",
-      subtitle: "Fresh tab, fresh coffee, same huge TODO list.",
-      accent: "oklch(0.76 0.16 78)",
-    },
-    {
-      headline: "Rise and refactor",
-      subtitle: "Your threads are awake before some of your teammates.",
-      accent: "oklch(0.73 0.17 110)",
-    },
-    {
-      headline: "Morning commit energy",
-      subtitle: "Start with the easy win before the meetings find you.",
-      accent: "oklch(0.78 0.15 48)",
-    },
+    { id: "goodMorning", accent: "oklch(0.76 0.16 78)" },
+    { id: "riseAndRefactor", accent: "oklch(0.73 0.17 110)" },
+    { id: "morningCommit", accent: "oklch(0.78 0.15 48)" },
   ],
   afternoon: [
-    {
-      headline: "Welcome back, sunshine",
-      subtitle: "Prime hour for turning half-finished ideas into features.",
-      accent: "oklch(0.74 0.18 58)",
-    },
-    {
-      headline: "Afternoon sprint mode",
-      subtitle: "The code is warm and your threads are lined up.",
-      accent: "oklch(0.68 0.19 28)",
-    },
-    {
-      headline: "Post-lunch patch attack",
-      subtitle: "Pick a thread and make the roadmap more believable.",
-      accent: "oklch(0.75 0.16 135)",
-    },
+    { id: "welcomeSunshine", accent: "oklch(0.74 0.18 58)" },
+    { id: "afternoonSprint", accent: "oklch(0.68 0.19 28)" },
+    { id: "postLunchPatch", accent: "oklch(0.75 0.16 135)" },
   ],
   evening: [
-    {
-      headline: "Evening shift engaged",
-      subtitle: "Quiet hours. Strong focus. Mild gremlin energy.",
-      accent: "oklch(0.67 0.17 15)",
-    },
-    {
-      headline: "Twilight build session",
-      subtitle: "A nice time to ship something clever and unnecessary.",
-      accent: "oklch(0.69 0.18 335)",
-    },
-    {
-      headline: "Welcome back after hours",
-      subtitle: "Your threads are ready for that definitely quick check-in.",
-      accent: "oklch(0.72 0.15 210)",
-    },
+    { id: "eveningShift", accent: "oklch(0.67 0.17 15)" },
+    { id: "twilightBuild", accent: "oklch(0.69 0.18 335)" },
+    { id: "afterHours", accent: "oklch(0.72 0.15 210)" },
   ],
 };
 
@@ -128,11 +69,7 @@ function pickRandomMessage(
   }
 
   let attempts = 0;
-  while (
-    attempts < 6 &&
-    nextMessage.headline === previous.headline &&
-    nextMessage.subtitle === previous.subtitle
-  ) {
+  while (attempts < 6 && nextMessage.id === previous.id) {
     nextMessage = messages[Math.floor(Math.random() * messages.length)];
     attempts += 1;
   }

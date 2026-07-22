@@ -1,3 +1,4 @@
+import { useTranslation } from "react-i18next";
 import { motion } from "motion/react";
 import { AgentStore } from "@/components/settings/AgentStore";
 import type { AgentsStepProps } from "./shared";
@@ -9,6 +10,7 @@ export function AgentsStep({
   onSaveAgent,
   onDeleteAgent,
 }: AgentsStepProps) {
+  const { t } = useTranslation();
   return (
     <div className="flex flex-1 flex-col overflow-hidden">
       {/* Heading */}
@@ -25,13 +27,13 @@ export function AgentsStep({
             color: "oklch(0.58 0.20 270)",
           }}
         >
-          Connect agents
+          {t("welcome.step.agentsTitle")}
         </h2>
         <p className="mt-3 text-lg text-muted-foreground">
-          Browse the store and add ACP agents with one click.
+          {t("welcome.step.agentsSubtitle")}
           <br />
           <span className="text-muted-foreground/60">
-            Claude Code and Codex are already built in.
+            {t("welcome.step.agentsBuiltIn")}
           </span>
         </p>
       </motion.div>

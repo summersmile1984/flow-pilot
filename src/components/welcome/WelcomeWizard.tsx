@@ -1,3 +1,4 @@
+import { useTranslation } from "react-i18next";
 import { useState, useCallback, useEffect, useRef } from "react";
 import { motion, AnimatePresence } from "motion/react";
 import { ChevronLeft, ChevronRight } from "lucide-react";
@@ -49,6 +50,7 @@ export function WelcomeWizard({
   hasProjects,
   onComplete,
 }: WelcomeWizardProps) {
+  const { t } = useTranslation();
   const { agents, saveAgent, deleteAgent } = useAgentContext();
   const islandLayout = useSettingsStore((s) => s.islandLayout);
   const [currentStep, setCurrentStep] = useState(0);
@@ -117,6 +119,7 @@ export function WelcomeWizard({
 
   return (
     <motion.div
+      data-testid="welcome-wizard"
       className={outerClass}
       style={{
         fontFamily: "'Sora', system-ui, sans-serif",
@@ -197,10 +200,11 @@ export function WelcomeWizard({
           <div className="flex w-20 items-center">
             {isFirst ? (
               <button
+                data-testid="welcome-skip"
                 onClick={skip}
                 className="text-sm text-muted-foreground/50 transition-colors hover:text-muted-foreground"
               >
-                Skip
+                {t("welcome.step.skip")}
               </button>
             ) : !isLast ? (
               <button
@@ -208,7 +212,7 @@ export function WelcomeWizard({
                 className="flex items-center gap-1 text-sm text-muted-foreground/50 transition-colors hover:text-muted-foreground"
               >
                 <ChevronLeft className="h-3.5 w-3.5" />
-                Back
+                {t("welcome.step.back")}
               </button>
             ) : null}
           </div>
@@ -221,7 +225,7 @@ export function WelcomeWizard({
                 onClick={goNext}
                 className="flex items-center gap-1 text-sm font-medium text-foreground/60 transition-colors hover:text-foreground"
               >
-                Next
+                {t("welcome.step.next")}
                 <ChevronRight className="h-3.5 w-3.5" />
               </button>
             )}

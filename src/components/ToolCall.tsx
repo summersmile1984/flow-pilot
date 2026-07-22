@@ -1,4 +1,5 @@
 import { useEffect, useRef, useMemo, memo } from "react";
+import { useTranslation } from "react-i18next";
 import { ChevronRight, AlertCircle } from "lucide-react";
 import {
   Collapsible,
@@ -6,7 +7,7 @@ import {
   CollapsibleTrigger,
 } from "@/components/ui/collapsible";
 import type { UIMessage } from "@/types";
-import { getToolIcon, getToolLabel, getToolColor } from "@/components/lib/tool-metadata";
+import { getToolIcon, toolLabel, getToolColor } from "@/components/lib/tool-metadata";
 import { formatCompactSummary } from "@/components/lib/tool-formatting";
 import { TextShimmer } from "@/components/ui/text-shimmer";
 import { TaskTool } from "./tool-renderers/TaskTool";
@@ -100,6 +101,7 @@ const RegularTool = memo(function RegularTool({
   coloredToolIcons,
   disableCollapseAnimation,
 }: RegularToolProps) {
+  const { t } = useTranslation();
   const isPlanTool = message.toolName === "ExitPlanMode";
   const isInteractive = isPlanTool || message.toolName === "AskUserQuestion";
   const isEditToolCall = message.toolName === "Edit" || message.toolName === "Write";
@@ -155,13 +157,13 @@ const RegularTool = memo(function RegularTool({
       ))}
       {isRunning ? (
         <TextShimmer as="span" className="shrink-0 whitespace-nowrap font-medium" duration={1.8} spread={1.5}>
-          {getToolLabel(message.toolName ?? "", "active") ?? message.toolName ?? "Running"}
+          {toolLabel(t, message.toolName ?? "", "active") ?? message.toolName ?? t("tool.fallback.running")}
         </TextShimmer>
       ) : (
         <span className={`shrink-0 whitespace-nowrap font-medium ${isError ? "text-red-400/70" : "text-foreground/60"}`}>
           {isError
-            ? `Failed to ${getToolLabel(message.toolName ?? "", "failure")}`
-            : (getToolLabel(message.toolName ?? "", "past") ?? message.toolName)}
+            ? toolLabel(t, message.toolName ?? "", "failed")
+            : (toolLabel(t, message.toolName ?? "", "past") ?? message.toolName)}
         </span>
       )}
       <span className="min-w-0 truncate text-foreground/40">{summary}</span>

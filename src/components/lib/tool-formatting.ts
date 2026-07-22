@@ -1,3 +1,6 @@
+// Uses the i18next singleton rather than `@/lib/i18n`: this module is imported
+// by unit tests, and @/lib/i18n pulls in the settings store (and localStorage).
+import i18n from "i18next";
 import type { UIMessage, SubagentToolStep } from "@/types";
 import { getMcpCompactSummary } from "@/components/McpToolContent";
 import { getTodoItems } from "@/lib/chat/todo-utils";
@@ -94,8 +97,8 @@ function getSearchResultSuffix(result: UIMessage["toolResult"]): string {
   const numFiles = "numFiles" in result ? Number(result.numFiles) : 0;
   const numLines = "numLines" in result ? Number(result.numLines) : 0;
   const mode = String(result.mode);
-  if (mode === "files_with_matches" && numFiles > 0) return ` → ${numFiles} file${numFiles !== 1 ? "s" : ""}`;
-  if (mode === "content" && numLines > 0) return ` → ${numLines} line${numLines !== 1 ? "s" : ""}`;
+  if (mode === "files_with_matches" && numFiles > 0) return i18n.t("count.arrowFiles", { count: numFiles });
+  if (mode === "content" && numLines > 0) return i18n.t("count.arrowLines", { count: numLines });
   if (numFiles === 0 && numLines === 0) return " → no matches";
   return "";
 }

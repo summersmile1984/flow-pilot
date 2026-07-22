@@ -23,8 +23,9 @@ test.beforeAll(async () => {
   await page.waitForLoadState('domcontentloaded');
   await page.waitForTimeout(3000);
   
-  // Dismiss welcome screen if present
-  const skipButton = page.locator('button:has-text("Skip")');
+  // Dismiss welcome screen if present. Selected by test id, not visible copy —
+  // a text selector would silently stop matching under a non-English locale.
+  const skipButton = page.getByTestId('welcome-skip');
   if (await skipButton.isVisible({ timeout: 2000 }).catch(() => false)) {
     await skipButton.click();
     await page.waitForTimeout(1000);

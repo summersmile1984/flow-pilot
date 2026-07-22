@@ -1,4 +1,5 @@
 import { useState, useEffect, useCallback } from "react";
+import { useTranslation } from "react-i18next";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Trash2, Plus, Edit2, X, Check, FileText } from "lucide-react";
@@ -16,6 +17,7 @@ Description of what this skill does and when to use it.
 `;
 
 export function SkillManager({ projectPath }: { projectPath?: string | null }) {
+  const { t } = useTranslation();
   const [skills, setSkills] = useState<Skill[]>([]);
   const [isLoading, setIsLoading] = useState(true);
   const [isCreating, setIsCreating] = useState(false);
@@ -36,7 +38,7 @@ export function SkillManager({ projectPath }: { projectPath?: string | null }) {
       if (result.success) {
         setSkills((result.skills ?? []) as Skill[]);
       } else {
-        setError(result.error || "Failed to load skills");
+        setError(result.error || t("settings.skills.error.load"));
       }
     } catch (err) {
       setError(String(err));
@@ -63,7 +65,7 @@ export function SkillManager({ projectPath }: { projectPath?: string | null }) {
         setIsCreating(false);
         await loadSkills();
       } else {
-        setError(result.error || "Failed to create skill");
+        setError(result.error || t("settings.skills.error.create"));
       }
     } catch (err) {
       setError(String(err));
@@ -71,14 +73,14 @@ export function SkillManager({ projectPath }: { projectPath?: string | null }) {
   };
 
   const handleDelete = async (skillPath: string) => {
-    if (!confirm("Are you sure you want to delete this skill?")) return;
+    if (!confirm(t("settings.skills.confirmDelete"))) return;
     setError(null);
     try {
       const result = await window.pilot.skills.delete(skillPath);
       if (result.success) {
         await loadSkills();
       } else {
-        setError(result.error || "Failed to delete skill");
+        setError(result.error || t("settings.skills.error.delete"));
       }
     } catch (err) {
       setError(String(err));
@@ -110,7 +112,7 @@ export function SkillManager({ projectPath }: { projectPath?: string | null }) {
         setEditContent("");
         await loadSkills();
       } else {
-        setError(result.error || "Failed to save skill");
+        setError(result.error || t("settings.skills.error.save"));
       }
     } catch (err) {
       setError(String(err));
@@ -130,9 +132,9 @@ export function SkillManager({ projectPath }: { projectPath?: string | null }) {
       {/* Header */}
       <div className="flex items-center justify-between">
         <div>
-          <h3 className="text-lg font-medium">Skills</h3>
+          <h3 className="text-lg font-medium">{t("settings.skills.title")}</h3>
           <p className="text-sm text-muted-foreground">
-            Manage agent skills for this project
+            {t("settings.skills.description")}
           </p>
         </div>
         <Button
@@ -141,7 +143,7 @@ export function SkillManager({ projectPath }: { projectPath?: string | null }) {
           disabled={isCreating}
         >
           <Plus className="w-4 h-4 mr-2" />
-          Add Skill
+          {t("settings.skills.add")}
         </Button>
       </div>
 
@@ -155,9 +157,9 @@ export function SkillManager({ projectPath }: { projectPath?: string | null }) {
       {/* Create new skill form */}
       {isCreating && (
         <div className="rounded-lg border border-border bg-card p-4 space-y-3">
-          <h4 className="text-sm font-medium">Create New Skill</h4>
+          <h4 className="text-sm font-medium">{t("settings.skills.createTitle")}</h4>
           <Input
-            placeholder="Skill name (e.g., my-custom-skill)"
+            placeholder={t("settings.skills.namePlaceholder")}
             value={newSkillName}
             onChange={(e) => setNewSkillName(e.target.value)}
             onKeyDown={(e) => {
@@ -171,20 +173,20 @@ export function SkillManager({ projectPath }: { projectPath?: string | null }) {
               variant={newSkillScope === "project" ? "default" : "outline"}
               onClick={() => setNewSkillScope("project")}
             >
-              Project
+              {t("settings.skills.scopeProject")}
             </Button>
             <Button
               size="sm"
               variant={newSkillScope === "global" ? "default" : "outline"}
               onClick={() => setNewSkillScope("global")}
             >
-              Global
+              {t("settings.skills.scopeGlobal")}
             </Button>
           </div>
           <div className="flex gap-2">
             <Button size="sm" onClick={handleCreate}>
               <Check className="w-4 h-4 mr-2" />
-              Create
+              {t("settings.skills.create")}
             </Button>
             <Button
               size="sm"
@@ -195,7 +197,7 @@ export function SkillManager({ projectPath }: { projectPath?: string | null }) {
               }}
             >
               <X className="w-4 h-4 mr-2" />
-              Cancel
+              {t("common.cancel")}
             </Button>
           </div>
         </div>
@@ -204,7 +206,7 @@ export function SkillManager({ projectPath }: { projectPath?: string | null }) {
       {/* Edit skill form */}
       {editingPath && (
         <div className="rounded-lg border border-border bg-card p-4 space-y-3">
-          <h4 className="text-sm font-medium">Edit Skill</h4>
+          <h4 className="text-sm font-medium">{t("settings.skills.editTitle")}</h4>
           <textarea
             value={editContent}
             onChange={(e) => setEditContent(e.target.value)}
@@ -214,7 +216,7 @@ export function SkillManager({ projectPath }: { projectPath?: string | null }) {
           <div className="flex gap-2">
             <Button size="sm" onClick={handleSave}>
               <Check className="w-4 h-4 mr-2" />
-              Save
+              {t("settings.skills.save")}
             </Button>
             <Button
               size="sm"
@@ -225,7 +227,7 @@ export function SkillManager({ projectPath }: { projectPath?: string | null }) {
               }}
             >
               <X className="w-4 h-4 mr-2" />
-              Cancel
+              {t("common.cancel")}
             </Button>
           </div>
         </div>
@@ -236,7 +238,7 @@ export function SkillManager({ projectPath }: { projectPath?: string | null }) {
         <div className="rounded-lg border border-border bg-card p-8 flex flex-col items-center justify-center">
           <FileText className="w-8 h-8 text-muted-foreground mb-2" />
           <p className="text-sm text-muted-foreground">
-            No skills found. Create your first skill to get started.
+            {t("settings.skills.empty")}
           </p>
         </div>
       ) : (
@@ -247,7 +249,7 @@ export function SkillManager({ projectPath }: { projectPath?: string | null }) {
                 <div className="flex-1 min-w-0">
                   <h4 className="text-sm font-medium truncate">{skill.name}</h4>
                   <p className="text-xs text-muted-foreground mt-1">
-                    {skill.description || "No description"}
+                    {skill.description || t("settings.skills.noDescription")}
                   </p>
                 </div>
                 <div className="flex gap-1 ml-2">

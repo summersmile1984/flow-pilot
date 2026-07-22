@@ -4,6 +4,9 @@
  * The Codex protocol uses item-based events (item/started, item/completed, deltas).
  * Each item type maps to a UIMessage role + toolName for the existing ToolCall UI.
  */
+// Uses the i18next singleton rather than `@/lib/i18n`: this module is imported
+// by unit tests, and @/lib/i18n pulls in the settings store (and localStorage).
+import i18n from "i18next";
 
 import type { TodoItem, ImageAttachment, ToolUseResult, CodexThreadItem } from "@/types";
 import type { FileUpdateChange } from "@/types/codex-protocol/v2/FileUpdateChange";
@@ -250,7 +253,7 @@ function describeWebSearchAction(payload: CodexWebSearchToolPayload): string {
     case "search": {
       const queryCount = payload.queries?.length ?? 0;
       if (queryCount > 0) {
-        return `Searched web with ${queryCount} quer${queryCount === 1 ? "y" : "ies"}`;
+        return i18n.t("count.searchedWebQueries", { count: queryCount });
       }
       if (payload.actionQuery) {
         return `Searched web for ${payload.actionQuery}`;

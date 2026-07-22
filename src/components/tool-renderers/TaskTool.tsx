@@ -1,4 +1,5 @@
 import { useMemo } from "react";
+import { useTranslation } from "react-i18next";
 import {
   Bot,
   ChevronRight,
@@ -13,7 +14,7 @@ import {
 import ReactMarkdown from "react-markdown";
 import remarkGfm from "remark-gfm";
 import type { UIMessage, SubagentToolStep } from "@/types";
-import { getToolIcon, getToolLabel } from "@/components/lib/tool-metadata";
+import { getToolIcon, toolLabel } from "@/components/lib/tool-metadata";
 import {
   formatTaskTitle,
   formatTaskRunningTitle,
@@ -48,6 +49,7 @@ function isWideToolName(toolName: string | null | undefined): boolean {
 }
 
 export function TaskTool({ message }: { message: UIMessage }) {
+  const { t } = useTranslation();
   const [expanded, setExpanded] = useChatPersistedState(`task:${message.id}`, false);
   const isRunning = message.subagentStatus === "running";
   const isCompleted = message.subagentStatus === "completed";
@@ -102,7 +104,7 @@ export function TaskTool({ message }: { message: UIMessage }) {
             {/* Step count badge */}
             {stepCount > 0 && (
               <span className="shrink-0 inline-flex items-center rounded-full bg-foreground/[0.06] px-1.5 py-px text-[10px] font-medium text-foreground/40 tabular-nums">
-                {stepCount} step{stepCount !== 1 ? "s" : ""}
+                {t("count.steps", { count: stepCount })}
               </span>
             )}
           </div>
@@ -231,6 +233,7 @@ function TaskResultBlock({
 // ── Step row — uses standard tool renderers when expanded ──
 
 function SubagentStepRow({ step }: { step: SubagentToolStep }) {
+  const { t } = useTranslation();
   const [open, setOpen] = useChatPersistedState(`task-step:${step.toolUseId}`, false);
   const hasResult = !!step.toolResult;
   const isError = !!step.toolError;
@@ -250,13 +253,13 @@ function SubagentStepRow({ step }: { step: SubagentToolStep }) {
         )}
         {!hasResult && !isError ? (
           <TextShimmer as="span" duration={1.8} spread={1.5}>
-            {getToolLabel(step.toolName, "active") ?? step.toolName}
+            {toolLabel(t, step.toolName, "active") ?? step.toolName}
           </TextShimmer>
         ) : (
           <span className={isError ? "text-red-400/70" : "text-foreground/75"}>
             {isError
-              ? `Failed to ${getToolLabel(step.toolName, "failure")}`
-              : (getToolLabel(step.toolName, "past") ?? step.toolName)}
+              ? toolLabel(t, step.toolName, "failed")
+              : (toolLabel(t, step.toolName, "past") ?? step.toolName)}
           </span>
         )}
         <span className="truncate text-foreground/40 ms-0.5">

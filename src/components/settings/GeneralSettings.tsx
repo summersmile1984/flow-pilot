@@ -1,4 +1,5 @@
 import { memo, useState, useCallback, useEffect } from "react";
+import { useTranslation } from "react-i18next";
 import { Download, MessageSquare, Code, Mic } from "lucide-react";
 import { Switch } from "@/components/ui/switch";
 import { ScrollArea } from "@/components/ui/scroll-area";
@@ -17,6 +18,7 @@ export const GeneralSettings = memo(function GeneralSettings({
   onUpdateAppSettings,
 }: GeneralSettingsProps) {
   // Local optimistic state — synced from props once loaded
+  const { t } = useTranslation();
   const [allowPrerelease, setAllowPrerelease] = useState(false);
   const [chatLimit, setChatLimit] = useState(10);
   const [preferredEditor, setPreferredEditor] = useState<PreferredEditor>("auto");
@@ -66,15 +68,18 @@ export const GeneralSettings = memo(function GeneralSettings({
 
   return (
     <div className="flex h-full flex-col">
-      <SettingsHeader title="General" description="Application-wide preferences" />
+      <SettingsHeader
+        title={t("settings.general.title")}
+        description={t("settings.general.description")}
+      />
 
       <ScrollArea className="min-h-0 flex-1">
         <div className="px-6 py-2">
           {/* ── Updates section ── */}
-          <SettingsSection icon={Download} label="Updates" first>
+          <SettingsSection icon={Download} label={t("settings.general.section.updates")} first>
             <SettingRow
-              label="Include pre-release updates"
-              description="Receive beta versions with the latest features. Disable to only get stable releases."
+              label={t("settings.general.prerelease.label")}
+              description={t("settings.general.prerelease.description")}
             >
               <Switch
                 checked={allowPrerelease}
@@ -84,10 +89,10 @@ export const GeneralSettings = memo(function GeneralSettings({
           </SettingsSection>
 
           {/* ── Sidebar section ── */}
-          <SettingsSection icon={MessageSquare} label="Sidebar">
+          <SettingsSection icon={MessageSquare} label={t("settings.general.section.sidebar")}>
             <SettingRow
-              label="Recent chats per project"
-              description="Number of chats shown by default in each project. Click 'Show more' in the sidebar to load additional chats."
+              label={t("settings.general.chatLimit.label")}
+              description={t("settings.general.chatLimit.description")}
             >
               <SettingsSelect
                 value={String(chatLimit)}
@@ -98,16 +103,17 @@ export const GeneralSettings = memo(function GeneralSettings({
           </SettingsSection>
 
           {/* ── Editor section ── */}
-          <SettingsSection icon={Code} label="Editor">
+          <SettingsSection icon={Code} label={t("settings.general.section.editor")}>
             <SettingRow
-              label="Default editor"
-              description="Choose which editor opens when you click 'Open in Editor'. Auto tries Cursor, VS Code, then Zed."
+              label={t("settings.general.editor.label")}
+              description={t("settings.general.editor.description")}
             >
               <SettingsSelect
                 value={preferredEditor}
                 onValueChange={handleEditorChange}
                 options={[
-                  { value: "auto", label: "Auto" },
+                  // Editor names are product names — never translated.
+                  { value: "auto", label: t("settings.general.editor.auto") },
                   { value: "cursor", label: "Cursor" },
                   { value: "code", label: "VS Code" },
                   { value: "zed", label: "Zed" },
@@ -117,17 +123,17 @@ export const GeneralSettings = memo(function GeneralSettings({
           </SettingsSection>
 
           {/* ── Voice Dictation section ── */}
-          <SettingsSection icon={Mic} label="Voice Dictation">
+          <SettingsSection icon={Mic} label={t("settings.general.section.voiceDictation")}>
             <SettingRow
-              label="Dictation mode"
-              description="Native uses your OS dictation (macOS only). Whisper runs a local AI model for speech-to-text on all platforms (~40 MB download on first use)."
+              label={t("settings.general.dictation.label")}
+              description={t("settings.general.dictation.description")}
             >
               <SettingsSelect
                 value={voiceDictation}
                 onValueChange={handleVoiceDictationChange}
                 options={[
-                  { value: "native", label: "Native (OS)" },
-                  { value: "whisper", label: "Whisper (Local AI)" },
+                  { value: "native", label: t("settings.general.dictation.native") },
+                  { value: "whisper", label: t("settings.general.dictation.whisper") },
                 ]}
               />
             </SettingRow>

@@ -1,3 +1,4 @@
+import { useTranslation } from "react-i18next";
 import { FileText } from "lucide-react";
 import type { UIMessage } from "@/types";
 import { formatResult } from "@/components/lib/tool-formatting";
@@ -44,6 +45,7 @@ function FilesMatchList({ filenames }: { filenames: string[] }) {
 }
 
 function ContentResult({ content, numLines }: { content: string; numLines?: number }) {
+  const { t } = useTranslation();
   if (!content) return null;
 
   // Parse lines to identify match lines (with :lineNum:) vs context (with -lineNum-)
@@ -68,7 +70,7 @@ function ContentResult({ content, numLines }: { content: string; numLines?: numb
       })}
       {numLines != null && numLines > 0 && (
         <div className="mt-1 text-[10px] text-foreground/25">
-          {numLines} line{numLines !== 1 ? "s" : ""}
+          {t("count.lines", { count: numLines })}
         </div>
       )}
     </pre>
@@ -78,6 +80,7 @@ function ContentResult({ content, numLines }: { content: string; numLines?: numb
 // ── Main component ──
 
 export function SearchContent({ message }: { message: UIMessage }) {
+  const { t } = useTranslation();
   const pattern = String(message.toolInput?.pattern ?? "");
   const glob = message.toolInput?.glob ? String(message.toolInput.glob) : "";
   const path = message.toolInput?.path ? String(message.toolInput.path) : "";
@@ -109,17 +112,17 @@ export function SearchContent({ message }: { message: UIMessage }) {
         {/* Summary badge */}
         {mode === "files_with_matches" && numFiles > 0 && (
           <span className="text-[10px] text-foreground/40 uppercase tracking-wider font-medium">
-            {numFiles} file{numFiles !== 1 ? "s" : ""}
+            {t("count.files", { count: numFiles })}
           </span>
         )}
         {mode === "content" && numLines != null && numLines > 0 && numFiles > 0 && (
           <span className="text-[10px] text-foreground/40 uppercase tracking-wider font-medium">
-            {numLines} line{numLines !== 1 ? "s" : ""} in {numFiles} file{numFiles !== 1 ? "s" : ""}
+            {t("count.linesInFiles", { lines: t("count.lines", { count: numLines }), files: t("count.files", { count: numFiles }) })}
           </span>
         )}
         {mode === "content" && numLines != null && numLines > 0 && numFiles === 0 && (
           <span className="text-[10px] text-foreground/40 uppercase tracking-wider font-medium">
-            {numLines} line{numLines !== 1 ? "s" : ""}
+            {t("count.lines", { count: numLines })}
           </span>
         )}
         {(mode === "files_with_matches" || mode === "content" || mode === "count") && numFiles === 0 && !content && (

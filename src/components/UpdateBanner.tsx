@@ -1,4 +1,5 @@
 import { memo, useCallback, useEffect, useRef, useState } from "react";
+import { useTranslation } from "react-i18next";
 import { AlertTriangle, ArrowDownToLine, RefreshCw, X } from "lucide-react";
 import { captureException } from "@/lib/analytics/analytics";
 
@@ -10,6 +11,7 @@ type UpdateState =
   | { phase: "error"; message: string };
 
 export const UpdateBanner = memo(function UpdateBanner() {
+  const { t } = useTranslation();
   const [state, setState] = useState<UpdateState>({ phase: "idle" });
   const [dismissed, setDismissed] = useState(false);
   const [isInstalling, setIsInstalling] = useState(false);
@@ -45,7 +47,13 @@ export const UpdateBanner = memo(function UpdateBanner() {
 
     unsubs.push(
       window.claude.updater.onInstallError((error) => {
-        setState({ phase: "error", message: error.message });
+        // The main process has no i18n of its own — it sends a stable `code` and
+        // an English `message`. Translate the code here; fall back to the raw
+        // message for anything this build does not have a key for.
+        const message = error.code
+          ? t(`updater.error.${error.code}`, { defaultValue: error.message })
+          : error.message;
+        setState({ phase: "error", message });
         setDismissed(false);
         setIsInstalling(false);
         installRequestedRef.current = false;
@@ -53,7 +61,8 @@ export const UpdateBanner = memo(function UpdateBanner() {
     );
 
     return () => unsubs.forEach((u) => u());
-  }, []);
+    // `t` is captured by the install-error handler, so resubscribe on language change.
+  }, [t]);
 
   const handleDownload = useCallback(() => {
     window.claude.updater.download();

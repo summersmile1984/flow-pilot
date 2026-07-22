@@ -1,23 +1,18 @@
 import { memo } from "react";
+import { useTranslation } from "react-i18next";
 import { ChevronDown, Info, Loader2, PanelLeft, X } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger } from "@/components/ui/dropdown-menu";
 import { Tooltip, TooltipContent, TooltipTrigger } from "@/components/ui/tooltip";
 import { isMac } from "@/lib/utils";
+import { NEW_CHAT_TITLE } from "@/lib/session-title";
 import type { AcpPermissionBehavior } from "@/types";
 
-const PERMISSION_MODE_LABELS: Record<string, string> = {
-  plan: "Plan",
-  default: "Ask Before Edits",
-  acceptEdits: "Accept Edits",
-  bypassPermissions: "Allow All",
-};
-
-const ACP_PERMISSION_BEHAVIOR_LABELS: Record<AcpPermissionBehavior, string> = {
-  ask: "Ask",
-  auto_accept: "Auto Accept",
-  allow_all: "Allow All",
-};
+// Ids only. The display strings live in the locale bundles and are resolved at
+// render — holding them here would freeze them at the boot language, since this
+// runs once at import. The list stays explicit so an unrecognised mode still
+// produces no label instead of i18next echoing the raw key back.
+const PERMISSION_MODE_IDS: readonly string[] = ["plan", "default", "acceptEdits", "bypassPermissions"];
 
 interface ChatHeaderProps {
   islandLayout: boolean;
@@ -62,9 +57,12 @@ export const ChatHeader = memo(function ChatHeader({
   onSeedDevExampleSpaceData,
   onClosePane,
 }: ChatHeaderProps) {
-  const modeLabel = permissionMode ? PERMISSION_MODE_LABELS[permissionMode] : null;
+  const { t } = useTranslation();
+  const modeLabel = permissionMode && PERMISSION_MODE_IDS.includes(permissionMode)
+    ? t(`chat.permissionMode.${permissionMode}`)
+    : null;
   const acpBehaviorLabel = acpPermissionBehavior
-    ? ACP_PERMISSION_BEHAVIOR_LABELS[acpPermissionBehavior]
+    ? t(`chat.acpPermissionBehavior.${acpPermissionBehavior}`)
     : null;
   const permissionDisplay = acpBehaviorLabel ?? modeLabel;
   const macIslandTitlebarOffsetClass = islandLayout && isMac ? "translate-y-0.5" : "";
@@ -73,11 +71,11 @@ export const ChatHeader = memo(function ChatHeader({
 
   // Collect all session detail rows for the unified tooltip
   const detailRows: { label: string; value: string }[] = [];
-  if (model) detailRows.push({ label: "Model", value: model });
-  detailRows.push({ label: "Plan", value: planMode ? "On" : "Off" });
-  if (permissionDisplay) detailRows.push({ label: "Permissions", value: permissionDisplay });
-  if (totalCost > 0) detailRows.push({ label: "Cost", value: `$${totalCost.toFixed(4)}` });
-  if (sessionId) detailRows.push({ label: "Session", value: sessionId });
+  if (model) detailRows.push({ label: t("chat.header.model"), value: model });
+  detailRows.push({ label: t("chat.header.plan"), value: planMode ? t("chat.header.on") : t("chat.header.off") });
+  if (permissionDisplay) detailRows.push({ label: t("chat.header.permissions"), value: permissionDisplay });
+  if (totalCost > 0) detailRows.push({ label: t("chat.header.cost"), value: `$${totalCost.toFixed(4)}` });
+  if (sessionId) detailRows.push({ label: t("chat.header.session"), value: sessionId });
 
   const hasDetails = detailRows.length > 0;
   const showDevSeedButton = import.meta.env.DEV && !!showDevFill && !!onSeedDevExampleConversation;
@@ -138,7 +136,7 @@ export const ChatHeader = memo(function ChatHeader({
             islandLayout ? "relative top-px" : ""
           } ${macIslandTitlebarOffsetClass}`}
         />
-      ) : title && title !== "New Chat" ? (
+      ) : title && title !== NEW_CHAT_TITLE ? (
         <span
           className={`no-drag truncate leading-none text-sm font-medium text-foreground/80 ${
             islandLayout ? "relative top-px" : ""
@@ -174,7 +172,7 @@ export const ChatHeader = memo(function ChatHeader({
                 </Button>
               </TooltipTrigger>
               <TooltipContent side="bottom" className="text-xs">
-                Close pane
+                {t("chat.header.closePane")}
               </TooltipContent>
             </Tooltip>
           )}

@@ -5,6 +5,7 @@ import { useSidebar } from "@/hooks/useSidebar";
 import { useSpaceManager } from "@/hooks/useSpaceManager";
 import { useSettingsCompat as useSettings } from "@/hooks/useSettingsCompat";
 import { useTheme } from "@/hooks/useTheme";
+import { useLanguage } from "@/hooks/useLanguage";
 import { useSpaceTerminals } from "@/hooks/useSpaceTerminals";
 import { useAgentRegistry } from "@/hooks/useAgentRegistry";
 import { useAcpAgentAutoUpdate } from "@/hooks/useAcpAgentAutoUpdate";
@@ -45,6 +46,7 @@ export function useAppOrchestrator() {
   const settingsProjectId = manager.activeSession?.projectId ?? manager.draftProjectId ?? null;
   const settings = useSettings(settingsProjectId, settingsEngine);
   const resolvedTheme = useTheme(settings.theme);
+  const resolvedLanguage = useLanguage(settings.language);
   const { agents, refresh: refreshAgents, saveAgent, deleteAgent } = useAgentRegistry();
   useAcpAgentAutoUpdate({ installedAgents: agents, refreshInstalledAgents: refreshAgents });
   // Engine is locked once a session is active (not draft) — null means free to switch
@@ -331,6 +333,7 @@ export function useAppOrchestrator() {
     manager,
     settings,
     resolvedTheme,
+    resolvedLanguage,
     spaceTerminals,
     activeSpaceTerminals,
   };
@@ -350,6 +353,7 @@ export function useAppOrchestrator() {
     manager,
     settings,
     resolvedTheme,
+    resolvedLanguage,
 
     // Agent state
     agents,

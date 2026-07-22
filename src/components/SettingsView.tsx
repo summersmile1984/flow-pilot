@@ -1,4 +1,5 @@
 import { memo, useState, useCallback, useEffect } from "react";
+import { useTranslation } from "react-i18next";
 import {
   SlidersHorizontal,
   Bell,
@@ -37,22 +38,24 @@ export type SettingsSection = "general" | "appearance" | "notifications" | "anal
 
 interface NavItem {
   id: SettingsSection;
-  label: string;
   icon: LucideIcon;
 }
 
+// Module scope, so it is evaluated once at import — labels must NOT live here or
+// they would freeze at the boot language. The id doubles as the translation key
+// (`settings.nav.<id>`), resolved at render below.
 const NAV_ITEMS: NavItem[] = [
-  { id: "general", label: "General", icon: SlidersHorizontal },
-  { id: "appearance", label: "Appearance", icon: Palette },
-  { id: "notifications", label: "Notifications", icon: Bell },
-  { id: "analytics", label: "Analytics", icon: BarChart3 },
-  { id: "pilot", label: "Pilot", icon: Compass },
-  { id: "agents", label: "ACP Agents", icon: Bot },
-  { id: "mcp", label: "MCP Servers", icon: Plug },
-  { id: "engines", label: "Engines", icon: Cpu },
-  { id: "skills", label: "Skills", icon: Sparkles },
-  { id: "advanced", label: "Advanced", icon: Wrench },
-  { id: "about", label: "About", icon: Info },
+  { id: "general", icon: SlidersHorizontal },
+  { id: "appearance", icon: Palette },
+  { id: "notifications", icon: Bell },
+  { id: "analytics", icon: BarChart3 },
+  { id: "pilot", icon: Compass },
+  { id: "agents", icon: Bot },
+  { id: "mcp", icon: Plug },
+  { id: "engines", icon: Cpu },
+  { id: "skills", icon: Sparkles },
+  { id: "advanced", icon: Wrench },
+  { id: "about", icon: Info },
 ];
 
 // ── Props ──
@@ -83,6 +86,7 @@ export const SettingsView = memo(function SettingsView({
   initialSection,
   activeProjectPath,
 }: SettingsViewProps) {
+  const { t } = useTranslation();
   const { agents, saveAgent, deleteAgent } = useAgentContext();
   const islandLayout = useSettingsStore((s) => s.islandLayout);
   const [activeSection, setActiveSection] = useState<SettingsSection>(initialSection ?? "general");
@@ -202,7 +206,7 @@ export const SettingsView = memo(function SettingsView({
             <PanelLeft className="h-4 w-4" />
           </Button>
         )}
-        <span className={`leading-none text-sm font-semibold text-foreground ${macIslandTitlebarOffsetClass}`}>Settings</span>
+        <span className={`leading-none text-sm font-semibold text-foreground ${macIslandTitlebarOffsetClass}`}>{t("settings.title")}</span>
       </div>
 
       <div className="flex min-h-0 flex-1 overflow-hidden">
@@ -216,6 +220,7 @@ export const SettingsView = memo(function SettingsView({
               return (
                 <button
                   key={item.id}
+                  data-testid={`settings-tab-${item.id}`}
                   onClick={() => setActiveSection(item.id)}
                   className={`flex w-full items-center justify-start gap-2 rounded-md px-2 py-1.5 text-[13px] text-start transition-colors ${
                     isActive
@@ -224,7 +229,7 @@ export const SettingsView = memo(function SettingsView({
                   }`}
                 >
                   <Icon className="h-4 w-4 shrink-0" />
-                  <span className="flex-1">{item.label}</span>
+                  <span className="flex-1">{t(`settings.nav.${item.id}`)}</span>
                 </button>
               );
             })}

@@ -1,0 +1,834 @@
+{
+  "settings": {
+    "title": "Settings",
+    "nav": {
+      "general": "General",
+      "appearance": "Appearance",
+      "notifications": "Notifications",
+      "analytics": "Analytics",
+      "pilot": "Pilot",
+      "agents": "ACP Agents",
+      "mcp": "MCP Servers",
+      "engines": "Engines",
+      "skills": "Skills",
+      "advanced": "Advanced",
+      "about": "About"
+    },
+    "general": {
+      "title": "General",
+      "description": "Application-wide preferences",
+      "section": {
+        "updates": "Updates",
+        "sidebar": "Sidebar",
+        "editor": "Editor",
+        "voiceDictation": "Voice Dictation"
+      },
+      "prerelease": {
+        "label": "Include pre-release updates",
+        "description": "Receive beta versions with the latest features. Disable to only get stable releases."
+      },
+      "chatLimit": {
+        "label": "Recent chats per project",
+        "description": "Number of chats shown by default in each project. Click 'Show more' in the sidebar to load additional chats."
+      },
+      "editor": {
+        "label": "Default editor",
+        "description": "Choose which editor opens when you click 'Open in Editor'. Auto tries Cursor, VS Code, then Zed.",
+        "auto": "Auto"
+      },
+      "dictation": {
+        "label": "Dictation mode",
+        "description": "Native uses your OS dictation (macOS only). Whisper runs a local AI model for speech-to-text on all platforms (~40 MB download on first use).",
+        "native": "Native (OS)",
+        "whisper": "Whisper (Local AI)"
+      }
+    },
+    "advanced": {
+      "title": "Advanced",
+      "description": "Low-level settings for protocol behavior and server communication",
+      "clientName": {
+        "label": "Client name",
+        "description": "How this app identifies itself to Codex servers during the handshake. Changes take effect on new sessions."
+      },
+      "devFill": {
+        "label": "Show Dev Fill in chat title bar",
+        "description": "Enable developer seeding actions in the active chat title bar. Hidden by default."
+      },
+      "jiraBoard": {
+        "label": "Enable Jira board",
+        "description": "Show the Jira board UI in project sidebars and chats. This is a developer preview."
+      },
+      "replayWelcome": {
+        "label": "Replay welcome wizard",
+        "description": "Reset the onboarding flag and relaunch the welcome wizard.",
+        "action": "Replay"
+      }
+    },
+    "notifications": {
+      "title": "Notifications",
+      "description": "Configure when OS notifications and sounds play for different events.",
+      "osNotification": "OS Notification",
+      "sound": "Sound",
+      "trigger": {
+        "always": "Always",
+        "unfocused": "When Unfocused",
+        "never": "Never"
+      },
+      "event": {
+        "sessionComplete": {
+          "label": "Session Complete",
+          "description": "When Claude finishes processing and the session becomes idle."
+        },
+        "exitPlanMode": {
+          "label": "Exit Plan Mode",
+          "description": "When Claude finishes planning and is ready to implement."
+        },
+        "permissions": {
+          "label": "Permission Request",
+          "description": "When Claude needs approval to run a command, edit a file, etc."
+        },
+        "askUserQuestion": {
+          "label": "Ask User Question",
+          "description": "When Claude asks you a question to guide the work."
+        }
+      }
+    },
+    "analytics": {
+      "title": "Analytics",
+      "description": "Help improve Pilot by sharing anonymous usage data",
+      "section": "Usage Analytics",
+      "toggle": {
+        "label": "Send anonymous analytics",
+        "description": "Share anonymous usage data to help us understand how people use Pilot and improve the app. We collect app version, platform, and basic feature usage. No code, prompts, or personal data is collected."
+      },
+      "userId": {
+        "label": "Anonymous User ID",
+        "note": "This randomly generated ID is used to count unique users without identifying you."
+      },
+      "collectTitle": "What we collect",
+      "collect": {
+        "platform": "App version and platform (macOS, Windows, Linux)",
+        "activeUsers": "Daily active users (to measure engagement)",
+        "featureUsage": "Basic feature usage (e.g., which engines are used)"
+      },
+      "notCollectTitle": "What we don't collect",
+      "notCollect": {
+        "code": "Your code, prompts, or conversations with AI",
+        "paths": "File paths, project names, or repository URLs",
+        "personal": "Any personal or identifying information",
+        "credentials": "API keys or credentials"
+      }
+    },
+    "about": {
+      "title": "About",
+      "description": "Version info, links & credits",
+      "tagline1": "Open-source desktop client for AI coding agents.",
+      "tagline2": "One app for Claude Code, Codex, and any ACP agent.",
+      "creditsTitle": "Credits",
+      "builtBy": "Built by OpenSource",
+      "license": "Pilot is open-source under the MIT License. Contributions, bug reports, and feature requests are welcome on GitHub.",
+      "builtWith": "Built with"
+    },
+    "mcp": {
+      "title": "MCP Servers",
+      "managedFromPrefix": "MCP servers are managed from the",
+      "managedFromSuffix": "panel in the right-side toolbar.",
+      "panelName": "MCP Servers",
+      "whyToolbar": "Why the toolbar?",
+      "perProject": {
+        "term": "Per-project configuration",
+        "desc": "each project has its own set of MCP servers, so they live alongside your project workspace."
+      },
+      "liveStatus": {
+        "term": "Live status monitoring",
+        "desc": "servers can disconnect mid-session. The toolbar panel shows real-time connection status so you can spot and fix issues quickly."
+      },
+      "accessible": {
+        "term": "Always accessible",
+        "desc": "add, remove, authenticate, and reconnect servers without leaving your chat."
+      }
+    },
+    "pilot": {
+      "title": "Pilot",
+      "description": "The Mastra supervisor that routes your work to ACP subagents",
+      "section": {
+        "supervisorModel": "Supervisor model",
+        "providers": "LLM providers"
+      },
+      "defaultModel": {
+        "label": "Default model",
+        "descriptionReady": "New Pilot chats start here. Switch per chat in the engine picker.",
+        "descriptionEmpty": "Add a provider below to choose a model."
+      },
+      "maxTokens": {
+        "label": "Max output tokens",
+        "description": "Cap on a single supervisor reply. Too low truncates mid-answer; the ceiling is model-specific (deepseek-chat maxes at 8192)."
+      },
+      "providersIntro": "API providers the supervisor can reach. Each carries its own key, base URL, and model list. Changes rebuild active Pilot chats.",
+      "provider": {
+        "name": "Name",
+        "baseUrl": "Base URL",
+        "baseUrlHint": "Optional. OpenAI-compatible endpoint. Blank = provider default.",
+        "apiKey": "API key",
+        "apiKeyPlaceholder": "sk-… (uses .env if blank)",
+        "models": "Models",
+        "fetching": "Fetching…",
+        "fetchFromApi": "Fetch from API",
+        "modelsHint": "One model id per line, or fetch from the provider's /models endpoint.",
+        "defaultEndpoint": "default endpoint",
+        "keySet": "key set",
+        "usesEnv": "uses .env",
+        "edit": "Edit",
+        "save": "Save",
+        "add": "Add provider",
+        "error": {
+          "load": "Failed to load providers",
+          "nameRequired": "Name is required",
+          "modelRequired": "Add at least one model",
+          "save": "Failed to save",
+          "delete": "Failed to delete",
+          "fetchModels": "Failed to fetch models"
+        }
+      }
+    },
+    "engines": {
+      "title": "Engines",
+      "description": "Configure engine-level runtime behavior and binary selection",
+      "binarySource": {
+        "auto": "Auto detect",
+        "managedInstall": "Managed install",
+        "managedDownload": "Managed download",
+        "custom": "Custom path"
+      },
+      "claude": {
+        "sourceLabel": "Claude binary source",
+        "sourceDescription": "Choose how Pilot resolves the Claude executable.",
+        "pathLabel": "Custom Claude path",
+        "pathDescription": "Absolute path to claude executable (claude or claude.exe).",
+        "pathPlaceholder": "Absolute path to claude executable"
+      },
+      "codex": {
+        "sourceLabel": "Codex binary source",
+        "sourceDescription": "Choose how Pilot resolves the Codex executable.",
+        "pathLabel": "Custom Codex path",
+        "pathDescription": "Absolute path to codex executable (codex or codex.exe).",
+        "pathPlaceholder": "Absolute path to codex executable"
+      }
+    },
+    "skills": {
+      "title": "Skills",
+      "description": "Manage agent skills for this project",
+      "add": "Add Skill",
+      "createTitle": "Create New Skill",
+      "namePlaceholder": "Skill name (e.g., my-custom-skill)",
+      "scopeProject": "Project",
+      "scopeGlobal": "Global",
+      "create": "Create",
+      "editTitle": "Edit Skill",
+      "save": "Save",
+      "empty": "No skills found. Create your first skill to get started.",
+      "noDescription": "No description",
+      "confirmDelete": "Are you sure you want to delete this skill?",
+      "error": {
+        "load": "Failed to load skills",
+        "create": "Failed to create skill",
+        "delete": "Failed to delete skill",
+        "save": "Failed to save skill"
+      }
+    },
+    "agents": {
+      "title": "ACP Agents",
+      "description": "Browse the agent store or manage your installed agents",
+      "tabStore": "Agent Store",
+      "tabMine": "My Agents",
+      "builtIn": "Built-in",
+      "add": "Add Agent",
+      "edit": "Edit Agent",
+      "empty": "No agents configured",
+      "emptyHint": "Add an ACP agent from the store or manually",
+      "pasteJson": "Paste JSON",
+      "pasteHint": "Paste an agent definition from agents.json to auto-fill the form",
+      "field": {
+        "id": "ID",
+        "idPlaceholder": "my-agent",
+        "name": "Name",
+        "namePlaceholder": "My Custom Agent",
+        "binary": "Binary",
+        "binaryPlaceholder": "npx",
+        "binaryHint": "Command to spawn the ACP agent process",
+        "args": "Arguments",
+        "argsPlaceholder": "@scope/package --flag",
+        "argsHint": "Space-separated command arguments",
+        "env": "Environment Variables",
+        "envKeyPlaceholder": "KEY",
+        "envValuePlaceholder": "value",
+        "addVariable": "Add variable"
+      },
+      "saving": "Saving...",
+      "saveChanges": "Save Changes",
+      "deleteTitle": "Delete Agent",
+      "deleteWarning": "This action cannot be undone.",
+      "delete": "Delete",
+      "store": {
+        "searchPlaceholder": "Search agents...",
+        "refresh": "Refresh registry",
+        "viewRepo": "View repository",
+        "install": "Add",
+        "installing": "Adding...",
+        "update": "Update",
+        "updating": "Updating...",
+        "download": "Download",
+        "setup": "Setup",
+        "empty": "No agents found",
+        "emptyHint": "Try a different search term"
+      },
+      "error": {
+        "idRequired": "ID is required",
+        "idReserved": "This ID is reserved",
+        "idDuplicate": "An agent with this ID already exists",
+        "nameRequired": "Name is required",
+        "binaryRequired": "Binary command is required",
+        "save": "Failed to save agent",
+        "clipboardInvalid": "Clipboard doesn't contain a valid agent JSON",
+        "clipboardRead": "Could not read clipboard"
+      }
+    },
+    "appearance": {
+      "title": "Appearance",
+      "description": "Customize the look and feel of the interface",
+      "section": {
+        "theme": "Theme",
+        "language": "Language",
+        "tools": "Tools",
+        "layout": "Layout",
+        "transparency": "Transparency"
+      },
+      "colorTheme": {
+        "label": "Color theme",
+        "description": "Choose between light and dark appearance, or follow your system setting.",
+        "dark": "Dark",
+        "light": "Light",
+        "system": "System"
+      },
+      "language": {
+        "label": "Display language",
+        "description": "Choose the language used across the interface, or follow your system setting.",
+        "system": "System"
+      },
+      "autoGroupTools": {
+        "label": "Auto-group tools",
+        "description": "Collapse consecutive tool calls into a single group. Disable to keep every tool call and in-between thinking row visible on its own."
+      },
+      "avoidGroupingEdits": {
+        "label": "Avoid grouping edits",
+        "description": "Treat Edit and Write tool calls as standalone rows, even when auto-grouping is enabled. Reads before and after an edit will form separate groups."
+      },
+      "autoExpandTools": {
+        "label": "Auto-expand tool results",
+        "description": "Temporarily expand completed tool calls, then collapse them again after a short delay. Disable to keep tool rows stable unless you open them yourself."
+      },
+      "expandEditWrite": {
+        "label": "Expand Edit and Write tools by default",
+        "description": "Start Edit and Write tool calls open when they appear. Disable to keep them collapsed until you open them."
+      },
+      "showToolIcons": {
+        "label": "Show tool icons",
+        "description": "Display icons next to tool call labels. Disable for a text-only view."
+      },
+      "coloredToolIcons": {
+        "label": "Colored tool icons",
+        "description": "Tint tool call icons with per-tool colors. Disable for monochrome icons."
+      },
+      "windowLayout": {
+        "label": "Window layout",
+        "description": "Choose how panels are arranged in the window.",
+        "islands": "Islands",
+        "flat": "Flat"
+      },
+      "coloredSidebarIcons": {
+        "label": "Colored sidebar icons",
+        "description": "Tint tool picker and panel header icons with per-tool colors. Disable for neutral monochrome icons."
+      },
+      "islandShine": {
+        "label": "Island border shine",
+        "description": "Show a subtle diagonal reflection on island panel borders. Only visible in island layout mode."
+      },
+      "backgroundEffect": {
+        "labelMac": "Window background effect",
+        "labelOther": "Window transparency",
+        "descriptionMacLiquidGlass": "Choose the native macOS background material. Blur Off keeps the window opaque, while switching from Liquid Glass to Vibrancy needs a restart.",
+        "descriptionMacNoLiquidGlass": "Choose the native macOS background material. Liquid Glass is unavailable on this Mac, so Vibrancy and Off are available.",
+        "descriptionGlassSupported": "Allow the desktop to show through the window background. Uses Mica on Windows when enabled.",
+        "descriptionGlassUnsupported": "Window transparency is not available on this platform.",
+        "liquidGlass": "Liquid Glass",
+        "vibrancy": "Vibrancy",
+        "off": "Blur Off"
+      },
+      "transparentToolPicker": {
+        "label": "Transparent tool picker",
+        "description": "Remove the background from the right-side tool picker strip so icons float directly over the window."
+      }
+    }
+  },
+  "sidebar": {
+    "addProject": "Add project",
+    "searchChats": "Search chats...",
+    "showMore": "Show more",
+    "showMoreCount": "({{shown}} of {{total}})",
+    "emptyNoProjects": "Add a project to get started",
+    "emptyInSpace": "No projects in this space",
+    "earlyBeta": "Pilot is in early beta",
+    "openSettings": "Settings",
+    "space": {
+      "createTitle": "Create a Space",
+      "createSubtitle": "Separate your projects for work, life, and more.",
+      "namePlaceholder": "Space name...",
+      "chooseTheme": "Choose a Theme",
+      "create": "Create Space"
+    },
+    "session": {
+      "generatingTitle": "Generating title...",
+      "pin": "Pin",
+      "unpin": "Unpin",
+      "moveToFolder": "Move to folder",
+      "removeFromFolder": "Remove from folder",
+      "openInSplitView": "Open in Split View",
+      "rename": "Rename",
+      "delete": "Delete"
+    }
+  },
+  "chat": {
+    "header": {
+      "model": "Model",
+      "plan": "Plan",
+      "permissions": "Permissions",
+      "cost": "Cost",
+      "session": "Session",
+      "on": "On",
+      "off": "Off",
+      "closePane": "Close pane",
+      "newChat": "New Chat"
+    },
+    "permissionMode": {
+      "plan": "Plan",
+      "default": "Ask Before Edits",
+      "acceptEdits": "Accept Edits",
+      "bypassPermissions": "Allow All"
+    },
+    "acpPermissionBehavior": {
+      "ask": "Ask",
+      "auto_accept": "Auto Accept",
+      "allow_all": "Allow All"
+    }
+  },
+  "common": {
+    "cancel": "Cancel"
+  },
+  "updater": {
+    "error": {
+      "manual-install-failed": "Automatic install failed. Please install the update manually.",
+      "download-failed": "Update failed to download. Try downloading the latest version manually."
+    }
+  },
+  "welcome": {
+    "openProject": "Open a project",
+    "openProjectSubtitle": "Choose a folder to anchor your sessions, tools, and file context.",
+    "chooseFolder": "Choose folder",
+    "step": {
+      "welcomeTo": "Welcome to",
+      "tagline": "The workspace where you and AI",
+      "tagline2": "build software together.",
+      "getStarted": "Get Started",
+      "skip": "Skip",
+      "back": "Back",
+      "permissionsTitle": "Your rules",
+      "permissionsSubtitle": "Set how much freedom Claude gets. Change this anytime.",
+      "projectTitle": "Your first project",
+      "projectSubtitle": "Point Pilot at any folder and start building.",
+      "skipForNow": "Skip for now",
+      "agentsTitle": "Connect agents",
+      "agentsSubtitle": "Browse the store and add ACP agents with one click.",
+      "agentsBuiltIn": "Claude Code and Codex are already built in.",
+      "readyTitle": "Ready to go",
+      "readyThemeChip": "{{theme}} theme",
+      "startBuilding": "Start building",
+      "appearanceTitle": "Make it yours",
+      "appearanceSubtitle": "Pick your vibe. Everything updates live.",
+      "sectionTheme": "Theme",
+      "sectionLayout": "Layout",
+      "sectionToolBehavior": "Tool behavior",
+      "autoGroupTools": "Auto-group tools",
+      "autoGroupToolsDesc": "Collapse consecutive tool calls into a single group.",
+      "autoExpandTools": "Auto-expand tool results",
+      "autoExpandToolsDesc": "Briefly open completed tool calls, then collapse them again.",
+      "expandEditWrite": "Expand Edit and Write tools by default",
+      "expandEditWriteDesc": "Start file edit tool calls open instead of collapsed.",
+      "transparency": "Window transparency",
+      "transparencyOn": "See your desktop through the window",
+      "transparencyOff": "Not available on this platform",
+      "layoutIslands": "Islands",
+      "layoutIslandsDesc": "Rounded, separated",
+      "layoutFlat": "Flat",
+      "layoutFlatDesc": "Edge-to-edge",
+      "tourSubtitle": "A few things that make Pilot different.",
+      "next": "Next"
+    },
+    "permission": {
+      "default": "Claude asks for approval before making file changes or running commands.",
+      "acceptEdits": "File edits are auto-approved, commands still require confirmation.",
+      "bypassPermissions": "Everything runs automatically with no prompts."
+    },
+    "tour": {
+      "title": "What's inside",
+      "spacesDesc": "Organize projects into color-coded workspaces. Each space tints the entire UI with its own hue.",
+      "toolsDesc": "Terminal, source control, browser, and more — integrated into the sidebar. Toggle them on and off as you work.",
+      "space": {
+        "frontend": "Frontend",
+        "api": "API",
+        "mobile": "Mobile",
+        "devops": "DevOps"
+      },
+      "tool": {
+        "terminal": {
+          "label": "Terminal",
+          "description": "Run commands and scripts"
+        },
+        "git": {
+          "label": "Source Control",
+          "description": "Commits, branches, diffs"
+        },
+        "browser": {
+          "label": "Browser",
+          "description": "Preview and inspect"
+        },
+        "files": {
+          "label": "Open Files",
+          "description": "Track accessed files"
+        },
+        "project-files": {
+          "label": "Project",
+          "description": "Browse file tree"
+        }
+      },
+      "spacesTitle": "Spaces",
+      "toolsTitle": "Tool Panels"
+    },
+    "continue": {
+      "continueBuilding": {
+        "headline": "Continue building",
+        "subtitle": "Your threads are warm. Pick one and keep shipping."
+      },
+      "welcomeBack": {
+        "headline": "Welcome back",
+        "subtitle": "The repo missed you for several whole seconds."
+      },
+      "backAtIt": {
+        "headline": "Back at it, menace",
+        "subtitle": "Choose a thread and apply tasteful chaos."
+      },
+      "oneMoreChange": {
+        "headline": "One more tiny change",
+        "subtitle": "Famous last words. Your threads are waiting."
+      },
+      "nightOwl": {
+        "headline": "Hello, night owl",
+        "subtitle": "Your best ideas and worst commit messages happen now."
+      },
+      "midnightDebug": {
+        "headline": "Midnight debug club",
+        "subtitle": "The stack trace is glowing gently in the dark."
+      },
+      "moonlightMerge": {
+        "headline": "Moonlight merge pending",
+        "subtitle": "Pick up where you left off before the birds clock in."
+      },
+      "goodMorning": {
+        "headline": "Good morning, builder",
+        "subtitle": "Fresh tab, fresh coffee, same huge TODO list."
+      },
+      "riseAndRefactor": {
+        "headline": "Rise and refactor",
+        "subtitle": "Your threads are awake before some of your teammates."
+      },
+      "morningCommit": {
+        "headline": "Morning commit energy",
+        "subtitle": "Start with the easy win before the meetings find you."
+      },
+      "welcomeSunshine": {
+        "headline": "Welcome back, sunshine",
+        "subtitle": "Prime hour for turning half-finished ideas into features."
+      },
+      "afternoonSprint": {
+        "headline": "Afternoon sprint mode",
+        "subtitle": "The code is warm and your threads are lined up."
+      },
+      "postLunchPatch": {
+        "headline": "Post-lunch patch attack",
+        "subtitle": "Pick a thread and make the roadmap more believable."
+      },
+      "eveningShift": {
+        "headline": "Evening shift engaged",
+        "subtitle": "Quiet hours. Strong focus. Mild gremlin energy."
+      },
+      "twilightBuild": {
+        "headline": "Twilight build session",
+        "subtitle": "A nice time to ship something clever and unnecessary."
+      },
+      "afterHours": {
+        "headline": "Welcome back after hours",
+        "subtitle": "Your threads are ready for that definitely quick check-in."
+      }
+    },
+    "sidebarHint": "your threads are in the sidebar"
+  },
+  "count": {
+    "files_one": "{{count}} file",
+    "files_other": "{{count}} files",
+    "lines_one": "{{count}} line",
+    "lines_other": "{{count}} lines",
+    "tools_one": "{{count}} tool",
+    "tools_other": "{{count}} tools",
+    "envVars_one": "{{count}} env var",
+    "envVars_other": "{{count}} env vars",
+    "steps_one": "{{count}} step",
+    "steps_other": "{{count}} steps",
+    "snippets_one": "{{count}} snippet",
+    "snippets_other": "{{count}} snippets",
+    "types_one": "{{count}} type",
+    "types_other": "{{count}} types",
+    "filesChanged_one": "{{count}} file changed",
+    "filesChanged_other": "{{count}} files changed",
+    "moreResults_one": "+{{count}} more result",
+    "moreResults_other": "+{{count}} more results",
+    "linesInFiles": "{{lines}} in {{files}}",
+    "arrowFiles_one": " → {{count}} file",
+    "arrowFiles_other": " → {{count}} files",
+    "arrowLines_one": " → {{count}} line",
+    "arrowLines_other": " → {{count}} lines",
+    "planSteps_one": "Plan: {{count}} step",
+    "planSteps_other": "Plan: {{count}} steps",
+    "searchedWebQueries_one": "Searched web with {{count}} query",
+    "searchedWebQueries_other": "Searched web with {{count}} queries"
+  },
+  "toolGroup": {
+    "edited_one": "edited {{count}} file",
+    "edited_other": "edited {{count}} files",
+    "read_one": "read {{count}} file",
+    "read_other": "read {{count}} files",
+    "ran_one": "ran {{count}} command",
+    "ran_other": "ran {{count}} commands",
+    "searched_one": "ran {{count}} search",
+    "searched_other": "ran {{count}} searches",
+    "used_one": "used {{count}} tool",
+    "used_other": "used {{count}} tools",
+    "join": ", ",
+    "joinTwo": " and ",
+    "joinLast": ", and "
+  },
+  "tool": {
+    "fallback": {
+      "running": "Running",
+      "tool": "Tool",
+      "failedGeneric": "Failed to run tool",
+      "failedNamed": "Failed to run {{tool}}",
+      "calledServer": "Called {{server}}",
+      "callingServer": "Calling {{server}}",
+      "failedCallServer": "Failed to call {{server}}"
+    },
+    "native": {
+      "Bash": {
+        "past": "Ran",
+        "active": "Running",
+        "failed": "Failed to run command"
+      },
+      "Read": {
+        "past": "Read",
+        "active": "Reading",
+        "failed": "Failed to read file"
+      },
+      "Write": {
+        "past": "Wrote",
+        "active": "Writing",
+        "failed": "Failed to write file"
+      },
+      "Edit": {
+        "past": "Edited",
+        "active": "Editing",
+        "failed": "Failed to edit file"
+      },
+      "Grep": {
+        "past": "Searched",
+        "active": "Searching",
+        "failed": "Failed to search"
+      },
+      "Glob": {
+        "past": "Found",
+        "active": "Finding",
+        "failed": "Failed to find files"
+      },
+      "WebSearch": {
+        "past": "Searched web",
+        "active": "Searching web",
+        "failed": "Failed to search the web"
+      },
+      "WebFetch": {
+        "past": "Fetched",
+        "active": "Fetching",
+        "failed": "Failed to fetch"
+      },
+      "TodoWrite": {
+        "past": "Updated tasks",
+        "active": "Updating tasks",
+        "failed": "Failed to update tasks"
+      },
+      "Think": {
+        "past": "Thought",
+        "active": "Thinking",
+        "failed": "Failed to think"
+      },
+      "EnterPlanMode": {
+        "past": "Entered plan mode",
+        "active": "Entering plan mode",
+        "failed": "Failed to enter plan mode"
+      },
+      "ExitPlanMode": {
+        "past": "Presented plan",
+        "active": "Preparing plan",
+        "failed": "Failed to prepare plan"
+      },
+      "AskUserQuestion": {
+        "past": "Asked",
+        "active": "Asking",
+        "failed": "Failed to ask"
+      },
+      "ToolSearch": {
+        "past": "Loaded tools",
+        "active": "Loading tools",
+        "failed": "Failed to load tools"
+      },
+      "Skill": {
+        "past": "Loaded skill",
+        "active": "Loading skill",
+        "failed": "Failed to load skill"
+      }
+    },
+    "mcp": {
+      "jiraSearch": {
+        "past": "Searched Jira",
+        "active": "Searching Jira",
+        "failed": "Failed to search Jira"
+      },
+      "jiraGetIssue": {
+        "past": "Fetched issue",
+        "active": "Fetching issue",
+        "failed": "Failed to fetch the issue"
+      },
+      "jiraListProjects": {
+        "past": "Listed projects",
+        "active": "Listing projects",
+        "failed": "Failed to list projects"
+      },
+      "jiraCreateIssue": {
+        "past": "Created issue",
+        "active": "Creating issue",
+        "failed": "Failed to create the issue"
+      },
+      "jiraEditIssue": {
+        "past": "Updated issue",
+        "active": "Updating issue",
+        "failed": "Failed to update the issue"
+      },
+      "jiraTransitionIssue": {
+        "past": "Transitioned issue",
+        "active": "Transitioning issue",
+        "failed": "Failed to transition the issue"
+      },
+      "jiraAddComment": {
+        "past": "Added comment",
+        "active": "Adding comment",
+        "failed": "Failed to add the comment"
+      },
+      "jiraGetTransitions": {
+        "past": "Got transitions",
+        "active": "Getting transitions",
+        "failed": "Failed to get transitions"
+      },
+      "jiraLookupUser": {
+        "past": "Looked up user",
+        "active": "Looking up user",
+        "failed": "Failed to look up the user"
+      },
+      "confluenceGetPage": {
+        "past": "Fetched page",
+        "active": "Fetching page",
+        "failed": "Failed to fetch the page"
+      },
+      "confluenceSearch": {
+        "past": "Searched Confluence",
+        "active": "Searching Confluence",
+        "failed": "Failed to search Confluence"
+      },
+      "confluenceListSpaces": {
+        "past": "Listed spaces",
+        "active": "Listing spaces",
+        "failed": "Failed to list spaces"
+      },
+      "confluenceListDescendants": {
+        "past": "Listed descendants",
+        "active": "Listing descendants",
+        "failed": "Failed to list descendants"
+      },
+      "confluenceListPages": {
+        "past": "Listed pages",
+        "active": "Listing pages",
+        "failed": "Failed to list pages"
+      },
+      "confluenceCreatePage": {
+        "past": "Created page",
+        "active": "Creating page",
+        "failed": "Failed to create the page"
+      },
+      "confluenceUpdatePage": {
+        "past": "Updated page",
+        "active": "Updating page",
+        "failed": "Failed to update the page"
+      },
+      "atlassianResources": {
+        "past": "Got resources",
+        "active": "Getting resources",
+        "failed": "Failed to get resources"
+      },
+      "atlassianUserInfo": {
+        "past": "Got user info",
+        "active": "Getting user info",
+        "failed": "Failed to get user info"
+      },
+      "atlassianSearch": {
+        "past": "Searched Atlassian",
+        "active": "Searching Atlassian",
+        "failed": "Failed to search Atlassian"
+      },
+      "atlassianFetch": {
+        "past": "Fetched resource",
+        "active": "Fetching resource",
+        "failed": "Failed to fetch the resource"
+      },
+      "context7ResolveLibrary": {
+        "past": "Resolved library",
+        "active": "Resolving library",
+        "failed": "Failed to resolve the library"
+      },
+      "context7QueryDocs": {
+        "past": "Queried docs",
+        "active": "Querying docs",
+        "failed": "Failed to query the docs"
+      }
+    }
+  },
+  "time": {
+    "justNow": "just now",
+    "minutesAgo": "{{count}}m ago",
+    "hoursAgo": "{{count}}h ago",
+    "daysAgo": "{{count}}d ago"
+  }
+}

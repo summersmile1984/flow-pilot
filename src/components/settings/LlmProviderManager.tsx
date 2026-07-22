@@ -1,4 +1,5 @@
 import { useState, useEffect, useCallback } from "react";
+import { useTranslation } from "react-i18next";
 import { Plus, Trash2, Pencil, Check, X, RefreshCw, Loader2 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import type { LlmProvider } from "@shared/types/llm-provider";
@@ -24,6 +25,7 @@ function slugify(name: string): string {
 
 /** Add / edit / delete the saved LLM providers used by the Pilot supervisor. */
 export function LlmProviderManager({ onProvidersChange }: { onProvidersChange?: () => void } = {}) {
+  const { t } = useTranslation();
   const [providers, setProviders] = useState<LlmProvider[]>([]);
   const [editing, setEditing] = useState<Draft | null>(null);
   const [isNew, setIsNew] = useState(false);
@@ -32,8 +34,10 @@ export function LlmProviderManager({ onProvidersChange }: { onProvidersChange?: 
   const reload = useCallback(async () => {
     const res = await window.pilot.mastra.listProviders();
     if (res.success) setProviders(res.providers ?? []);
-    else setError(res.error ?? "Failed to load providers");
-  }, []);
+    // res.error is a raw message from the main process — left untranslated on
+    // purpose; only our own fallback copy goes through t().
+    else setError(res.error ?? t("settings.pilot.provider.error.load"));
+  }, [t]);
 
   useEffect(() => { void reload(); }, [reload]);
 
@@ -50,9 +54,9 @@ export function LlmProviderManager({ onProvidersChange }: { onProvidersChange?: 
   const save = async () => {
     if (!editing) return;
     const name = editing.name.trim();
-    if (!name) { setError("Name is required"); return; }
+    if (!name) { setError(t("settings.pilot.provider.error.nameRequired")); return; }
     const models = editing.models.split("\n").map((m) => m.trim()).filter(Boolean);
-    if (models.length === 0) { setError("Add at least one model"); return; }
+    if (models.length === 0) { setError(t("settings.pilot.provider.error.modelRequired")); return; }
     const provider: LlmProvider = {
       id: editing.id || slugify(name),
       name,
@@ -62,13 +66,13 @@ export function LlmProviderManager({ onProvidersChange }: { onProvidersChange?: 
     };
     const res = await window.pilot.mastra.saveProvider(provider);
     if (res.success) { setProviders(res.providers ?? []); cancel(); onProvidersChange?.(); }
-    else setError(res.error ?? "Failed to save");
+    else setError(res.error ?? t("settings.pilot.provider.error.save"));
   };
 
   const remove = async (id: string) => {
     const res = await window.pilot.mastra.deleteProvider(id);
     if (res.success) { setProviders(res.providers ?? []); onProvidersChange?.(); }
-    else setError(res.error ?? "Failed to delete");
+    else setError(res.error ?? t("settings.pilot.provider.error.delete"));
   };
 
   const field = (label: string, node: React.ReactNode, hint?: string) => (
@@ -92,7 +96,7 @@ export function LlmProviderManager({ onProvidersChange }: { onProvidersChange?: 
               <div className="min-w-0">
                 <div className="text-sm font-medium text-foreground">{p.name}</div>
                 <div className="text-[11px] text-muted-foreground">
-                  {p.baseUrl || "default endpoint"} · {p.apiKey ? "key set" : "uses .env"}
+                  {p.baseUrl || t("settings.pilot.provider.defaultEndpoint")} · {p.apiKey ? t("settings.pilot.provider.keySet") : t("settings.pilot.provider.usesEnv")}
                 </div>
                 <div className="mt-1 flex flex-wrap gap-1">
                   {p.models.map((m) => (
@@ -102,7 +106,7 @@ export function LlmProviderManager({ onProvidersChange }: { onProvidersChange?: 
               </div>
               <div className="flex shrink-0 gap-1">
                 <Button size="xs" variant="ghost" onClick={() => startEdit(p)} className="h-7 gap-1 text-xs">
-                  <Pencil className="h-3 w-3" /> Edit
+                  <Pencil className="h-3 w-3" /> {t("settings.pilot.provider.edit")}
                 </Button>
                 <Button size="xs" variant="ghost" onClick={() => remove(p.id)} className="h-7 gap-1 text-xs text-muted-foreground hover:text-red-500">
                   <Trash2 className="h-3 w-3" />
@@ -121,7 +125,7 @@ export function LlmProviderManager({ onProvidersChange }: { onProvidersChange?: 
 
       {!editing && (
         <Button size="sm" variant="outline" onClick={startAdd} className="h-8 w-fit gap-1.5 text-xs">
-          <Plus className="h-3.5 w-3.5" /> Add provider
+          <Plus className="h-3.5 w-3.5" /> {t("settings.pilot.provider.add")}
         </Button>
       )}
     </div>
@@ -137,6 +141,7 @@ interface ProviderFormProps {
 }
 
 function ProviderForm({ draft, setDraft, onSave, onCancel, field }: ProviderFormProps) {
+  const { t } = useTranslation();
   const [fetching, setFetching] = useState(false);
   const [fetchError, setFetchError] = useState<string | null>(null);
 
@@ -152,7 +157,7 @@ function ProviderForm({ draft, setDraft, onSave, onCancel, field }: ProviderForm
       if (res.success && res.models) {
         setDraft({ ...draft, models: res.models.join("\n") });
       } else {
-        setFetchError(res.error ?? "Failed to fetch models");
+        setFetchError(res.error ?? t("settings.pilot.provider.error.fetchModels"));
       }
     } catch (err) {
       setFetchError(String(err));
@@ -163,38 +168,40 @@ function ProviderForm({ draft, setDraft, onSave, onCancel, field }: ProviderForm
 
   return (
     <div className="flex flex-col gap-2.5">
-      {field("Name", (
+      {/* Placeholders that are example values (DeepSeek, the endpoint URL, the
+          model ids) stay as-is — they illustrate the expected format, not copy. */}
+      {field(t("settings.pilot.provider.name"), (
         <input className={INPUT_CLASS} value={draft.name} placeholder="DeepSeek"
           onChange={(e) => setDraft({ ...draft, name: e.target.value })} />
       ))}
-      {field("Base URL", (
+      {field(t("settings.pilot.provider.baseUrl"), (
         <input className={INPUT_CLASS} value={draft.baseUrl} placeholder="https://api.deepseek.com" spellCheck={false}
           onChange={(e) => setDraft({ ...draft, baseUrl: e.target.value })} />
-      ), "Optional. OpenAI-compatible endpoint. Blank = provider default.")}
-      {field("API key", (
-        <input className={INPUT_CLASS} type="password" value={draft.apiKey} placeholder="sk-… (uses .env if blank)" autoComplete="off" spellCheck={false}
+      ), t("settings.pilot.provider.baseUrlHint"))}
+      {field(t("settings.pilot.provider.apiKey"), (
+        <input className={INPUT_CLASS} type="password" value={draft.apiKey} placeholder={t("settings.pilot.provider.apiKeyPlaceholder")} autoComplete="off" spellCheck={false}
           onChange={(e) => setDraft({ ...draft, apiKey: e.target.value })} />
       ))}
       <div className="flex flex-col gap-1">
         <div className="flex items-center justify-between">
-          <label className="text-xs font-medium text-foreground">Models</label>
+          <label className="text-xs font-medium text-foreground">{t("settings.pilot.provider.models")}</label>
           <Button size="xs" variant="ghost" disabled={fetching} onClick={fetchModels} className="h-6 gap-1 text-[11px]">
             {fetching ? <Loader2 className="h-3 w-3 animate-spin" /> : <RefreshCw className="h-3 w-3" />}
-            {fetching ? "Fetching…" : "Fetch from API"}
+            {fetching ? t("settings.pilot.provider.fetching") : t("settings.pilot.provider.fetchFromApi")}
           </Button>
         </div>
         <textarea className={`${INPUT_CLASS} h-auto min-h-16 py-1.5`} value={draft.models} placeholder={"deepseek-chat\ndeepseek-reasoner"} spellCheck={false}
           onChange={(e) => setDraft({ ...draft, models: e.target.value })} />
         {fetchError
           ? <span className="text-[10px] text-red-500">{fetchError}</span>
-          : <span className="text-[10px] text-muted-foreground">One model id per line, or fetch from the provider's /models endpoint.</span>}
+          : <span className="text-[10px] text-muted-foreground">{t("settings.pilot.provider.modelsHint")}</span>}
       </div>
       <div className="flex justify-end gap-2 pt-0.5">
         <Button size="sm" variant="ghost" onClick={onCancel} className="h-8 gap-1 text-xs">
-          <X className="h-3.5 w-3.5" /> Cancel
+          <X className="h-3.5 w-3.5" /> {t("common.cancel")}
         </Button>
         <Button size="sm" onClick={onSave} className="h-8 gap-1 text-xs">
-          <Check className="h-3.5 w-3.5" /> Save
+          <Check className="h-3.5 w-3.5" /> {t("settings.pilot.provider.save")}
         </Button>
       </div>
     </div>

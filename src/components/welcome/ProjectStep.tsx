@@ -1,3 +1,4 @@
+import { useTranslation } from "react-i18next";
 import { useEffect, useRef } from "react";
 import { motion } from "motion/react";
 import { FolderOpen } from "lucide-react";
@@ -8,6 +9,7 @@ export function ProjectStep({
   onCreateProject,
   hasProjects,
 }: ProjectStepProps) {
+  const { t } = useTranslation();
   // Auto-advance when a project is successfully created
   const prevHasProjects = useRef(hasProjects);
   useEffect(() => {
@@ -38,7 +40,7 @@ export function ProjectStep({
         animate={{ opacity: 1, y: 0 }}
         transition={{ duration: 0.4, delay: 0.1 }}
       >
-        Your first project
+        {t("welcome.step.projectTitle")}
       </motion.h2>
 
       <motion.p
@@ -47,7 +49,7 @@ export function ProjectStep({
         animate={{ opacity: 1, y: 0 }}
         transition={{ duration: 0.4, delay: 0.18 }}
       >
-        Point Pilot at any folder and start building.
+        {t("welcome.step.projectSubtitle")}
       </motion.p>
 
       <motion.button
@@ -57,17 +59,18 @@ export function ProjectStep({
         animate={{ opacity: 1, y: 0 }}
         transition={{ duration: 0.4, delay: 0.28 }}
       >
-        Choose folder
+        {t("welcome.chooseFolder")}
       </motion.button>
 
       <motion.button
+        data-testid="welcome-project-skip"
         onClick={onNext}
         className="mt-4 text-sm text-muted-foreground/50 transition-colors hover:text-muted-foreground"
         initial={{ opacity: 0 }}
         animate={{ opacity: 1 }}
         transition={{ duration: 0.4, delay: 0.38 }}
       >
-        Skip for now
+        {t("welcome.step.skipForNow")}
       </motion.button>
     </div>
   );

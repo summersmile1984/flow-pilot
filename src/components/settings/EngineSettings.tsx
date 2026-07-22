@@ -1,4 +1,5 @@
 import { memo, useState, useCallback, useEffect } from "react";
+import { useTranslation } from "react-i18next";
 import { Server } from "lucide-react";
 import { ScrollArea } from "@/components/ui/scroll-area";
 import { SettingRow, SettingsSelect, SettingsHeader, SettingsSection } from "@/components/settings/shared";
@@ -18,6 +19,7 @@ export const EngineSettings = memo(function EngineSettings({
   appSettings,
   onUpdateAppSettings,
 }: EngineSettingsProps) {
+  const { t } = useTranslation();
   const [claudeBinarySource, setClaudeBinarySource] = useState<"auto" | "managed" | "custom">("auto");
   const [claudeCustomBinaryPath, setClaudeCustomBinaryPath] = useState("");
   const [codexBinarySource, setCodexBinarySource] = useState<"auto" | "managed" | "custom">("auto");
@@ -68,24 +70,25 @@ export const EngineSettings = memo(function EngineSettings({
   return (
     <div className="flex h-full flex-col">
       <SettingsHeader
-        title="Engines"
-        description="Configure engine-level runtime behavior and binary selection"
+        title={t("settings.engines.title")}
+        description={t("settings.engines.description")}
       />
 
       <ScrollArea className="min-h-0 flex-1">
         <div className="px-6 py-2">
+          {/* "Claude Code" is a product name — not translated. */}
           <SettingsSection icon={Server} label="Claude Code" first>
             <SettingRow
-              label="Claude binary source"
-              description="Choose how Pilot resolves the Claude executable."
+              label={t("settings.engines.claude.sourceLabel")}
+              description={t("settings.engines.claude.sourceDescription")}
             >
               <SettingsSelect
                 value={claudeBinarySource}
                 onValueChange={handleClaudeBinarySourceChange}
                 options={[
-                  { value: "auto", label: "Auto detect" },
-                  { value: "managed", label: "Managed install" },
-                  { value: "custom", label: "Custom path" },
+                  { value: "auto", label: t("settings.engines.binarySource.auto") },
+                  { value: "managed", label: t("settings.engines.binarySource.managedInstall") },
+                  { value: "custom", label: t("settings.engines.binarySource.custom") },
                 ]}
                 className="w-44"
               />
@@ -93,8 +96,8 @@ export const EngineSettings = memo(function EngineSettings({
 
             {claudeBinarySource === "custom" && (
               <SettingRow
-                label="Custom Claude path"
-                description="Absolute path to claude executable (claude or claude.exe)."
+                label={t("settings.engines.claude.pathLabel")}
+                description={t("settings.engines.claude.pathDescription")}
               >
                 <input
                   type="text"
@@ -106,7 +109,7 @@ export const EngineSettings = memo(function EngineSettings({
                   }}
                   spellCheck={false}
                   className="h-8 w-80 rounded-md border border-foreground/10 bg-background px-2.5 text-sm text-foreground outline-none transition-colors placeholder:text-muted-foreground hover:border-foreground/20 focus:border-foreground/30 focus:ring-1 focus:ring-foreground/20"
-                  placeholder="Absolute path to claude executable"
+                  placeholder={t("settings.engines.claude.pathPlaceholder")}
                 />
               </SettingRow>
             )}
@@ -114,16 +117,16 @@ export const EngineSettings = memo(function EngineSettings({
 
           <SettingsSection icon={Server} label="Codex">
             <SettingRow
-              label="Codex binary source"
-              description="Choose how Pilot resolves the Codex executable."
+              label={t("settings.engines.codex.sourceLabel")}
+              description={t("settings.engines.codex.sourceDescription")}
             >
               <SettingsSelect
                 value={codexBinarySource}
                 onValueChange={handleCodexBinarySourceChange}
                 options={[
-                  { value: "auto", label: "Auto detect" },
-                  { value: "managed", label: "Managed download" },
-                  { value: "custom", label: "Custom path" },
+                  { value: "auto", label: t("settings.engines.binarySource.auto") },
+                  { value: "managed", label: t("settings.engines.binarySource.managedDownload") },
+                  { value: "custom", label: t("settings.engines.binarySource.custom") },
                 ]}
                 className="w-44"
               />
@@ -131,8 +134,8 @@ export const EngineSettings = memo(function EngineSettings({
 
             {codexBinarySource === "custom" && (
               <SettingRow
-                label="Custom Codex path"
-                description="Absolute path to codex executable (codex or codex.exe)."
+                label={t("settings.engines.codex.pathLabel")}
+                description={t("settings.engines.codex.pathDescription")}
               >
                 <input
                   type="text"
@@ -144,7 +147,7 @@ export const EngineSettings = memo(function EngineSettings({
                   }}
                   spellCheck={false}
                   className={INPUT_CLASS}
-                  placeholder="Absolute path to codex executable"
+                  placeholder={t("settings.engines.codex.pathPlaceholder")}
                 />
               </SettingRow>
             )}

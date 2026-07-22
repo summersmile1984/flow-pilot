@@ -5,6 +5,9 @@
  * tool call state, and approval bridging. Returns the same interface shape
  * as useClaude/useACP so useSessionManager can dispatch generically.
  */
+// Uses the i18next singleton rather than `@/lib/i18n`: this module is imported
+// by unit tests, and @/lib/i18n pulls in the settings store (and localStorage).
+import i18n from "i18next";
 
 import { useState, useCallback, useEffect, useRef } from "react";
 import { toast } from "sonner";
@@ -715,7 +718,7 @@ export function useCodex({
         ...(explanation ? { explanation } : {}),
       };
       const toolResult = {
-        content: `Plan: ${plan.length} step${plan.length !== 1 ? "s" : ""}`,
+        content: i18n.t("count.planSteps", { count: plan.length }),
       };
 
       if (existing) {
