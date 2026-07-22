@@ -9,7 +9,6 @@ import {
   Wrench,
   Palette,
   Sparkles,
-  Users,
   BarChart3,
   PanelLeft,
   Compass,
@@ -24,7 +23,6 @@ import { McpSettings } from "@/components/settings/McpSettings";
 import { AdvancedSettings } from "@/components/settings/AdvancedSettings";
 import { EngineSettings } from "@/components/settings/EngineSettings";
 import { PilotSettings } from "@/components/settings/PilotSettings";
-import { PlaceholderSection } from "@/components/settings/PlaceholderSection";
 import { SkillManager } from "@/components/settings/SkillManager";
 import { AboutSettings } from "@/components/settings/AboutSettings";
 import { AnalyticsSettings } from "@/components/settings/AnalyticsSettings";
@@ -35,14 +33,12 @@ import { useAgentContext } from "./AgentContext";
 
 // ── Section definitions ──
 
-export type SettingsSection = "general" | "appearance" | "notifications" | "analytics" | "pilot" | "agents" | "mcp" | "engines" | "skills" | "custom-agents" | "advanced" | "about";
+export type SettingsSection = "general" | "appearance" | "notifications" | "analytics" | "pilot" | "agents" | "mcp" | "engines" | "skills" | "advanced" | "about";
 
 interface NavItem {
   id: SettingsSection;
   label: string;
   icon: LucideIcon;
-  /** Renders a subtle "soon" indicator next to the label */
-  comingSoon?: boolean;
 }
 
 const NAV_ITEMS: NavItem[] = [
@@ -55,7 +51,6 @@ const NAV_ITEMS: NavItem[] = [
   { id: "mcp", label: "MCP Servers", icon: Plug },
   { id: "engines", label: "Engines", icon: Cpu },
   { id: "skills", label: "Skills", icon: Sparkles },
-  { id: "custom-agents", label: "Agents", icon: Users, comingSoon: true },
   { id: "advanced", label: "Advanced", icon: Wrench },
   { id: "about", label: "About", icon: Info },
 ];
@@ -181,15 +176,6 @@ export const SettingsView = memo(function SettingsView({
         );
       case "skills":
         return <SkillManager projectPath={activeProjectPath} />;
-      case "custom-agents":
-        return (
-          <PlaceholderSection
-            title="Agents"
-            description="Build and configure custom agents with specialized tools, prompts, and workflows."
-            icon={Users}
-            comingSoon
-          />
-        );
       case "about":
         return <AboutSettings />;
       default:
@@ -239,11 +225,6 @@ export const SettingsView = memo(function SettingsView({
                 >
                   <Icon className="h-4 w-4 shrink-0" />
                   <span className="flex-1">{item.label}</span>
-                  {item.comingSoon && (
-                    <span className="rounded bg-foreground/[0.06] px-1.5 py-px text-[10px] font-medium text-muted-foreground/70">
-                      Soon
-                    </span>
-                  )}
                 </button>
               );
             })}
