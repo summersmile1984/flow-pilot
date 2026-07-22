@@ -37,11 +37,17 @@ export interface MainToolAreaLayoutInput {
   pickerW: number;
   handleW: number;
   rightPanelWidth: number;
+  /** Current width of the file preview pane, in px. */
+  previewPaneWidth: number;
+  /** Whether a file preview is open. */
+  hasPreview: boolean;
 }
 
 export interface MainToolAreaLayout {
   mainTopToolColumnCount: number;
   mainWorkspaceChatMinWidth: number;
+  /** True when the preview fits alongside the chat and tool columns. */
+  canDockPreview: boolean;
   mainHasToolWorkspace: boolean;
   mainCombinedWorkspaceWidth: number;
   mainMaxToolAreaWidth: number;
@@ -68,6 +74,8 @@ export function useMainToolAreaLayout(input: MainToolAreaLayoutInput): MainToolA
     pickerW,
     handleW,
     rightPanelWidth,
+    previewPaneWidth,
+    hasPreview,
   } = input;
 
   const mainTopToolColumnCount = mainToolWorkspace.topRowItems.length;
@@ -107,15 +115,6 @@ export function useMainToolAreaLayout(input: MainToolAreaLayoutInput): MainToolA
     mainToolWorkspace.bottomToolIslands.length > 0 ||
     !!mainToolDrag;
 
-  const mainWorkspaceReservedWidth =
-    (showToolPicker ? pickerW : 0) +
-    (hasRightPanel ? rightPanelWidth + handleW : 0) +
-    (mainHasToolWorkspace ? handleW : 0);
-
-  const mainCombinedWorkspaceWidth = Math.max(0, availableSplitWidth - mainWorkspaceReservedWidth);
-
-  const mainMaxToolAreaWidth = Math.max(0, mainCombinedWorkspaceWidth - mainWorkspaceChatMinWidth);
-
   const mainShowTopToolArea =
     mainTopToolColumnCount > 0 ||
     mainToolDrag?.targetArea === "top" ||
@@ -152,6 +151,32 @@ export function useMainToolAreaLayout(input: MainToolAreaLayoutInput): MainToolA
   const mainRequiredToolWidth = mainShowTopToolArea
     ? getRequiredToolIslandsWidth(Math.max(mainTopPreviewColumnCount, 1))
     : 0;
+
+  // ── File preview pane ──
+  //
+  // The preview is a right-side panel just like the right panel above, so it is
+  // reserved out of the workspace the same way — but only when the remainder can
+  // still seat the chat at its minimum plus whatever the tool columns require.
+  //
+  // That check is what makes the behaviour responsive: on a wide window the
+  // preview docks and the three columns share the row; on a narrow one it stays
+  // an overlay rather than squeezing the chat past its floor or overflowing off
+  // screen. Reserving unconditionally is exactly the bug this replaces.
+  const previewReserveWidth = hasPreview ? previewPaneWidth + handleW : 0;
+  const baseReservedWidth =
+    (showToolPicker ? pickerW : 0) +
+    (hasRightPanel ? rightPanelWidth + handleW : 0) +
+    (mainHasToolWorkspace ? handleW : 0);
+  const workspaceWithoutPreview = Math.max(0, availableSplitWidth - baseReservedWidth);
+  const canDockPreview =
+    hasPreview &&
+    workspaceWithoutPreview - previewReserveWidth >= mainWorkspaceChatMinWidth + mainRequiredToolWidth;
+
+  const mainWorkspaceReservedWidth = baseReservedWidth + (canDockPreview ? previewReserveWidth : 0);
+
+  const mainCombinedWorkspaceWidth = Math.max(0, availableSplitWidth - mainWorkspaceReservedWidth);
+
+  const mainMaxToolAreaWidth = Math.max(0, mainCombinedWorkspaceWidth - mainWorkspaceChatMinWidth);
 
   const resolvedMainToolArea = resolveMainToolAreaWidth({
     preferredTopAreaWidthPx: mainToolWorkspace.preferredTopAreaWidthPx,
@@ -334,6 +359,7 @@ export function useMainToolAreaLayout(input: MainToolAreaLayoutInput): MainToolA
   return {
     mainTopToolColumnCount,
     mainWorkspaceChatMinWidth,
+    canDockPreview,
     mainHasToolWorkspace,
     mainCombinedWorkspaceWidth,
     mainMaxToolAreaWidth,

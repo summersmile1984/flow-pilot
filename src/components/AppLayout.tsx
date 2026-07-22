@@ -256,6 +256,9 @@ export function AppLayout() {
   const splitContainerRef = useRef<HTMLDivElement>(null);
   const topRowRef = useRef<HTMLDivElement>(null);
   const [availableSplitWidth, setAvailableSplitWidth] = useState(0);
+  // Declared here (not next to its consumer) because the workspace width budget
+  // below reserves space for the preview pane.
+  const [previewPaneWidth, setPreviewPaneWidth] = useState(640);
 
   useLayoutEffect(() => {
     const element = contentRef.current;
@@ -762,10 +765,13 @@ export function AppLayout() {
     pickerW,
     handleW,
     rightPanelWidth: settings.rightPanelWidth,
+    previewPaneWidth,
+    hasPreview: !!activePreviewPath,
   });
   const {
     mainTopToolColumnCount,
     mainWorkspaceChatMinWidth,
+    canDockPreview,
     mainCombinedWorkspaceWidth,
     mainToolAreaWidth,
     mainToolRelativeFractions,
@@ -1044,7 +1050,6 @@ export function AppLayout() {
   // is a provider/model pair encoded as `providerId::model`, carried through
   // the existing model plumbing (session.model / mastra:start).
   // Width of the right-anchored file preview pane (persisted for the session).
-  const [previewPaneWidth, setPreviewPaneWidth] = useState(640);
 
   const [mastraProviders, setMastraProviders] = useState<LlmProvider[]>([]);
   // Settings → Pilot's default model, as a compound `providerId::modelId`.
@@ -1862,6 +1867,7 @@ export function AppLayout() {
               onClose={handleClosePreview}
               width={previewPaneWidth}
               onWidthChange={setPreviewPaneWidth}
+              docked={canDockPreview}
               minWidth={360}
               maxWidth={Math.max(360, (topRowRef.current?.clientWidth ?? window.innerWidth) - 360)}
             />

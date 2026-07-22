@@ -1,3 +1,4 @@
+import { useTranslation } from "react-i18next";
 import { useCallback, useEffect, useRef } from "react";
 import { X } from "lucide-react";
 import { OpenInEditorButton } from "./OpenInEditorButton";
@@ -17,14 +18,22 @@ interface PreviewPaneProps {
   onWidthChange: (width: number) => void;
   minWidth: number;
   maxWidth: number;
+  /**
+   * True when the workspace budget reserved room for this pane, so it can sit in
+   * the row as a sibling. False on windows too narrow for three columns, where it
+   * falls back to overlaying the right edge rather than pushing itself off screen.
+   */
+  docked: boolean;
 }
 
 /**
- * A large, resizable file preview pane anchored to the right of the main
- * content area — an editor-like surface with tabs for multiple open files.
- * Unlike a modal it never covers the chat; drag its left edge to resize.
+ * A large, resizable file preview pane on the right of the main content area —
+ * an editor-like surface with tabs for multiple open files. Docks beside the
+ * chat and tool islands when the window can seat all three, and overlays the
+ * right edge when it cannot. Drag its left edge to resize.
  */
-export function PreviewPane({ tabs, activePath, onSelectTab, onCloseTab, onClose, width, onWidthChange, minWidth, maxWidth }: PreviewPaneProps) {
+export function PreviewPane({ tabs, activePath, onSelectTab, onCloseTab, onClose, width, onWidthChange, minWidth, maxWidth, docked }: PreviewPaneProps) {
+  const { t } = useTranslation();
   const dragging = useRef(false);
 
   const onHandleDown = useCallback((e: React.MouseEvent) => {
@@ -61,10 +70,18 @@ export function PreviewPane({ tabs, activePath, onSelectTab, onCloseTab, onClose
     return () => window.removeEventListener("keydown", onKey);
   }, [onClose]);
 
+  // Docked: a flex sibling, so the row seats chat | tools | preview side by side.
+  // Undocked: the old right-edge overlay. Which one applies is decided by the
+  // workspace width budget, not here — see canDockPreview in useMainToolAreaLayout.
   return (
-    <div className="absolute inset-y-0 end-0 z-20 flex" style={{ width }}>
+    <div
+      data-testid="preview-pane"
+      data-docked={docked}
+      className={docked ? "relative flex shrink-0" : "absolute inset-y-0 end-0 z-20 flex"}
+      style={{ width }}
+    >
       {/* Left-edge resize handle */}
-      <div onMouseDown={onHandleDown} className="group relative w-1 shrink-0 cursor-col-resize" title="Drag to resize">
+      <div onMouseDown={onHandleDown} className="group relative w-1 shrink-0 cursor-col-resize" title={t("preview.dragToResize")}>
         <div className="absolute inset-y-0 -inset-x-1" />
         <div className="absolute inset-y-0 start-0 w-px bg-foreground/10 transition-colors group-hover:bg-foreground/30" />
       </div>
@@ -92,7 +109,7 @@ export function PreviewPane({ tabs, activePath, onSelectTab, onCloseTab, onClose
                     className={`inline-flex h-4 w-4 shrink-0 items-center justify-center rounded transition-opacity hover:bg-foreground/10 ${
                       isActive ? "opacity-60 hover:opacity-100" : "opacity-0 group-hover:opacity-60"
                     }`}
-                    title="Close tab"
+                    title={t("preview.closeTab")}
                   >
                     <X className="h-3 w-3" />
                   </button>
@@ -105,7 +122,7 @@ export function PreviewPane({ tabs, activePath, onSelectTab, onCloseTab, onClose
             <button
               type="button"
               onClick={onClose}
-              title="Close preview"
+              title={t("preview.closePreview")}
               className="inline-flex h-6 w-6 cursor-pointer items-center justify-center rounded-md text-muted-foreground/40 transition-colors hover:text-foreground hover:bg-foreground/[0.06] active:scale-90"
             >
               <X className="h-3.5 w-3.5" />

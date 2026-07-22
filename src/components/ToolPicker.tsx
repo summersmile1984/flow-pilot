@@ -138,6 +138,7 @@ function ToolButton({
       <TooltipTrigger asChild>
         <button
           type="button"
+          data-testid={`tool-${tool.id}`}
           onClick={onClick}
           className={`tool-picker-btn group/btn relative mx-auto flex ${buttonSize} items-center justify-center ${radius} overflow-visible p-0 transition-all duration-200 cursor-pointer ${
             isActive

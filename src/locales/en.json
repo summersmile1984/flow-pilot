@@ -844,5 +844,10 @@
       "acp": "Local CLI · connected via ACP",
       "mastra": "DeepSeek routes work to OpenCode & Codex"
     }
+  },
+  "preview": {
+    "dragToResize": "Drag to resize",
+    "closeTab": "Close tab",
+    "closePreview": "Close preview"
   }
 }

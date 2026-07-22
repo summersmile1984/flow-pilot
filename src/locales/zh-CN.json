@@ -844,5 +844,10 @@
       "acp": "本地 CLI · 通过 ACP 接入",
       "mastra": "由 DeepSeek 调度 OpenCode 与 Codex"
     }
+  },
+  "preview": {
+    "dragToResize": "拖动调整宽度",
+    "closeTab": "关闭标签页",
+    "closePreview": "关闭预览"
   }
 }
