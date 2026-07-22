@@ -6,7 +6,7 @@ Open-source desktop client for the Agent Client Protocol. Uses the `@anthropic-a
 
 - **Runtime**: Electron 40 (main process) + React 19 (renderer)
 - **Build**: Vite 7, TypeScript 5.9, tsup (electron TS→JS), electron-builder (cross-platform packaging)
-- **Testing**: vitest (unit tests for hooks, lib utilities, and electron modules; config: `vitest.config.electron.ts`)
+- **Testing**: vitest (unit tests for hooks, lib utilities, and electron modules; config: `vitest.config.ts`). The `e2e/` specs are Playwright, run separately via `pnpm test:e2e` — vitest's `include` deliberately excludes them.
 - **Styling**: Tailwind CSS v4 + ShadCN UI (includes Preflight — no CSS resets needed)
 - **UI Components**: ShadCN (Button, Badge, ScrollArea, Tooltip, Collapsible, Separator, DropdownMenu, Avatar)
 - **Icons**: lucide-react
@@ -155,8 +155,9 @@ pnpm install
 pnpm dev       # Starts Vite dev server + tsup watch + Electron
 pnpm build     # tsup (electron/) + Vite (renderer) production build
 pnpm start     # Run Electron with pre-built dist/
-pnpm test      # Run vitest unit tests (uses vitest.config.electron.ts)
+pnpm test      # Run vitest unit tests
 pnpm test:watch    # Run vitest in watch mode
+pnpm test:e2e  # Run the Playwright specs in e2e/ (never run these under vitest)
 ```
 
 **Dev logs**: Main process logs go to `logs/main-{timestamp}.log` (dev) or `{userData}/logs/main-{timestamp}.log` (packaged). Check the latest file with `ls -t logs/main-*.log | head -1 | xargs cat`.

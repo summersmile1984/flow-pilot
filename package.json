@@ -20,8 +20,8 @@
     "dist:win": "pnpm build && electron-builder --win --config electron-builder.config.js",
     "dist:linux": "pnpm build && electron-builder --linux --config electron-builder.config.js",
     "postinstall": "node -e \"require('child_process').execSync('electron-rebuild'+(process.platform==='darwin'?'':' --ignore electron-liquid-glass'),{stdio:'inherit'})\"",
-    "test": "vitest run --config vitest.config.electron.ts",
-    "test:watch": "vitest --config vitest.config.electron.ts",
+    "test": "vitest run",
+    "test:watch": "vitest",
     "test:e2e": "playwright test --project=electron",
     "test:e2e:dev": "PILOT_DEV_PORT=5180 playwright test --project=electron"
   },
