@@ -77,16 +77,10 @@ export interface InputBarProps {
   agents?: InstalledAgent[];
   selectedAgent?: InstalledAgent | null;
   onAgentChange?: (agent: InstalledAgent | null) => void;
-  /** Mastra agent mode options */
+  /** Mastra agent mode options — label-only, the mode is no longer selectable */
   mastraModeOptions?: MastraModeOption[];
   /** Currently selected Mastra mode */
   selectedMastraMode?: string;
-  /** Callback when Mastra mode changes */
-  onMastraModeChange?: (mode: string, agentId?: string) => void;
-  /** Whether Mastra mode is being switched */
-  mastraModeLoading?: boolean;
-  /** True when picking a different mode opens a new chat (mode is per-chat). */
-  mastraModeOpensNewChat?: boolean;
   /** Selectable Pilot supervisor provider/model pairs (from saved providers). */
   mastraModelOptions?: MastraModelOption[];
   /** Currently selected Pilot supervisor provider/model (compound id). */
@@ -151,9 +145,6 @@ export const InputBar = memo(function InputBar({
   onAgentChange,
   mastraModeOptions,
   selectedMastraMode,
-  onMastraModeChange,
-  mastraModeLoading,
-  mastraModeOpensNewChat,
   mastraModelOptions,
   selectedMastraModel,
   onMastraModelChange,
@@ -935,9 +926,6 @@ export const InputBar = memo(function InputBar({
               onAgentChange={onAgentChange ?? (() => {})}
               mastraModeOptions={mastraModeOptions}
               selectedMastraMode={selectedMastraMode}
-              onMastraModeChange={onMastraModeChange}
-              mastraModeLoading={mastraModeLoading}
-              mastraModeOpensNewChat={mastraModeOpensNewChat}
               mastraModelOptions={mastraModelOptions}
               selectedMastraModel={selectedMastraModel}
               onMastraModelChange={onMastraModelChange}

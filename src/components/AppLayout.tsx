@@ -1038,60 +1038,6 @@ export function AppLayout() {
     [mastraModeOptions, selectedMastraMode],
   );
 
-  const handleMastraModeChange = useCallback((mode: string, _agentId?: string) => {
-    let newMode = mode;
-    let newAgentId = _agentId;
-
-    if (mode.startsWith("direct-")) {
-      newMode = "direct";
-      newAgentId = mode.replace("direct-", "");
-    } else if (mode.startsWith("acp-supervisor-")) {
-      newMode = "acp-supervisor";
-      newAgentId = mode.replace("acp-supervisor-", "");
-    }
-
-    settings.setMastraMode(newMode);
-    if (newAgentId) settings.setMastraAgentId(newAgentId);
-
-    const agentLabel = newAgentId
-      ? ({ opencode: "OpenCode", codex: "Codex" } as Record<string, string>)[newAgentId]
-        ?? newAgentId.charAt(0).toUpperCase() + newAgentId.slice(1)
-      : "";
-    const modeLabels: Record<string, string> = {
-      supervisor: "Auto routing",
-      direct: `${agentLabel} only`,
-      "acp-supervisor": `${agentLabel} leads`,
-    };
-
-    // A chat's mode is fixed at creation, so picking a different mode inside
-    // an existing Pilot chat opens a fresh chat in that mode — same behavior
-    // as picking a different agent.
-    const active = manager.activeSession;
-    if (active?.engine === "mastra" && !manager.isDraft && mode !== selectedMastraMode) {
-      const pilotAgent = agents.find((a) => a.engine === "mastra") ?? null;
-      const options = buildSessionOptions(
-        "mastra",
-        settings.getModelForEngine,
-        settings.permissionMode,
-        settings.planMode,
-        settings.thinking,
-        () => undefined,
-        pilotAgent,
-        newMode,
-        newAgentId,
-      );
-      void manager.createSession(active.projectId, options);
-      toast.success("Agent mode changed", {
-        description: `Opened a new Pilot chat with ${modeLabels[newMode] || newMode}.`,
-      });
-      return;
-    }
-
-    toast.success("Agent mode changed", {
-      description: `New Pilot chats will use ${modeLabels[newMode] || newMode}.`,
-    });
-  }, [agents, manager, selectedMastraMode, settings]);
-
   // ── Pilot supervisor provider + model selection ──
   // Options come from the saved LLM providers (Settings → Engines). Each entry
   // is a provider/model pair encoded as `providerId::model`, carried through
@@ -1710,8 +1656,6 @@ export function AppLayout() {
                   onAgentChange={activePaneCtrl?.handlePaneAgentChange ?? handleAgentChange}
                   mastraModeOptions={mastraModeOptions}
                   selectedMastraMode={selectedMastraMode}
-                  onMastraModeChange={handleMastraModeChange}
-                  mastraModeOpensNewChat={!!activeMastra && !manager.isDraft}
                   mastraModelOptions={mastraModelOptions}
                   selectedMastraModel={selectedMastraModel}
                   onMastraModelChange={handleMastraModelChange}
