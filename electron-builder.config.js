@@ -18,6 +18,36 @@ const KEEP_ENTRIES = new Set([
   "node_modules", // production dependencies (already filtered by electron-builder)
 ]);
 
+// --- Packages electron-builder's dependency collector drops on the floor ---
+// @standard-schema/spec is a types-only package: its CJS entry is literally
+// `module.exports = {}` and its `main` points at a 0-byte index.js. The
+// collector appears to treat that as having no runtime content and skips it,
+// even when it is declared as a direct dependency.
+//
+// It is still required unconditionally at load time — @ai-sdk/provider-utils
+// does `__reExport(exports, require("@standard-schema/spec"), module.exports)`
+// at the top of its index.js — so a missing copy throws MODULE_NOT_FOUND the
+// moment any ai-sdk provider is loaded, taking the Mastra/Pilot agent with it.
+//
+// Copy it in by hand. Node resolves upward from
+// app.asar/node_modules/@ai-sdk/... so one copy at the root serves every
+// requirer, aliased or not.
+const FORCE_INCLUDE_PACKAGES = ["@standard-schema/spec"];
+
+function forceIncludePackages(tmpDir) {
+  for (const pkg of FORCE_INCLUDE_PACKAGES) {
+    const src = path.join(__dirname, "node_modules", pkg);
+    const dest = path.join(tmpDir, "node_modules", pkg);
+    if (fs.existsSync(dest)) continue;
+    if (!fs.existsSync(src)) {
+      throw new Error(`afterPack: ${pkg} is missing from node_modules — cannot force-include it`);
+    }
+    fs.mkdirSync(path.dirname(dest), { recursive: true });
+    fs.cpSync(src, dest, { recursive: true });
+    console.log(`  • afterPack: force-included ${pkg}`);
+  }
+}
+
 async function afterPackHook(context) {
   const resourcesDir = ["darwin", "mas"].includes(context.electronPlatformName)
     ? path.join(context.appOutDir, `${context.packager.appInfo.productFilename}.app`, "Contents", "Resources")
@@ -50,6 +80,8 @@ async function afterPackHook(context) {
       }
     }
   }
+
+  forceIncludePackages(tmpDir);
 
   console.log("  \u2022 afterPack: repacking asar...");
   fs.rmSync(asarPath, { force: true });

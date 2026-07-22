@@ -37,6 +37,7 @@
     "@modelcontextprotocol/sdk": "^1.26.0",
     "@monaco-editor/react": "^4.7.0",
     "@posthog/react": "^1.8.2",
+    "@standard-schema/spec": "1.1.0",
     "@tanstack/react-virtual": "^3.13.22",
     "chart.js": "^4.5.1",
     "docx-preview": "^0.4.0",
