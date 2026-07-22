@@ -830,5 +830,19 @@
     "minutesAgo": "{{count}}m ago",
     "hoursAgo": "{{count}}h ago",
     "daysAgo": "{{count}}d ago"
+  },
+  "enginePicker": {
+    "direct": "Direct",
+    "directHint": "Direct — chat with one agent",
+    "pilot": "Pilot",
+    "pilotHint": "Pilot — multi-agent",
+    "manageAcps": "Manage ACPs",
+    "opensNewChat": "Opens new chat",
+    "subtitle": {
+      "claude": "Anthropic CLI · native Agent SDK",
+      "codex": "OpenAI CLI · native app-server",
+      "acp": "Local CLI · connected via ACP",
+      "mastra": "DeepSeek routes work to OpenCode & Codex"
+    }
   }
 }

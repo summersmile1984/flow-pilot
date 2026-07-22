@@ -1,11 +1,11 @@
 import { memo } from "react";
+import { useTranslation } from "react-i18next";
 import { ChevronDown, Loader2, Settings } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import {
   DropdownMenu,
   DropdownMenuContent,
   DropdownMenuItem,
-  DropdownMenuGroup,
   DropdownMenuLabel,
   DropdownMenuSeparator,
   DropdownMenuSub,
@@ -143,6 +143,7 @@ export const EnginePickerDropdown = memo(function EnginePickerDropdown({
   lockedAgentId,
   onManageACPs,
 }: EnginePickerDropdownProps) {
+  const { t } = useTranslation();
   // Engine-specific config items (model/effort/ACP config) -- shared between
   // multi-agent submenu and single-agent direct rendering
   const configItems = (
@@ -402,11 +403,12 @@ export const EnginePickerDropdown = memo(function EnginePickerDropdown({
     return false;
   };
 
+  // Product names stay as-is; only the descriptive half is translated.
   const ENGINE_SUBTITLES: Record<string, string> = {
-    claude: "Anthropic CLI · native Agent SDK",
-    codex: "OpenAI CLI · native app-server",
-    acp: "Local CLI · connected via ACP",
-    mastra: "DeepSeek routes work to OpenCode & Codex",
+    claude: t("enginePicker.subtitle.claude"),
+    codex: t("enginePicker.subtitle.codex"),
+    acp: t("enginePicker.subtitle.acp"),
+    mastra: t("enginePicker.subtitle.mastra"),
   };
 
   // Pilot's submenu carries the supervisor model list. With no providers saved
@@ -432,7 +434,7 @@ export const EnginePickerDropdown = memo(function EnginePickerDropdown({
           )}
           {isCrossEngine && (
             <div className="text-[10px] text-muted-foreground/70">
-              Opens new chat
+              {t("enginePicker.opensNewChat")}
             </div>
           )}
         </div>
@@ -497,24 +499,35 @@ export const EnginePickerDropdown = memo(function EnginePickerDropdown({
       <DropdownMenuContent align="start" className="w-64">
         {hasMultipleAgents ? (
           <>
+            {/* Both branches collapse to a single row that opens a submenu, so
+                Direct and Pilot read as siblings at the top level instead of
+                Direct spilling its whole agent list inline. The "what is this"
+                copy moves to the head of each submenu, where it still applies. */}
             {directAgents.length > 0 && (
-              <DropdownMenuGroup>
-                <DropdownMenuLabel className="text-[10px] font-medium text-muted-foreground">
-                  Direct — chat with one agent
-                </DropdownMenuLabel>
-                {directAgents.map((a) => renderAgent(a, willOpenNewChat(a)))}
-              </DropdownMenuGroup>
+              <DropdownMenuSub>
+                <DropdownMenuSubTrigger data-testid="engine-group-direct">
+                  {t("enginePicker.direct")}
+                </DropdownMenuSubTrigger>
+                <DropdownMenuSubContent className="w-64">
+                  <DropdownMenuLabel className="text-[10px] font-medium text-muted-foreground">
+                    {t("enginePicker.directHint")}
+                  </DropdownMenuLabel>
+                  {directAgents.map((a) => renderAgent(a, willOpenNewChat(a)))}
+                </DropdownMenuSubContent>
+              </DropdownMenuSub>
             )}
             {orchestrators.length > 0 && (
-              <>
-                {directAgents.length > 0 && <DropdownMenuSeparator />}
-                <DropdownMenuGroup>
+              <DropdownMenuSub>
+                <DropdownMenuSubTrigger data-testid="engine-group-pilot">
+                  {t("enginePicker.pilot")}
+                </DropdownMenuSubTrigger>
+                <DropdownMenuSubContent className="w-64">
                   <DropdownMenuLabel className="text-[10px] font-medium text-muted-foreground">
-                    Pilot — multi-agent
+                    {t("enginePicker.pilotHint")}
                   </DropdownMenuLabel>
                   {orchestrators.map((a) => renderAgent(a, willOpenNewChat(a)))}
-                </DropdownMenuGroup>
-              </>
+                </DropdownMenuSubContent>
+              </DropdownMenuSub>
             )}
           </>
         ) : (
@@ -525,7 +538,7 @@ export const EnginePickerDropdown = memo(function EnginePickerDropdown({
             <DropdownMenuSeparator />
             <DropdownMenuItem onClick={onManageACPs}>
               <Settings className="h-3.5 w-3.5 text-muted-foreground" />
-              Manage ACPs
+              {t("enginePicker.manageAcps")}
             </DropdownMenuItem>
           </>
         )}

@@ -830,5 +830,19 @@
     "minutesAgo": "{{count}} 分钟前",
     "hoursAgo": "{{count}} 小时前",
     "daysAgo": "{{count}} 天前"
+  },
+  "enginePicker": {
+    "direct": "单智能体",
+    "directHint": "单智能体 — 与一个智能体对话",
+    "pilot": "Pilot",
+    "pilotHint": "Pilot — 多智能体协作",
+    "manageAcps": "管理 ACP 智能体",
+    "opensNewChat": "将新建对话",
+    "subtitle": {
+      "claude": "Anthropic CLI · 原生 Agent SDK",
+      "codex": "OpenAI CLI · 原生 app-server",
+      "acp": "本地 CLI · 通过 ACP 接入",
+      "mastra": "由 DeepSeek 调度 OpenCode 与 Codex"
+    }
   }
 }
