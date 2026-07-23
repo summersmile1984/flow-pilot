@@ -8,6 +8,20 @@ supervisor:
     - deepseek/deepseek-reasoner
 
 agents:
+  workbuddy:
+    command: /Applications/WorkBuddy.app/Contents/Resources/app.asar.unpacked/cli/bin/codebuddy
+    args: ["--acp"]
+    capabilities: ["code-edit", "bash", "git", "reasoning"]
+    strengths: ["complex-refactor", "multi-file-changes", "general-coding"]
+    role: both
+
+  wukong:
+    command: /Applications/Wukong.app/Contents/MacOS/wukong-cli
+    args: ["chat", "--protocol=acp"]
+    capabilities: ["code-edit", "bash", "git", "reasoning"]
+    strengths: ["general-coding", "multi-file-changes"]
+    role: both
+
   opencode:
     command: opencode
     args: ["acp"]
