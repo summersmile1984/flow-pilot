@@ -1,4 +1,4 @@
-# Harnss Release Notes Template
+# Flow Pilot Release Notes Template
 
 ## Title Format
 
@@ -89,7 +89,7 @@ Long conversations are dramatically faster now. We replaced the old rendering ap
 When Claude draws a diagram using a mermaid code block, it now actually renders as a visual diagram — flowcharts, sequence diagrams, pie charts, git graphs, and more. Diagrams adapt to your light/dark theme automatically. While Claude is still typing, you see the raw source; once the message is complete, the diagram appears.
 
 ### 📂 Deep Folder Inclusion (`@#`)
-You can now use `@#foldername` in the composer to include the full contents of a folder — not just the file tree, but every file inside it. Regular `@folder` still gives you the structure overview. If the folder is large, Harnss will warn you before sending.
+You can now use `@#foldername` in the composer to include the full contents of a folder — not just the file tree, but every file inside it. Regular `@folder` still gives you the structure overview. If the folder is large, Flow Pilot will warn you before sending.
 
 ### ⌨️ `/clear` Command
 Type `/clear` in the composer and hit Enter to instantly open a fresh chat — without sending anything to the agent.

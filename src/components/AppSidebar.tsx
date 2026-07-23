@@ -674,10 +674,6 @@ export const AppSidebar = memo(function AppSidebar({
 
           <UpdateBanner />
           <PreReleaseBanner onOpenSettings={onOpenSettings} />
-
-          <div className="flex items-center justify-center gap-1.5 px-3 py-1.5 text-[11px] text-sidebar-foreground/40">
-            <span>{t("sidebar.earlyBeta")}</span>
-          </div>
         </div>
         </SidebarActionsProvider>
       )}

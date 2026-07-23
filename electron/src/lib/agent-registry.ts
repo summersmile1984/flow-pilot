@@ -59,7 +59,7 @@ agents.set(BUILTIN_OPENCODE.id, BUILTIN_OPENCODE);
 agents.set(BUILTIN_PILOT.id, BUILTIN_PILOT);
 
 function getConfigPath(): string {
-  return path.join(app.getPath("userData"), "openacpui-data", "agents.json");
+  return path.join(app.getPath("userData"), "data", "agents.json");
 }
 
 export function loadUserAgents(): void {

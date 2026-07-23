@@ -31,7 +31,7 @@ const {
     getPath: vi.fn((name: string) => {
       const paths: Record<string, string> = {
         appData: "/mock/Library/Application Support",
-        exe: "/Applications/Pilot.app/Contents/MacOS/Pilot",
+        exe: "/Applications/Flow Pilot.app/Contents/MacOS/Flow Pilot",
         temp: "/tmp",
       };
       return paths[name] ?? "/mock";
@@ -255,7 +255,10 @@ describe("getErrorMessage", () => {
 });
 
 describe("findUpdateZip", () => {
-  const cacheDir = "/mock/Library/Caches/pilot-updater/pending";
+  // Must track electron-builder's updaterCacheDirName, which it derives from
+  // package.json "name". If these drift, findUpdateZip looks in the wrong place
+  // and macOS auto-update fails silently.
+  const cacheDir = "/mock/Library/Caches/flow-pilot-updater/pending";
 
   it("returns null when cache directory does not exist", () => {
     (fs.existsSync as Mock).mockReturnValue(false);
@@ -269,43 +272,43 @@ describe("findUpdateZip", () => {
 
     (fs.existsSync as Mock).mockReturnValue(true);
     (fs.readdirSync as Mock).mockReturnValue([
-      "Pilot-0.12.1-arm64-mac.zip",
-      "Harnss-0.11.0-arm64-mac.zip",
+      "Flow Pilot-0.12.1-arm64-mac.zip",
+      "Flow Pilot-0.11.0-arm64-mac.zip",
     ]);
 
     const result = findUpdateZip();
-    expect(result).toBe(`${cacheDir}/Pilot-0.12.1-arm64-mac.zip`);
+    expect(result).toBe(`${cacheDir}/Flow Pilot-0.12.1-arm64-mac.zip`);
   });
 
   it("falls back to newest ZIP when no version match", () => {
     (fs.existsSync as Mock).mockReturnValue(true);
     (fs.readdirSync as Mock).mockReturnValue([
-      "Harnss-0.11.0-arm64-mac.zip",
-      "Harnss-0.10.0-arm64-mac.zip",
+      "Flow Pilot-0.11.0-arm64-mac.zip",
+      "Flow Pilot-0.10.0-arm64-mac.zip",
     ]);
     (fs.statSync as Mock).mockImplementation((p: string) => ({
       mtimeMs: (p as string).includes("0.11.0") ? 2000 : 1000,
     }));
 
     const result = findUpdateZip();
-    expect(result).toBe(`${cacheDir}/Harnss-0.11.0-arm64-mac.zip`);
+    expect(result).toBe(`${cacheDir}/Flow Pilot-0.11.0-arm64-mac.zip`);
   });
 
   it("ignores temp-prefixed files in fallback", () => {
     (fs.existsSync as Mock).mockReturnValue(true);
     (fs.readdirSync as Mock).mockReturnValue([
-      "temp-Pilot-0.12.1-arm64-mac.zip",
-      "Harnss-0.11.0-arm64-mac.zip",
+      "temp-Flow Pilot-0.12.1-arm64-mac.zip",
+      "Flow Pilot-0.11.0-arm64-mac.zip",
     ]);
     (fs.statSync as Mock).mockReturnValue({ mtimeMs: 1000 });
 
     const result = findUpdateZip();
-    expect(result).toBe(`${cacheDir}/Harnss-0.11.0-arm64-mac.zip`);
+    expect(result).toBe(`${cacheDir}/Flow Pilot-0.11.0-arm64-mac.zip`);
   });
 
   it("ignores non-mac.zip files", () => {
     (fs.existsSync as Mock).mockReturnValue(true);
-    (fs.readdirSync as Mock).mockReturnValue(["Harnss-Setup-0.12.1-x64.exe"]);
+    (fs.readdirSync as Mock).mockReturnValue(["Flow Pilot-Setup-0.12.1-x64.exe"]);
 
     expect(findUpdateZip()).toBeNull();
   });
@@ -619,7 +622,7 @@ describe("initAutoUpdater", () => {
       (fs.existsSync as Mock).mockReturnValue(true);
       (fs.readdirSync as Mock)
         // First call: findUpdateZip cache dir
-        .mockReturnValueOnce(["Pilot-0.12.1-arm64-mac.zip"])
+        .mockReturnValueOnce(["Flow Pilot-0.12.1-arm64-mac.zip"])
         // Second call: extracted tmpDir contents
         .mockReturnValueOnce(["Pilot.app"]);
       (fs.statSync as Mock).mockReturnValue({ mtimeMs: 1000 });
@@ -685,7 +688,7 @@ describe("initAutoUpdater", () => {
         return false;
       });
       (fs.readdirSync as Mock)
-        .mockReturnValueOnce(["Pilot-0.12.1-arm64-mac.zip"]) // findUpdateZip
+        .mockReturnValueOnce(["Flow Pilot-0.12.1-arm64-mac.zip"]) // findUpdateZip
         .mockReturnValueOnce(["Pilot.app"]); // extracted dir
       (fs.statSync as Mock).mockReturnValue({ mtimeMs: 1000 });
       (fs.mkdirSync as Mock).mockImplementation(() => calls.push("mkdirSync"));
@@ -713,7 +716,7 @@ describe("initAutoUpdater", () => {
         return false;
       });
       (fs.readdirSync as Mock)
-        .mockReturnValueOnce(["Pilot-0.12.1-arm64-mac.zip"])
+        .mockReturnValueOnce(["Flow Pilot-0.12.1-arm64-mac.zip"])
         .mockReturnValueOnce(["Pilot.app"]);
       (fs.statSync as Mock).mockReturnValue({ mtimeMs: 1000 });
 
@@ -773,7 +776,7 @@ describe("initAutoUpdater", () => {
         return false;
       });
       (fs.readdirSync as Mock)
-        .mockReturnValueOnce(["Pilot-0.12.1-arm64-mac.zip"])
+        .mockReturnValueOnce(["Flow Pilot-0.12.1-arm64-mac.zip"])
         .mockReturnValueOnce(["Pilot.app"]);
       (fs.statSync as Mock).mockReturnValue({ mtimeMs: 1000 });
 
@@ -802,7 +805,7 @@ describe("initAutoUpdater", () => {
 
     it("throws when exe path does not match .app pattern", async () => {
       (fs.existsSync as Mock).mockReturnValue(true);
-      (fs.readdirSync as Mock).mockReturnValueOnce(["Pilot-0.12.1-arm64-mac.zip"]);
+      (fs.readdirSync as Mock).mockReturnValueOnce(["Flow Pilot-0.12.1-arm64-mac.zip"]);
       (fs.statSync as Mock).mockReturnValue({ mtimeMs: 1000 });
 
       // Return an exe path without .app bundle pattern
@@ -828,7 +831,7 @@ describe("initAutoUpdater", () => {
       mockApp.getPath.mockImplementation((name: string) => {
         const paths: Record<string, string> = {
           appData: "/mock/Library/Application Support",
-          exe: "/Applications/Pilot.app/Contents/MacOS/Pilot",
+          exe: "/Applications/Flow Pilot.app/Contents/MacOS/Flow Pilot",
           temp: "/tmp",
         };
         return paths[name] ?? "/mock";
@@ -840,7 +843,7 @@ describe("initAutoUpdater", () => {
         if (p.includes("pending")) return true;
         return false;
       });
-      (fs.readdirSync as Mock).mockReturnValueOnce(["Pilot-0.12.1-arm64-mac.zip"]);
+      (fs.readdirSync as Mock).mockReturnValueOnce(["Flow Pilot-0.12.1-arm64-mac.zip"]);
       (fs.statSync as Mock).mockReturnValue({ mtimeMs: 1000 });
       (fs.accessSync as Mock).mockImplementation(() => {
         throw new Error("EACCES");

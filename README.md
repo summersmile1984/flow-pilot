@@ -1,8 +1,8 @@
 > [!CAUTION]
-> Harnss is currently pending a large rewrite to improve usability, performance and overall codebase into a more production ready app. I will share more info about it soon.
+> Flow Pilot is currently pending a large rewrite to improve usability, performance and overall codebase into a more production ready app. I will share more info about it soon.
 
 > [!WARNING]
-> Harnss is in early development and issues are to be expected. Please feel free to report bugs and issues in the Issues section.
+> Flow Pilot is in early development and issues are to be expected. Please feel free to report bugs and issues in the Issues section.
 
 <p align="center">
   <img alt="harnss_banner" src="https://github.com/user-attachments/assets/88f4dce1-c12b-493a-be8c-a3c418293ef4" />
@@ -23,9 +23,9 @@
 
 ---
 
-Harnss is a cross-platform desktop app that gives you one interface to run, manage, and switch between AI coding agents — Claude Code, Codex, and any ACP-compatible agent — without losing context, sessions, or tool state.
+Flow Pilot is a cross-platform desktop app that gives you one interface to run, manage, and switch between AI coding agents — Claude Code, Codex, and any ACP-compatible agent — without losing context, sessions, or tool state.
 
-**Why Harnss?**
+**Why Flow Pilot?**
 
 - **One app, every agent.** Run Claude Code, Codex, and custom ACP agents side by side. No more juggling terminals or losing context when switching tools.
 - **See what your AI is actually doing.** Tool calls render as interactive cards with word-level diffs, syntax highlighting, and inline bash output — not raw JSON.
@@ -137,14 +137,14 @@ Full-text search across session titles and message content. Import and resume co
 ## Quick Start
 
 1. **Download** the latest release for your platform from the [Releases page](https://github.com/OpenSource03/harnss/releases/latest)
-2. **Open a project** — point Harnss at any folder on disk
+2. **Open a project** — point Flow Pilot at any folder on disk
 3. **Choose an engine** — Claude Code, Codex, or any installed ACP agent — and start working
 
 ---
 
 ## Engines & Agents
 
-Harnss supports three execution engines out of the box:
+Flow Pilot supports three execution engines out of the box:
 
 | Engine | Protocol | Requirements |
 |--------|----------|--------------|

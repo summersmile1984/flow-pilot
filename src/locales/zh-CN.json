@@ -95,11 +95,11 @@
     },
     "analytics": {
       "title": "数据统计",
-      "description": "分享匿名使用数据，帮助改进 Pilot",
+      "description": "分享匿名使用数据，帮助改进 Flow Pilot",
       "section": "使用数据统计",
       "toggle": {
         "label": "发送匿名使用数据",
-        "description": "分享匿名使用数据，帮助我们了解用户如何使用 Pilot 并改进产品。我们收集应用版本、平台和基本功能使用情况，不收集任何代码、提示词或个人数据。"
+        "description": "分享匿名使用数据，帮助我们了解用户如何使用 Flow Pilot 并改进产品。我们收集应用版本、平台和基本功能使用情况，不收集任何代码、提示词或个人数据。"
       },
       "userId": {
         "label": "匿名用户 ID",
@@ -126,7 +126,7 @@
       "tagline2": "一个应用统管 Claude Code、Codex 及各类 ACP 智能体。",
       "creditsTitle": "致谢",
       "builtBy": "由开源社区打造",
-      "license": "Pilot 基于 MIT 许可证开源。欢迎在 GitHub 上贡献代码、反馈问题或提出功能建议。",
+      "license": "Flow Pilot 基于 MIT 许可证开源。欢迎在 GitHub 上贡献代码、反馈问题或提出功能建议。",
       "builtWith": "技术栈"
     },
     "mcp": {
@@ -202,14 +202,14 @@
       },
       "claude": {
         "sourceLabel": "Claude 可执行文件来源",
-        "sourceDescription": "选择 Pilot 定位 Claude 可执行文件的方式。",
+        "sourceDescription": "选择 Flow Pilot 定位 Claude 可执行文件的方式。",
         "pathLabel": "自定义 Claude 路径",
         "pathDescription": "claude 可执行文件的绝对路径（claude 或 claude.exe）。",
         "pathPlaceholder": "claude 可执行文件的绝对路径"
       },
       "codex": {
         "sourceLabel": "Codex 可执行文件来源",
-        "sourceDescription": "选择 Pilot 定位 Codex 可执行文件的方式。",
+        "sourceDescription": "选择 Flow Pilot 定位 Codex 可执行文件的方式。",
         "pathLabel": "自定义 Codex 路径",
         "pathDescription": "codex 可执行文件的绝对路径（codex 或 codex.exe）。",
         "pathPlaceholder": "codex 可执行文件的绝对路径"
@@ -377,7 +377,6 @@
     "showMoreCount": "（{{shown}} / 共 {{total}}）",
     "emptyNoProjects": "添加一个项目开始使用",
     "emptyInSpace": "此空间中还没有项目",
-    "earlyBeta": "Pilot 处于早期测试阶段",
     "openSettings": "设置",
     "space": {
       "createTitle": "创建空间",
@@ -444,7 +443,7 @@
       "permissionsTitle": "由你定规则",
       "permissionsSubtitle": "设定给 Claude 多大的自由度。随时可以修改。",
       "projectTitle": "你的第一个项目",
-      "projectSubtitle": "把 Pilot 指向任意文件夹，开始动手。",
+      "projectSubtitle": "把 Flow Pilot 指向任意文件夹，开始动手。",
       "skipForNow": "暂时跳过",
       "agentsTitle": "接入智能体",
       "agentsSubtitle": "浏览商店，一键添加 ACP 智能体。",
@@ -470,7 +469,7 @@
       "layoutIslandsDesc": "圆角、相互分离",
       "layoutFlat": "平铺",
       "layoutFlatDesc": "边到边铺满",
-      "tourSubtitle": "几个让 Pilot 与众不同的地方。",
+      "tourSubtitle": "几个让 Flow Pilot 与众不同的地方。",
       "next": "下一步"
     },
     "permission": {

@@ -21,7 +21,6 @@ if (process.platform !== "win32") {
 }
 import { log } from "./lib/logger";
 import { reportError } from "./lib/error-utils";
-import { migrateFromOpenAcpUi } from "./lib/migration";
 import { glassEnabled, applyGlass, setGlassTint } from "./lib/glass";
 import { getAppSettings } from "./lib/app-settings";
 import { initAutoUpdater, getIsInstallingUpdate } from "./lib/updater";
@@ -410,7 +409,7 @@ function openDevToolsWindow(): void {
         devToolsWindow = new BrowserWindow({
           width: 1000,
           height: 700,
-          title: "Pilot DevTools",
+          title: "Flow Pilot DevTools",
           webPreferences: {
             contextIsolation: true,
             nodeIntegration: false,
@@ -457,8 +456,6 @@ ipcMain.handle("speech:request-mic-permission", async () => {
 });
 
 app.whenReady().then(() => {
-  // Migrate data from old "OpenACP UI" app directory before anything reads it
-  migrateFromOpenAcpUi();
   if (process.platform === "darwin") {
     pendingMacBackgroundEffect = resolveMacBackgroundEffect(
       normalizeMacBackgroundEffect(getAppSettings().macBackgroundEffect),

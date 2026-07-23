@@ -61,7 +61,7 @@ function applyPermissionModeOptions(
   if (permissionMode) {
     queryOptions.permissionMode = permissionMode;
   }
-  // Harnss exposes "Allow All" as a runtime mode switch. The SDK only lets a
+  // Flow Pilot exposes "Allow All" as a runtime mode switch. The SDK only lets a
   // live session enter bypass mode if this startup flag was present from launch.
   queryOptions.allowDangerouslySkipPermissions = true;
 }

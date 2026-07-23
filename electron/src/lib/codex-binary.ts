@@ -3,7 +3,7 @@
  *
  * Search order:
  * 1. CODEX_CLI_PATH env var (explicit override)
- * 2. App data dir ({userData}/openacpui-data/bin/codex) — our managed copy (kept as openacpui-data for backward compat)
+ * 2. App data dir ({userData}/data/bin/codex) — our managed copy
  * 3. System PATH (which codex)
  * 4. Known install locations (Homebrew, Codex Desktop app bundle)
  *
@@ -36,7 +36,7 @@ const KNOWN_PATHS: string[] =
 
 /** Where we store our managed copy of the codex binary. */
 function getManagedBinDir(): string {
-  const dir = path.join(app.getPath("userData"), "openacpui-data", "bin");
+  const dir = path.join(app.getPath("userData"), "data", "bin");
   fs.mkdirSync(dir, { recursive: true });
   return dir;
 }

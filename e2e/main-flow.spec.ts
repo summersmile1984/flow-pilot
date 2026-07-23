@@ -105,21 +105,19 @@ test('app should launch and render', async () => {
 // 2. Welcome Screen
 // ══════════════════════════════════════════════════════════
 
-test('welcome screen should show Pilot branding', async () => {
+test('welcome screen should show Flow Pilot branding', async () => {
   await waitForApp();
-  const bodyText = await page.locator('body').textContent() || '';
-  
-  // Check for Pilot branding (might be on welcome or main screen)
-  const hasPilot = bodyText.includes('Pilot');
-  const hasHarnss = bodyText.includes('Harnss');
-  
-  console.log('Has Pilot:', hasPilot);
-  console.log('Has Harnss:', hasHarnss);
-  
+  // innerText, not textContent — the latter comes back empty through a Locator
+  // here, which made the old assertion pass without reading anything.
+  const bodyText = await page.evaluate(() => document.body.innerText || '');
+
+  console.log('Has Flow Pilot:', bodyText.includes('Flow Pilot'));
   await takeScreenshot('02-welcome-or-main');
-  
-  // Should not have Harnss
-  expect(hasHarnss).toBe(false);
+
+  // The name must actually be on screen. The old test computed this and only
+  // logged it, so a build with no branding at all would still have passed.
+  expect(bodyText, 'app name missing from the first screen').toContain('Flow Pilot');
+  expect(bodyText, 'retired brand name leaked into the UI').not.toContain('Harnss');
 });
 
 // ══════════════════════════════════════════════════════════
@@ -245,14 +243,15 @@ test('should find and open engine picker', async () => {
 // 7. Branding Check
 // ══════════════════════════════════════════════════════════
 
-test('should have no Harnss references in UI', async () => {
-  const bodyText = await page.locator('body').textContent() || '';
-  const hasHarnss = bodyText.includes('Harnss');
+test('should have no retired brand names in UI', async () => {
+  const bodyText = await page.evaluate(() => document.body.innerText || '');
+  console.log('body length:', bodyText.length);
 
-  console.log('Has Harnss in UI:', hasHarnss);
-
-  // Should not have Harnss
-  expect(hasHarnss).toBe(false);
+  // Guard against reading an empty string and passing vacuously.
+  expect(bodyText.length, 'read no UI text — assertions below would be meaningless').toBeGreaterThan(0);
+  for (const retired of ['Harnss', 'OpenACP']) {
+    expect(bodyText, `retired brand "${retired}" leaked into the UI`).not.toContain(retired);
+  }
 });
 
 // ══════════════════════════════════════════════════════════

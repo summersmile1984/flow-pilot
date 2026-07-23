@@ -21,13 +21,13 @@ export const AdvancedSettings = memo(function AdvancedSettings({
   onReplayWelcome,
 }: AdvancedSettingsProps) {
   const { t } = useTranslation();
-  const [codexClientName, setCodexClientName] = useState("Pilot");
+  const [codexClientName, setCodexClientName] = useState("Flow Pilot");
   const [showDevFillInChatTitleBar, setShowDevFillInChatTitleBar] = useState(false);
   const [showJiraBoard, setShowJiraBoard] = useState(false);
 
   useEffect(() => {
     if (appSettings) {
-      setCodexClientName(appSettings.codexClientName || "Pilot");
+      setCodexClientName(appSettings.codexClientName || "Flow Pilot");
       setShowDevFillInChatTitleBar(!!appSettings.showDevFillInChatTitleBar);
       setShowJiraBoard(!!appSettings.showJiraBoard);
     }
@@ -86,7 +86,7 @@ export const AdvancedSettings = memo(function AdvancedSettings({
                 }}
                 spellCheck={false}
                 className="h-8 w-40 rounded-md border border-foreground/10 bg-background px-2.5 text-sm text-foreground outline-none transition-colors placeholder:text-muted-foreground hover:border-foreground/20 focus:border-foreground/30 focus:ring-1 focus:ring-foreground/20"
-                placeholder="Pilot"
+                placeholder="Flow Pilot"
               />
             </SettingRow>
 

@@ -12,7 +12,7 @@ Your role is **review and diagnosis only** — you never edit code, never produc
 
 ## Project Context
 
-You are reviewing an Electron 40 desktop app (Harnss) that manages AI chat sessions with:
+You are reviewing an Electron 40 desktop app (Flow Pilot) that manages AI chat sessions with:
 - React 19 renderer with Tailwind CSS v4 + ShadCN UI
 - Real-time streaming via SDK async generators → IPC → rAF-batched React state updates
 - `StreamingBuffer` (refs) flushed at ~60fps via `requestAnimationFrame`

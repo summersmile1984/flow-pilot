@@ -98,7 +98,7 @@ export function useGlassOrchestrator({
     toast("Restart required", {
       id: MAC_BACKGROUND_EFFECT_RESTART_TOAST_ID,
       duration: Infinity,
-      description: "Restart Pilot to switch away from Liquid Glass cleanly.",
+      description: "Restart Flow Pilot to switch away from Liquid Glass cleanly.",
       action: {
         label: "Restart",
         onClick: () => {

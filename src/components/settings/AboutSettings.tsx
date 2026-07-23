@@ -4,9 +4,9 @@ import { Heart } from "lucide-react";
 import { ScrollArea } from "@/components/ui/scroll-area";
 import { SettingsHeader } from "@/components/settings/shared";
 
-// ── Harnss logo mark — a stylized "H" rendered inline ──
+// ── Flow Pilot logo mark — a paper-plane heading along a flow line ──
 
-function HarnssLogo({ className }: { className?: string }) {
+function FlowPilotLogo({ className }: { className?: string }) {
   return (
     <svg
       viewBox="0 0 32 32"
@@ -16,11 +16,19 @@ function HarnssLogo({ className }: { className?: string }) {
     >
       {/* Rounded square background */}
       <rect width="32" height="32" rx="8" fill="currentColor" fillOpacity="0.08" />
-      {/* Stylized "H" with connected crossbar */}
+      {/* Flow line sweeping up to the mark */}
       <path
-        d="M10 8v16M22 8v16M10 16h12"
+        d="M7 22c4 0 6.5-2 9-5"
         stroke="currentColor"
-        strokeWidth="2.5"
+        strokeWidth="2"
+        strokeLinecap="round"
+        strokeOpacity="0.45"
+      />
+      {/* Paper plane */}
+      <path
+        d="M25 8L14.5 18.5M25 8l-3.5 16-4-7-7-4L25 8z"
+        stroke="currentColor"
+        strokeWidth="2"
         strokeLinecap="round"
         strokeLinejoin="round"
       />
@@ -49,10 +57,10 @@ export const AboutSettings = memo(function AboutSettings() {
         <div className="px-6 py-5">
           {/* ── App identity ── */}
           <div className="flex items-start gap-4">
-            <HarnssLogo className="h-12 w-12 shrink-0 text-foreground" />
+            <FlowPilotLogo className="h-12 w-12 shrink-0 text-foreground" />
             <div className="min-w-0">
               <h3 className="text-lg font-semibold tracking-tight text-foreground">
-                Pilot
+                Flow Pilot
               </h3>
               <p className="mt-0.5 text-[13px] leading-relaxed text-muted-foreground">
                 {t("settings.about.tagline1")}

@@ -97,12 +97,12 @@ export const ACPAuthDialog = memo(function ACPAuthDialog({
                 )}
                 {method.type === "terminal" && (
                   <div className="mt-1 text-xs text-muted-foreground">
-                    Terminal auth is not supported in Pilot yet.
+                    Terminal auth is not supported in Flow Pilot yet.
                   </div>
                 )}
                 {method.type === "env_var" && method.vars.length > 0 && (
                   <div className="mt-1 text-xs text-muted-foreground">
-                    Env-var auth is not supported in Pilot yet. Required vars: {method.vars.map((entry) => entry.name).join(", ")}
+                    Env-var auth is not supported in Flow Pilot yet. Required vars: {method.vars.map((entry) => entry.name).join(", ")}
                   </div>
                 )}
               </div>

@@ -1,8 +1,8 @@
 {
-  "name": "pilot",
+  "name": "flow-pilot",
   "version": "0.1.0",
-  "productName": "Pilot",
-  "description": "Pilot your AI coding agents — unified management for Claude Code, Codex, and any ACP agent via Mastra",
+  "productName": "Flow Pilot",
+  "description": "Flow Pilot — unified management for Claude Code, Codex, and any ACP agent via Mastra",
   "author": {
     "name": "Dejan Zegarac",
     "email": "dejanzegarac3@gmail.com"
@@ -17,6 +17,7 @@
     "dist": "pnpm build && electron-builder --config electron-builder.config.js",
     "dist:fast": "pnpm build && electron-builder --config electron-builder.config.js --dir",
     "dist:mac": "pnpm build && electron-builder --mac --config electron-builder.config.js",
+    "verify:asar": "node scripts/verify-asar.cjs \"release/$npm_package_version/mac-arm64/Flow Pilot.app/Contents/Resources/app.asar\"",
     "dist:win": "pnpm build && electron-builder --win --config electron-builder.config.js",
     "dist:linux": "pnpm build && electron-builder --linux --config electron-builder.config.js",
     "postinstall": "node -e \"require('child_process').execSync('electron-rebuild'+(process.platform==='darwin'?'':' --ignore electron-liquid-glass'),{stdio:'inherit'})\"",

@@ -48,7 +48,7 @@ export const webFetchTool = createTool({
       const res = await fetch(url, {
         redirect: 'follow',
         signal: AbortSignal.timeout(TIMEOUT_MS),
-        headers: { 'User-Agent': 'Pilot/1.0 (+supervisor web_fetch)' },
+        headers: { 'User-Agent': 'Flow Pilot/1.0 (+supervisor web_fetch)' },
       });
       const contentType = res.headers.get('content-type') ?? '';
       const body = await res.text();

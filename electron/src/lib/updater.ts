@@ -234,12 +234,13 @@ export function initAutoUpdater(
  */
 /** @internal Exported for testing. */
 export function findUpdateZip(): string | null {
-  // electron-updater stores downloads in ~/Library/Caches/pilot-updater/pending/
+  // electron-updater stores downloads in ~/Library/Caches/flow-pilot-updater/pending/
+  // The dir name is derived by electron-builder from package.json "name" — keep in sync.
   // app.getPath("appData") = ~/Library/Application Support, so go up one to ~/Library/
-  const cacheDir = path.join(path.dirname(app.getPath("appData")), "Caches", "pilot-updater", "pending");
+  const cacheDir = path.join(path.dirname(app.getPath("appData")), "Caches", "flow-pilot-updater", "pending");
   if (!fs.existsSync(cacheDir)) return null;
 
-  // Try exact match first (e.g. Pilot-0.6.1-arm64-mac.zip)
+  // Try exact match first (e.g. Flow Pilot-0.6.1-arm64-mac.zip)
   if (lastDownloadedVersion) {
     const entries = fs.readdirSync(cacheDir);
     const match = entries.find(
@@ -274,7 +275,7 @@ async function manualMacInstall(): Promise<void> {
   log("UPDATER", `Manual install: using ZIP at ${zipPath}`);
 
   // Resolve the current .app bundle path from the running executable
-  // e.g. /Applications/Pilot.app/Contents/MacOS/Pilot → /Applications/Pilot.app
+  // e.g. /Applications/Flow Pilot.app/Contents/MacOS/Flow Pilot → /Applications/Flow Pilot.app
   const exePath = app.getPath("exe");
   const appBundleMatch = exePath.match(/^(.+?\.app)\//);
   if (!appBundleMatch) throw new Error(`Cannot determine .app bundle from exe path: ${exePath}`);
@@ -288,7 +289,7 @@ async function manualMacInstall(): Promise<void> {
     throw new Error(`No write permission to ${appParentDir} — install the app to a writable location`);
   }
 
-  const tmpDir = path.join(app.getPath("temp"), `pilot-update-${Date.now()}`);
+  const tmpDir = path.join(app.getPath("temp"), `flow-pilot-update-${Date.now()}`);
   const backupPath = `${appBundlePath}.old`;
 
   try {

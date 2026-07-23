@@ -1,9 +1,9 @@
 ---
 name: release
-description: "Run the Harnss release workflow — review staged diff, bump version, commit, tag, push, and create a GitHub release. Use when releasing, bumping version, tagging, or creating a release. Argument: major, minor, or patch."
+description: "Run the Flow Pilot release workflow — review staged diff, bump version, commit, tag, push, and create a GitHub release. Use when releasing, bumping version, tagging, or creating a release. Argument: major, minor, or patch."
 ---
 
-# Harnss Release Workflow
+# Flow Pilot Release Workflow
 
 Run the full release pipeline. Bump type is passed as `$ARGUMENTS` (major, minor, or patch).
 

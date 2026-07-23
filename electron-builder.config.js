@@ -48,6 +48,81 @@ function forceIncludePackages(tmpDir) {
   }
 }
 
+/**
+ * Block until `app.asar` is actually on disk.
+ *
+ * `@electron/asar`'s `createPackage` resolves too early. `streamTransformedFile`
+ * pipes each source file into the archive stream with `{ end: false }` and
+ * resolves on the *read* stream's "end" — so it reports done once the source has
+ * been read, not once the bytes have been written. `writeFileListToStream` then
+ * finishes with `return out.end()`, and a WriteStream's `end()` returns the
+ * stream, not a promise, so awaiting it is a no-op. `await createPackage(...)`
+ * can therefore return with hundreds of MB still queued.
+ *
+ * That is not theoretical: it shipped a "successful" build whose asar had a
+ * correct header and a data section that never finished writing. electron-builder
+ * had already signed it, hashed it into `ElectronAsarIntegrity`, and rolled it
+ * into a DMG. Electron could not parse `package.json`, so the app exited 0 with
+ * no window, no stderr and no crash report.
+ *
+ * The archive is complete exactly when the last entry's declared end equals the
+ * file size — the header is written first and states where the data must stop.
+ */
+async function waitForAsarFlush(asarPath, timeoutMs = 180000) {
+  const deadline = Date.now() + timeoutMs;
+  let lastSize = -1;
+  for (;;) {
+    const size = fs.statSync(asarPath).size;
+    const declaredEnd = declaredAsarEnd(asarPath, size);
+    if (declaredEnd !== null && declaredEnd === size) return;
+    if (Date.now() > deadline) {
+      throw new Error(
+        `afterPack: app.asar was still incomplete after ${timeoutMs}ms ` +
+          `(size ${size}, expected ${declaredEnd ?? "unknown"}) — refusing to ship it`,
+      );
+    }
+    lastSize = size;
+    await new Promise((r) => setTimeout(r, 250));
+    // A stalled write is a failure, not something to keep waiting on.
+    if (fs.statSync(asarPath).size === lastSize && Date.now() > deadline - 1000) {
+      throw new Error("afterPack: app.asar stopped growing while still incomplete");
+    }
+  }
+}
+
+/** End offset the asar header claims for its data section, or null if unreadable yet. */
+function declaredAsarEnd(asarPath, size) {
+  if (size < 16) return null;
+  const fd = fs.openSync(asarPath, "r");
+  try {
+    const sizeField = Buffer.alloc(8);
+    fs.readSync(fd, sizeField, 0, 8, 8);
+    const headerSize = sizeField.readUInt32LE(4);
+    if (!headerSize || 16 + headerSize > size) return null;
+    const headerBuf = Buffer.alloc(headerSize);
+    fs.readSync(fd, headerBuf, 0, headerSize, 16);
+    let header;
+    try {
+      header = JSON.parse(headerBuf.toString("utf8"));
+    } catch {
+      return null;
+    }
+    // The pickled header is padded out to a 4-byte boundary.
+    const base = 16 + headerSize + ((4 - (headerSize % 4)) % 4);
+    let max = 0;
+    (function walk(node) {
+      for (const key of Object.keys(node.files || {})) {
+        const f = node.files[key];
+        if (f.files) walk(f);
+        else if (f.offset != null) max = Math.max(max, Number(f.offset) + f.size);
+      }
+    })(header);
+    return base + max;
+  } finally {
+    fs.closeSync(fd);
+  }
+}
+
 async function afterPackHook(context) {
   const resourcesDir = ["darwin", "mas"].includes(context.electronPlatformName)
     ? path.join(context.appOutDir, `${context.packager.appInfo.productFilename}.app`, "Contents", "Resources")
@@ -84,8 +159,15 @@ async function afterPackHook(context) {
   forceIncludePackages(tmpDir);
 
   console.log("  \u2022 afterPack: repacking asar...");
+  // Build beside the target and rename into place. Writing straight to app.asar
+  // means a repack that dies partway leaves a broken archive that electron-builder
+  // will happily sign and ship.
+  const stagedAsar = `${asarPath}.repacked`;
+  fs.rmSync(stagedAsar, { force: true });
+  await asar.createPackage(tmpDir, stagedAsar);
+  await waitForAsarFlush(stagedAsar);
   fs.rmSync(asarPath, { force: true });
-  await asar.createPackage(tmpDir, asarPath);
+  fs.renameSync(stagedAsar, asarPath);
   fs.rmSync(tmpDir, { recursive: true, force: true });
 
   // Log final size for visibility
@@ -96,8 +178,8 @@ async function afterPackHook(context) {
 
 /** @type {import('electron-builder').Configuration} */
 module.exports = {
-  appId: "com.pilot.app",
-  productName: "Pilot",
+  appId: "com.flowpilot.app",
+  productName: "Flow Pilot",
 
   directories: {
     output: "release/${version}",
@@ -144,7 +226,7 @@ module.exports = {
     entitlements: "build/entitlements.mac.plist",
     entitlementsInherit: "build/entitlements.mac.plist",
     extendInfo: {
-      NSMicrophoneUsageDescription: "Pilot uses the microphone for voice dictation to transcribe speech into text.",
+      NSMicrophoneUsageDescription: "Flow Pilot uses the microphone for voice dictation to transcribe speech into text.",
     },
   },
 

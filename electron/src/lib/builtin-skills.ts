@@ -3,7 +3,7 @@ import path from 'path';
 import { log } from './logger';
 
 /**
- * Starter skills bundled with Pilot. On first launch they are seeded into the
+ * Starter skills bundled with Flow Pilot. On first launch they are seeded into the
  * global skills directory (~/.pilot/skills/<name>/SKILL.md) so they behave
  * exactly like user-authored skills afterwards: editable in Settings, listed
  * in the supervisor's catalog, and deletable — a bumped SEED_VERSION only adds

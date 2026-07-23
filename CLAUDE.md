@@ -1,4 +1,4 @@
-# Harnss
+# Flow Pilot
 
 Open-source desktop client for the Agent Client Protocol. Uses the `@anthropic-ai/claude-agent-sdk` to programmatically manage Claude sessions via `query()`. Supports multiple concurrent sessions with persistent chat history, project workspaces, background agents, tool permissions, and context compaction.
 
@@ -364,7 +364,7 @@ The main process uses `@anthropic-ai/claude-agent-sdk` (ESM-only, loaded via `aw
 
 Three tiers of settings storage, each suited to different access patterns:
 
-1. **`useSettings` hook** (renderer, localStorage) — UI preferences that only the renderer needs: model, permissionMode, panel widths, active tools, thinking toggle. Per-project settings keyed by `harnss-{projectId}-*`, global settings keyed by `harnss-*`.
+1. **`useSettings` hook** (renderer, localStorage) — UI preferences that only the renderer needs: model, permissionMode, panel widths, active tools, thinking toggle. Per-project settings keyed by `pilot-{projectId}-*`, global settings keyed by `pilot-*`. (The prefix is a historical name and is deliberately NOT renamed — see Gotchas.)
 
 2. **`settings-store.ts`** (renderer, Zustand + localStorage) — A thin Zustand wrapper around localStorage for settings that multiple components subscribe to reactively (e.g. theme, notification preferences). Located in `src/stores/settings-store.ts`. Prefer this over raw `localStorage` reads in components.
 
@@ -527,7 +527,7 @@ Tool name normalization: `extractMcpToolName(toolName)` strips the `"mcp__Server
 
 `ipc/git.ts` exposes a full git operation layer backed by `electron/src/lib/git-exec.ts`. Status, log, diff, stage/unstage, commit, branch operations, and worktree management are all available via IPC (see IPC API — Git section above).
 
-**Worktrees**: `WorktreeBar.tsx` shows available git worktrees for the active project and lets the user switch. `useWorktreeChips` derives the chip list from `git:status`. Each `Space` can be pinned to a worktree path; `useAppSpaceWorkflow` handles the worktree-space association. Worktree config is stored in `.harnss/worktree.json`.
+**Worktrees**: `WorktreeBar.tsx` shows available git worktrees for the active project and lets the user switch. `useWorktreeChips` derives the chip list from `git:status`. Each `Space` can be pinned to a worktree path; `useAppSpaceWorkflow` handles the worktree-space association. Worktree config is stored in `.pilot/worktree.json`.
 
 **Git Panel** (`src/components/git/`): Decomposed into 9 components — `GitPanel` (orchestrator), `RepoSection` (repo header + branch), `BranchPicker` (branch switcher popover), `ChangesSection` (staged/unstaged file list), `CommitInput` (message + commit button), `FileItem` (individual file row), `InlineDiff` (per-file diff preview), `InlineSelector` (hunk-level staging UI), `git-panel-utils.ts` (formatting helpers).
 
@@ -670,7 +670,7 @@ Always search the web when needed for up-to-date API references, Electron APIs, 
 Types shared between electron and renderer live in `shared/types/`. Both tsconfigs include this directory via `@shared/*` path alias.
 
 - **`shared/types/codex-protocol/`** — auto-generated from `codex app-server generate-ts`. Contains v1, v2, and serde_json type families. Used by both electron Codex handlers and renderer hooks.
-- **`shared/types/codex.ts`** — re-exports with `Codex`-prefixed aliases (e.g., `CodexThreadItem`, `CodexSessionEvent`) plus Harnss-specific wrappers (`CodexApprovalRequest`, `CodexRequestUserInputRequest`).
+- **`shared/types/codex.ts`** — re-exports with `Codex`-prefixed aliases (e.g., `CodexThreadItem`, `CodexSessionEvent`) plus Flow Pilot-specific wrappers (`CodexApprovalRequest`, `CodexRequestUserInputRequest`).
 - **`shared/types/engine.ts`** — `EngineId`, `AppPermissionBehavior`, `SlashCommand`, `RespondPermissionFn`. No React or renderer dependencies.
 - **`src/types/engine-hook.ts`** — `EngineHookState`, `BackgroundSessionSnapshot`. React-dependent engine types that live in the renderer layer.
 - **`src/types/agents.ts`** — `BackgroundAgent`, `BackgroundAgentActivity`, `BackgroundAgentUsage`. Renderer-only types for tracking background Task agents (status, activity log, live usage metrics, progress summary, current tool).
@@ -743,7 +743,7 @@ Types shared between electron and renderer live in `shared/types/`. Both tsconfi
 - **`src/lib/clipboard.ts`** — `copyToClipboard()` with IPC + `navigator.clipboard` + textarea fallback
 - **`src/lib/ask-user-question.ts`** — answer extraction for the `AskUserQuestion` tool (pairs with `AskUserQuestion.tsx` renderer)
 - **`src/lib/element-inspector.ts`** — injectable IIFE injected into the Browser Panel's `<webview>` that intercepts element clicks and sends `GrabbedElement` data back via `ipcRenderer.sendToHost`
-- **`src/lib/local-storage-migration.ts`** — runs once at startup to migrate `openacpui-*` localStorage keys to `harnss-*`
+- localStorage prefix migrations were removed with the Flow Pilot rename — a renamed app gets a fresh userData dir, so there is nothing to migrate from
 - **`src/lib/terminal-tabs.ts`** — `TerminalTab`, `SpaceTerminalState`, `LiveTerminalRecord` types
 - **`src/lib/monaco.ts`** — file extension → Monaco language id map
 - **`src/lib/languages.ts`** — language-to-Prism style map for syntax highlighting
@@ -888,6 +888,35 @@ crash — the failing require had only moved off the startup path and would have
 fired the first time a Pilot agent ran. What surfaced it: compare every bare
 `require()` in the asar against what was actually packaged.
 
+### Packaging: the asar can be signed, shipped, and unreadable
+
+Symptom: the packaged app exits **0** within a few seconds — no window, no
+stderr, no `logs/` dir under userData, no crash report, nothing in `log show`.
+The same `electron/dist/main.js` run unpackaged (`npx electron .`) stays up.
+
+Cause: `@electron/asar`'s `createPackage` resolves before the archive is on
+disk. `streamTransformedFile` pipes each source into the output with
+`{ end: false }` and resolves on the **read** stream's `end`, then
+`writeFileListToStream` finishes with `return out.end()` — and a WriteStream's
+`end()` returns the stream, not a promise, so awaiting it is a no-op. The
+`afterPack` repack hook returned while hundreds of MB were still queued, and
+electron-builder went straight on to sign the bundle, hash it into
+`ElectronAsarIntegrity`, and build the DMG. The result had a correct header and
+a data section that never finished: every entry resolved to another file's
+bytes, and `package.json` came back as a fragment of a dev log. Electron could
+not read `main`, so it quit.
+
+It is a **race**, not a certainty — it reproduced under load (E2E, vite and a
+dev Electron all running) and vanished on a clean rebuild. `waitForAsarFlush` in
+`electron-builder.config.js` now blocks until the last entry's declared end
+equals the file size, and the repack goes to a staged path and is renamed in.
+
+**Integrity hashes cannot detect this.** They are computed from the bytes
+electron-builder wrote, so a scrambled archive still verifies as intact. Check
+meaning, not consistency: `pnpm verify:asar` parses `package.json` out of the
+archive, follows its `main`, and confirms `index.html` is HTML. Run it before
+shipping any build.
+
 Other packaging notes:
 - Playwright **cannot** attach to a signed hardened-runtime build (the debugger
   is blocked without `get-task-allow`). Verify packaged apps by launching the
@@ -973,3 +1002,44 @@ nothing.
 - The dev app exposes CDP on **9333**, which is the fastest way to inspect a
   running session: `chromium.connectOverCDP('http://127.0.0.1:9333')`, find the
   page with `#root`, then evaluate against the live DOM.
+
+### Renaming the app: what is identity and what is not
+
+The app has been renamed twice before (OpenACP UI → Harnss → Pilot → Flow Pilot),
+and each pass left sediment. The rule that keeps it contained:
+
+> **Change what a user can see, or what identifies the app to the OS or the
+> network. Leave internal identifiers alone.**
+
+That line also resolves the overload on the word "Pilot": it is the app name
+*and* the name of the Mastra orchestrator engine (the "Pilot" half of Direct vs
+Pilot in the engine picker). A global find-and-replace renames the feature too.
+In `src/locales/*.json`, 8 keys carry the app name and 6 carry the engine name —
+`settings.nav.pilot`, `settings.pilot.*`, and `enginePicker.pilot*` are the
+engine and must stay.
+
+Deliberately **not** renamed, and why:
+
+- `.pilot/` (config.yaml, memory, skills, worktree.json) and `~/.pilot/skills` —
+  these live in users' own repos and belong to the engine, not the app.
+- Agent id `"pilot"` in `agent-registry.ts` — persisted in `agents.json`.
+- `pilot-data/` and `pilot.db` — the Pilot engine's own conversation store.
+- `window.pilot` bridge and the `pilot-*` localStorage prefix — internal, never
+  user-visible. Note `settings-store.ts` parses project ids with
+  `key.slice("pilot-".length, …)`, so a partial rename there mis-parses ids
+  silently rather than failing.
+- `PILOT_DEV_PORT` — dev-only.
+
+`productName` is the lever with the widest blast radius. It drives
+`app.getPath("userData")` **and** the macOS keychain entry name
+(`"<name> Safe Storage"`), which is what `safeStorage` uses to encrypt the MCP
+and Jira OAuth token stores. Changing it orphans those credentials in a way that
+copying files does **not** fix — the new name yields a different keychain entry,
+so `decryptString()` simply fails. Re-authentication is the only path.
+
+The sneakiest coupling is the updater cache. electron-builder derives
+`updaterCacheDirName` from `package.json` `name`, while `updater.ts` hardcodes
+the same string to find the downloaded ZIP. Let those drift and `findUpdateZip()`
+returns null, so macOS auto-update fails **silently**. `updater.test.ts` pins the
+directory name for exactly this reason — when it fails after a rename, that is
+the test doing its job, not a stale fixture.

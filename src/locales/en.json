@@ -95,11 +95,11 @@
     },
     "analytics": {
       "title": "Analytics",
-      "description": "Help improve Pilot by sharing anonymous usage data",
+      "description": "Help improve Flow Pilot by sharing anonymous usage data",
       "section": "Usage Analytics",
       "toggle": {
         "label": "Send anonymous analytics",
-        "description": "Share anonymous usage data to help us understand how people use Pilot and improve the app. We collect app version, platform, and basic feature usage. No code, prompts, or personal data is collected."
+        "description": "Share anonymous usage data to help us understand how people use Flow Pilot and improve the app. We collect app version, platform, and basic feature usage. No code, prompts, or personal data is collected."
       },
       "userId": {
         "label": "Anonymous User ID",
@@ -126,7 +126,7 @@
       "tagline2": "One app for Claude Code, Codex, and any ACP agent.",
       "creditsTitle": "Credits",
       "builtBy": "Built by OpenSource",
-      "license": "Pilot is open-source under the MIT License. Contributions, bug reports, and feature requests are welcome on GitHub.",
+      "license": "Flow Pilot is open-source under the MIT License. Contributions, bug reports, and feature requests are welcome on GitHub.",
       "builtWith": "Built with"
     },
     "mcp": {
@@ -202,14 +202,14 @@
       },
       "claude": {
         "sourceLabel": "Claude binary source",
-        "sourceDescription": "Choose how Pilot resolves the Claude executable.",
+        "sourceDescription": "Choose how Flow Pilot resolves the Claude executable.",
         "pathLabel": "Custom Claude path",
         "pathDescription": "Absolute path to claude executable (claude or claude.exe).",
         "pathPlaceholder": "Absolute path to claude executable"
       },
       "codex": {
         "sourceLabel": "Codex binary source",
-        "sourceDescription": "Choose how Pilot resolves the Codex executable.",
+        "sourceDescription": "Choose how Flow Pilot resolves the Codex executable.",
         "pathLabel": "Custom Codex path",
         "pathDescription": "Absolute path to codex executable (codex or codex.exe).",
         "pathPlaceholder": "Absolute path to codex executable"
@@ -377,7 +377,6 @@
     "showMoreCount": "({{shown}} of {{total}})",
     "emptyNoProjects": "Add a project to get started",
     "emptyInSpace": "No projects in this space",
-    "earlyBeta": "Pilot is in early beta",
     "openSettings": "Settings",
     "space": {
       "createTitle": "Create a Space",
@@ -444,7 +443,7 @@
       "permissionsTitle": "Your rules",
       "permissionsSubtitle": "Set how much freedom Claude gets. Change this anytime.",
       "projectTitle": "Your first project",
-      "projectSubtitle": "Point Pilot at any folder and start building.",
+      "projectSubtitle": "Point Flow Pilot at any folder and start building.",
       "skipForNow": "Skip for now",
       "agentsTitle": "Connect agents",
       "agentsSubtitle": "Browse the store and add ACP agents with one click.",
@@ -470,7 +469,7 @@
       "layoutIslandsDesc": "Rounded, separated",
       "layoutFlat": "Flat",
       "layoutFlatDesc": "Edge-to-edge",
-      "tourSubtitle": "A few things that make Pilot different.",
+      "tourSubtitle": "A few things that make Flow Pilot different.",
       "next": "Next"
     },
     "permission": {

@@ -63,7 +63,7 @@ export function getCodexSessionModel(internalId: string): string | undefined {
 }
 
 function getAppServerClientInfo(): { name: string; title: string; version: string } {
-  const clientName = getAppSetting("codexClientName") || "Harnss";
+  const clientName = getAppSetting("codexClientName") || "Flow Pilot";
   return {
     name: clientName,
     title: clientName,
