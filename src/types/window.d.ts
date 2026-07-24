@@ -376,6 +376,8 @@ declare global {
         ) => Promise<Record<string, { path: string; args?: string[] } | null>>;
         /** Preferred ACP registry platform keys for the current machine. */
         getPlatformKeys: () => Promise<string[]>;
+        /** Detect ACP agents installed locally (on PATH or as known app bundles). */
+        detectAcp: () => Promise<InstalledAgent[]>;
       };
       settings: {
         get: () => Promise<AppSettings>;

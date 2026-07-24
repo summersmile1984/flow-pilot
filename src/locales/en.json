@@ -280,7 +280,8 @@
         "download": "Download",
         "setup": "Setup",
         "empty": "No agents found",
-        "emptyHint": "Try a different search term"
+        "emptyHint": "Try a different search term",
+        "detectedTitle": "Detected on this machine"
       },
       "error": {
         "idRequired": "ID is required",

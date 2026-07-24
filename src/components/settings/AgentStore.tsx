@@ -9,6 +9,7 @@ import {
   AlertCircle,
   Loader2,
   Trash2,
+  Terminal,
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -241,6 +242,55 @@ const StoreAgentCard = memo(function StoreAgentCard({
   );
 });
 
+// ── Detected local agent card ──
+// For ACP agents found on this machine (PATH binaries or known app bundles).
+// Already an InstalledAgent, so "Add" persists it directly — no registry lookup.
+
+const DetectedAgentCard = memo(function DetectedAgentCard({
+  agent,
+  isInstalling,
+  onAdd,
+}: {
+  agent: InstalledAgent;
+  isInstalling: boolean;
+  onAdd: () => void;
+}) {
+  const { t } = useTranslation();
+  return (
+    <div className="group relative flex flex-col rounded-lg border border-foreground/[0.06] bg-background p-4 transition-colors hover:border-foreground/[0.1]">
+      <div className="flex items-start gap-3">
+        <div className="flex h-9 w-9 shrink-0 items-center justify-center rounded-md bg-muted/40">
+          <AgentIcon icon={agent.icon} size={20} />
+        </div>
+        <div className="min-w-0 flex-1">
+          <span className="truncate text-sm font-medium text-foreground">{agent.name}</span>
+          <div className="mt-0.5 flex items-center gap-1 truncate">
+            <Terminal className="h-3 w-3 shrink-0 text-muted-foreground/50" />
+            <span className="truncate font-mono text-[11px] text-muted-foreground/70">
+              {agent.binary}
+            </span>
+          </div>
+        </div>
+      </div>
+      <div className="mt-3 flex items-center justify-end">
+        <Button
+          size="sm"
+          className="h-7 gap-1.5 px-3 text-xs"
+          onClick={onAdd}
+          disabled={isInstalling}
+        >
+          {isInstalling ? (
+            <Loader2 className="h-3 w-3 animate-spin" />
+          ) : (
+            <Download className="h-3 w-3" />
+          )}
+          {t("settings.agents.add")}
+        </Button>
+      </div>
+    </div>
+  );
+});
+
 // ── Main Component ──
 
 export const AgentStore = memo(function AgentStore({
@@ -249,10 +299,33 @@ export const AgentStore = memo(function AgentStore({
   onUninstall,
 }: AgentStoreProps) {
   const { t } = useTranslation();
-  const { registryAgents, isLoading, error, binaryPaths, platformKeys, refresh } = useAgentStore();
+  const { registryAgents, detectedAgents, isLoading, error, binaryPaths, platformKeys, refresh } = useAgentStore();
   const [search, setSearch] = useState("");
   const [installing, setInstalling] = useState<Set<string>>(new Set());
   const [isRefreshing, setIsRefreshing] = useState(false);
+
+  // Local ACP agents detected on this machine that aren't already added.
+  const installedIds = useMemo(() => new Set(installedAgents.map((a) => a.id)), [installedAgents]);
+  const detectedNotAdded = useMemo(
+    () => detectedAgents.filter((a) => !installedIds.has(a.id)),
+    [detectedAgents, installedIds],
+  );
+
+  const handleAddDetected = useCallback(
+    async (agent: InstalledAgent) => {
+      setInstalling((prev) => new Set(prev).add(agent.id));
+      try {
+        await onInstall(agent);
+      } finally {
+        setInstalling((prev) => {
+          const next = new Set(prev);
+          next.delete(agent.id);
+          return next;
+        });
+      }
+    },
+    [onInstall],
+  );
 
   // Map installed agents by registryId for O(1) lookup
   const installedMap = useMemo(
@@ -365,6 +438,24 @@ export const AgentStore = memo(function AgentStore({
         <StoreSkeleton />
       ) : (
         <ScrollArea className="min-h-0 flex-1">
+          {/* Detected local agents — installed on this machine, one-click add */}
+          {detectedNotAdded.length > 0 && !search.trim() && (
+            <div className="px-5 pt-4">
+              <div className="mb-2 text-[11px] font-medium uppercase tracking-wide text-muted-foreground">
+                {t("settings.agents.store.detectedTitle")}
+              </div>
+              <div className="grid grid-cols-2 gap-3">
+                {detectedNotAdded.map((agent) => (
+                  <DetectedAgentCard
+                    key={agent.id}
+                    agent={agent}
+                    isInstalling={installing.has(agent.id)}
+                    onAdd={() => handleAddDetected(agent)}
+                  />
+                ))}
+              </div>
+            </div>
+          )}
           <div className="grid grid-cols-2 gap-3 px-5 pb-5">
             {filtered.map((agent) => {
               const status = getCardStatus(agent, installedMap, binaryPaths);

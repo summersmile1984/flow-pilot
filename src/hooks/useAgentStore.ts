@@ -1,5 +1,5 @@
 import { useState, useEffect, useCallback } from "react";
-import type { RegistryAgent } from "@/types";
+import type { RegistryAgent, InstalledAgent } from "@/types";
 import {
   fetchAgentRegistry,
   resolveRegistryBinaryPaths,
@@ -13,6 +13,7 @@ import {
  */
 export function useAgentStore() {
   const [registryAgents, setRegistryAgents] = useState<RegistryAgent[]>([]);
+  const [detectedAgents, setDetectedAgents] = useState<InstalledAgent[]>([]);
   const [isLoading, setIsLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
   const [binaryPaths, setBinaryPaths] = useState<Record<string, BinaryCheckResult>>({});
@@ -51,6 +52,16 @@ export function useAgentStore() {
         if (!cancelled) setPlatformKeys([]);
       });
 
+    // Detect ACP agents installed on this machine (PATH binaries + known app
+    // bundles). These are offered as one-click installs in the store.
+    void window.claude.agents.detectAcp()
+      .then((agents) => {
+        if (!cancelled) setDetectedAgents(agents);
+      })
+      .catch(() => {
+        if (!cancelled) setDetectedAgents([]);
+      });
+
     return () => {
       cancelled = true;
     };
@@ -63,6 +74,8 @@ export function useAgentStore() {
 
   return {
     registryAgents,
+    /** ACP agents detected on this machine (PATH binaries + known app bundles). */
+    detectedAgents,
     isLoading,
     error,
     /** Map of agent id → resolved binary path + args for agents found on the system. */

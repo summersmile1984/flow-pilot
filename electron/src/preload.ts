@@ -337,6 +337,7 @@ contextBridge.exposeInMainWorld("claude", {
     checkBinaries: (agents: Array<{ id: string; binary: Record<string, { cmd: string; args?: string[] }> }>) =>
       ipcRenderer.invoke("agents:check-binaries", agents),
     getPlatformKeys: () => ipcRenderer.invoke("agents:get-platform-keys"),
+    detectAcp: () => ipcRenderer.invoke("agents:detect-acp"),
   },
   settings: {
     get: () => ipcRenderer.invoke("settings:get"),

@@ -245,12 +245,51 @@ const ACP_AGENT_CANDIDATES: AcpAgentCandidate[] = [
   { id: "cursor", name: "Cursor", command: "cursor", args: ["--acp"], icon: "mouse-pointer" },
 ];
 
+/**
+ * Agents that ship as installed apps rather than PATH binaries — their command
+ * is an absolute path inside the .app bundle, so `which` won't find them. We
+ * detect them by checking the executable exists on disk.
+ */
+const APP_AGENT_CANDIDATES: AcpAgentCandidate[] = [
+  {
+    id: "workbuddy",
+    name: "WorkBuddy",
+    command: "/Applications/WorkBuddy.app/Contents/Resources/app.asar.unpacked/cli/bin/codebuddy",
+    args: ["--acp"],
+    icon: "bot",
+  },
+  {
+    id: "wukong",
+    name: "Wukong",
+    command: "/Applications/Wukong.app/Contents/MacOS/wukong-cli",
+    args: ["chat", "--protocol=acp"],
+    icon: "bot",
+  },
+];
+
 export async function detectLocalAcpAgents(): Promise<InstalledAgent[]> {
   const detected: InstalledAgent[] = [];
 
   for (const candidate of ACP_AGENT_CANDIDATES) {
     const resolved = await resolveWhich(candidate.command);
     if (resolved) {
+      detected.push({
+        id: candidate.id,
+        name: candidate.name,
+        engine: "acp",
+        builtIn: false,
+        icon: candidate.icon,
+        binary: candidate.command,
+        args: candidate.args,
+        detected: true,
+      });
+    }
+  }
+
+  // App-bundle agents: the command is an absolute path, so probe the filesystem
+  // instead of PATH.
+  for (const candidate of APP_AGENT_CANDIDATES) {
+    if (fs.existsSync(candidate.command)) {
       detected.push({
         id: candidate.id,
         name: candidate.name,

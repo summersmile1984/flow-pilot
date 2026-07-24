@@ -280,7 +280,8 @@
         "download": "下载",
         "setup": "配置",
         "empty": "未找到智能体",
-        "emptyHint": "换个关键词试试"
+        "emptyHint": "换个关键词试试",
+        "detectedTitle": "本机检测到的"
       },
       "error": {
         "idRequired": "ID 不能为空",
