@@ -16,7 +16,6 @@ import { SidebarSearch } from "./SidebarSearch";
 import { SpaceBar, SpaceIcon } from "./SpaceBar";
 import { SpaceCustomizer } from "./SpaceCustomizer";
 import { UpdateBanner } from "./UpdateBanner";
-import { PreReleaseBanner } from "./PreReleaseBanner";
 import { ProjectSection } from "./sidebar/ProjectSection";
 import { SidebarActionsProvider } from "./sidebar/SidebarActionsContext";
 import { useAgentContext } from "./AgentContext";
@@ -673,7 +672,6 @@ export const AppSidebar = memo(function AppSidebar({
           </div>
 
           <UpdateBanner />
-          <PreReleaseBanner onOpenSettings={onOpenSettings} />
         </div>
         </SidebarActionsProvider>
       )}
