@@ -289,8 +289,8 @@ module.exports = {
   // --- Auto-update ---
   publish: {
     provider: "github",
-    owner: "OpenSource03",
-    repo: "pilot",
+    owner: "summersmile1984",
+    repo: "flow-pilot",
     releaseType: "release",
   },
 

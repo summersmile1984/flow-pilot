@@ -22,8 +22,8 @@ interface PreReleaseInfo {
   releaseUrl: string | null;
 }
 
-const GITHUB_OWNER = "OpenSource03";
-const GITHUB_REPO = "pilot";
+const GITHUB_OWNER = "summersmile1984";
+const GITHUB_REPO = "flow-pilot";
 const FETCH_TIMEOUT_MS = 10_000;
 
 let cachedResult: PreReleaseInfo | null = null;
