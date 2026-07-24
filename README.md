@@ -1,227 +1,182 @@
-> [!CAUTION]
-> Flow Pilot is currently pending a large rewrite to improve usability, performance and overall codebase into a more production ready app. I will share more info about it soon.
-
-> [!WARNING]
-> Flow Pilot is in early development and issues are to be expected. Please feel free to report bugs and issues in the Issues section.
-
 <p align="center">
-  <img alt="harnss_banner" src="https://github.com/user-attachments/assets/88f4dce1-c12b-493a-be8c-a3c418293ef4" />
+  <strong>Flow Pilot</strong>
 </p>
 
 <p align="center">
-  <strong>Harness your AI coding agents.</strong>
+  One cockpit for every AI coding agent — <em>orchestrate</em>, don't just switch.
 </p>
 
 <p align="center">
-  <a href="https://github.com/OpenSource03/harnss/releases"><img alt="Latest Release" src="https://img.shields.io/github/v/release/OpenSource03/harnss?style=flat-square&color=blue" /></a>
-  <a href="https://github.com/OpenSource03/harnss/stargazers"><img alt="Stars" src="https://img.shields.io/github/stars/OpenSource03/harnss?style=flat-square" /></a>
+  <a href="https://github.com/summersmile1984/flow-pilot/releases"><img alt="Release" src="https://img.shields.io/github/v/release/summersmile1984/flow-pilot?style=flat-square&color=1677ff" /></a>
+  <a href="https://github.com/summersmile1984/flow-pilot/stargazers"><img alt="Stars" src="https://img.shields.io/github/stars/summersmile1984/flow-pilot?style=flat-square" /></a>
   <img alt="Platform" src="https://img.shields.io/badge/platform-macOS%20%7C%20Windows%20%7C%20Linux-brightgreen?style=flat-square" />
-  <img alt="Electron" src="https://img.shields.io/badge/electron-40-47848F?style=flat-square&logo=electron&logoColor=white" />
-  <img alt="License" src="https://img.shields.io/github/license/OpenSource03/harnss?style=flat-square" />
-  <a href="https://github.com/OpenSource03/harnss/actions"><img alt="Build" src="https://img.shields.io/github/actions/workflow/status/OpenSource03/harnss/build.yml?style=flat-square&label=build" /></a>
+  <img alt="Electron" src="https://img.shields.io/badge/Electron-40-47848F?style=flat-square&logo=electron&logoColor=white" />
+  <img alt="License" src="https://img.shields.io/badge/license-MIT-blue?style=flat-square" />
+</p>
+
+<p align="center">
+  <a href="#english">English</a> · <a href="#简体中文">简体中文</a>
 </p>
 
 ---
 
-Flow Pilot is a cross-platform desktop app that gives you one interface to run, manage, and switch between AI coding agents — Claude Code, Codex, and any ACP-compatible agent — without losing context, sessions, or tool state.
+## English
 
-**Why Flow Pilot?**
+**Flow Pilot** is a cross-platform desktop app that puts Claude Code, Codex, and any ACP-compatible agent behind a single window — and adds an orchestration layer on top so a supervisor can route work across them automatically. Run agents side by side without losing context, sessions, or tool state.
 
-- **One app, every agent.** Run Claude Code, Codex, and custom ACP agents side by side. No more juggling terminals or losing context when switching tools.
-- **See what your AI is actually doing.** Tool calls render as interactive cards with word-level diffs, syntax highlighting, and inline bash output — not raw JSON.
-- **Your workspace, your way.** Built-in terminal, browser, git, MCP servers, and file panels — all scoped per project, all staying open while you work.
+### What makes it different
 
----
+Most "AI coding" tools let you talk to **one** agent. Flow Pilot is built around running **many** — and coordinating them.
 
-## Screenshots
+- **🧭 Pilot — a supervisor that orchestrates agents, not just switches them.**
+  The Pilot engine is a [Mastra](https://mastra.ai)-powered supervisor: it wraps every configured ACP agent as a callable tool, then **routes each task to the best agent by its declared strengths** — and can delegate several subtasks **in parallel**. A cheap model does the dispatching; specialized agents (Claude Code, Codex, OpenCode, or your own) do the heavy lifting. Configure the roster in `.pilot/config.yaml`; no other tool ships this.
 
-<p align="center">
-  <img width="2069" height="1333" alt="CleanShot 2026-03-08 at 05 39 16" src="https://github.com/user-attachments/assets/87f06ec9-e09d-4889-9aa0-6904eb68f30a" />
+- **🔀 One app, every agent.** Claude Code (Anthropic Agent SDK), Codex (app-server), and any Agent Client Protocol agent run in parallel, each with its own history and context. Switch instantly, nothing resets.
 
-  <br />
-  <em>Terminal, browser, git, and MCP integrations — all in one window.</em>
-</p>
+- **📚 Skills — reusable playbooks.** Drop a `SKILL.md` under `.pilot/skills/<name>/` (per-project) or `~/.pilot/skills` (global). The supervisor and agents load the relevant skill on demand and fold its steps into the work — version-controlled, shareable know-how instead of copy-pasted prompts.
 
-<p align="center">
-<img width="2069" height="1333" alt="CleanShot 2026-03-08 at 05 40 20" src="https://github.com/user-attachments/assets/7dc6b42f-398b-405e-9413-7192b2aaecb6" />
+- **🔍 See what the AI is actually doing.** Every tool call renders as an interactive card — word-level diffs with syntax highlighting, inline bash output, nested subagent progress, and a per-turn Changes panel. Not raw JSON.
 
+- **🛒 Agent Store + local detection.** Browse and one-click-install agents from the community [ACP registry](https://agentclientprotocol.com/get-started/registry), *and* have Flow Pilot auto-detect agents already installed on your machine (PATH binaries and known app bundles) — surfaced right in the store with one-click add.
 
-  <br />
-  <em>One UI - all agents. Browse entire ACP registry.</em>
-</p>
+- **🖥️ A real workspace, not a chat box.** Built-in multi-tab terminal, embedded browser, full git integration, and MCP servers — all scoped per project, all staying mounted while you work.
 
-<details>
-<summary>Click to reveal other screenshots</summary>
+- **🌏 Bilingual, local-first.** Full English / 简体中文 UI with runtime switching. It's a desktop app: your projects and sessions live on your disk.
 
+### Engines
 
+| Engine | What it does | Requirements |
+|--------|--------------|--------------|
+| **Pilot** (Mastra supervisor) | Orchestrates multiple ACP agents — routes and delegates tasks by strength | A supervisor LLM (e.g. DeepSeek) + at least one subagent |
+| **Claude Code** | Direct 1:1 chat over the Anthropic Agent SDK | Claude account (subscription or API key) |
+| **Codex** | Direct 1:1 chat over the Codex app-server | Codex CLI in PATH + OpenAI/ChatGPT |
+| **ACP agents** | Any Agent Client Protocol agent, as a direct engine or a Pilot subagent | Agent-specific |
 
-https://github.com/user-attachments/assets/41f5bcbc-c141-4a16-b430-79f8e01d107e
+Claude Code and Codex are built in. ACP agents install from the in-app store or a manual command definition (**Settings → Agents**). Configure Pilot's subagent roster in `.pilot/config.yaml`.
 
-<p align="center">
-  <br />
-  <em>Organize your projects in spaces.</em>
-</p>
+### Feature highlights
 
-<p align="center">
-  <img width="825" height="721" alt="CleanShot 2026-03-02 at 02 43 43" src="https://github.com/user-attachments/assets/842c29f8-c11a-4a26-9940-380c4f4cb6a2" />
+- **Multi-engine sessions** running in parallel, each with isolated state
+- **Rich tool visualization** — diffs, syntax highlighting, nested subagents, Changes panel
+- **MCP servers** per project (stdio / SSE / HTTP) with in-app OAuth
+- **Git** — stage, commit, push, branches, worktrees, AI commit messages
+- **Terminal & browser** panels, mounted per project
+- **Projects & Spaces** — organize folders into named, color-coded groups
+- **Plan mode & permissions** — Ask First / Accept Edits / Allow All
+- **Background task agents** tracked in a dedicated panel
+- **Image attachment & annotation**, **voice input** (native or on-device Whisper)
+- **Full-text session search**; import & resume Claude Code CLI conversations
+- **Jira / Confluence** and other MCP integrations with dedicated UIs
 
-  <br />
-  <em>Every tool call beautifully visualised - even those from popular MCPs.</em>
-</p>
+### Quick start
 
-<p align="center">
-<img width="251" height="198" alt="CleanShot 2026-03-02 at 02 33 04" src="https://github.com/user-attachments/assets/f1c8930f-16fb-4d3f-8d2e-330425965291" />
-
-  <br />
-  <em>Run multiple agent sessions side by side — switch instantly without losing progress.</em>
-</p>
-
-</details>
-
-
-
----
-
-## Features
-
-### Multi-engine sessions
-
-Run Claude Code (via the Anthropic SDK), Codex, and ACP-compatible agents in parallel. Each session has its own state, history, and context. Switch between them instantly.
-
-### Rich tool visualization
-
-Every tool call renders as an interactive card. File edits show word-level diffs with syntax highlighting. Bash output appears inline. Subagent tasks nest with step-by-step progress tracking. File changes are summarized per turn with a dedicated Changes panel.
-
-### MCP server management
-
-Connect any MCP server per project via stdio, SSE, or HTTP transport. OAuth flows are handled automatically. Server status and available tool counts are visible at a glance. Jira, Confluence, and other integrations render with dedicated UIs rather than raw JSON.
-
-### Git integration
-
-Stage, unstage, commit, and push without leaving the app. Browse branches, view commit history, and manage git worktrees. AI-generated commit messages are available from the staged diff.
-
-### Built-in terminal & browser
-
-Multi-tab PTY terminal backed by native shell processes. An embedded browser for opening URLs inline and providing additional context to the agent. Both panels stay mounted while you work.
-
-### Project workspaces & spaces
-
-Projects map to folders on disk. Spaces let you organize projects into named groups with custom icons and colors. Sessions, history, and panel settings are all scoped per project.
-
-### Agent Store
-
-Browse and install agents from the ACP community registry directly in the app. Add custom agents by specifying a command, arguments, environment variables, and an icon. All configuration is managed through Settings — no config files.
-
-### Plan mode & permission control
-
-Work in plan mode to have the agent draft a plan before making any changes. Three permission levels — Ask First, Accept Edits, Allow All — control how much autonomy the agent has. Switch modes at any point without interrupting context.
-
-### Background task agents
-
-Task agents spawned during a session continue running in the background and are tracked in a dedicated panel. Keep working in other sessions while long-running tasks complete.
-
-### Image attachments & annotation
-
-Attach screenshots or images directly in the chat. An built-in annotation tool lets you draw, highlight, and mark up images with freehand strokes before sending them to the agent.
-
-### Voice input & notifications
-
-Voice input via native macOS dictation or an on-device Whisper model (no API key required). Configurable OS notifications for plan approval requests, permission prompts, agent questions, and session completion.
-
-### Session search & history
-
-Full-text search across session titles and message content. Import and resume conversations previously started in the Claude Code CLI.
-
----
-
-## Quick Start
-
-1. **Download** the latest release for your platform from the [Releases page](https://github.com/OpenSource03/harnss/releases/latest)
+1. **Download** the latest build for your platform from [Releases](https://github.com/summersmile1984/flow-pilot/releases/latest)
 2. **Open a project** — point Flow Pilot at any folder on disk
-3. **Choose an engine** — Claude Code, Codex, or any installed ACP agent — and start working
+3. **Pick an engine** — Pilot, Claude Code, Codex, or any installed ACP agent — and start working
 
----
+> Pre-built binaries are **unsigned**. On macOS, right-click the app → **Open** on first launch (or `xattr -dr com.apple.quarantine "Flow Pilot.app"`).
 
-## Engines & Agents
-
-Flow Pilot supports three execution engines out of the box:
-
-| Engine | Protocol | Requirements |
-|--------|----------|--------------|
-| **Claude Code** | Anthropic Agent SDK | Claude account (subscription or API key) |
-| **Codex** | JSON-RPC app-server | Codex CLI in PATH + OpenAI API key or ChatGPT account |
-| **ACP agents** | Agent Client Protocol | Agent-specific (see registry) |
-
-Claude Code and Codex are built-in. ACP agents can be installed from the [ACP Agent Registry](https://agentclientprotocol.com/get-started/registry) inside the app, or configured manually.
-
-**Examples of installable ACP-compatible agents:**
-
-| Agent | Command | Notes |
-|-------|---------|-------|
-| [Gemini CLI](https://github.com/google-gemini/gemini-cli) | `gemini --experimental-acp` | Experimental ACP flag |
-| [Goose](https://github.com/block/goose) | `goose acp` | |
-| [Docker cagent](https://github.com/docker/cagent) | `cagent acp agent.yml` | Container-based agents |
-
-### Adding an agent
-
-Open **Settings → ACP Agents**. The **Agent Store** tab lets you browse and install agents from the community registry. The **My Agents** tab lets you create custom agents — set the binary command, arguments, environment variables, and icon, or paste a JSON definition to auto-fill the form.
-
----
-
-## MCP Servers
-
-MCP servers are configured per project through the **MCP Servers panel** in the right-side toolbar. Supported transports: stdio, SSE, and HTTP. OAuth authentication is handled in-app with token persistence across sessions.
-
----
-
-## Install
-
-> [!NOTE]
-> Pre-built binaries are currently **unsigned**. On macOS, right-click the app and choose **Open** to bypass the Gatekeeper warning on first launch. On Windows, click **More info → Run anyway** if Windows Defender flags the installer.
-
-| Platform | Download |
-|----------|----------|
-| macOS (Apple Silicon) | [`.dmg` (arm64)](https://github.com/OpenSource03/harnss/releases/latest) |
-| macOS (Intel) | [`.dmg` (x64)](https://github.com/OpenSource03/harnss/releases/latest) |
-| Windows (x64) | [`.exe` installer](https://github.com/OpenSource03/harnss/releases/latest) |
-| Windows (ARM64) | [`.exe` installer](https://github.com/OpenSource03/harnss/releases/latest) |
-| Linux | [`.AppImage`](https://github.com/OpenSource03/harnss/releases/latest) / [`.deb`](https://github.com/OpenSource03/harnss/releases/latest) |
-
----
-
-## Development
+### Development
 
 ```bash
-git clone https://github.com/OpenSource03/harnss.git
-cd harnss
+git clone https://github.com/summersmile1984/flow-pilot.git
+cd flow-pilot
 pnpm install
 pnpm dev
 ```
 
-### Build installers
+Build installers:
 
 ```bash
 pnpm dist:mac      # macOS DMG (arm64 + x64)
-pnpm dist:win      # Windows NSIS installer (x64 + ARM64)
+pnpm dist:win      # Windows NSIS installer
 pnpm dist:linux    # Linux AppImage + deb
 ```
 
+**Stack:** Electron 40 · React 19 · Vite 7 · TypeScript · [Mastra](https://mastra.ai) · [Agent Client Protocol](https://agentclientprotocol.com) · Tailwind CSS v4 · ShadCN · Zustand · i18next.
+
 ---
 
-## Contributing
+## 简体中文
 
-1. Fork the repo and create a feature branch
-2. Follow the conventions in `CLAUDE.md`
-3. Test with `pnpm dev`
-4. Open a pull request
+**Flow Pilot** 是一款跨平台桌面应用：把 Claude Code、Codex 以及任意兼容 ACP 的智能体收进同一个窗口，并在其上加一层**编排能力**——让一个 supervisor 自动在多个智能体之间分派任务。多个智能体并排运行，切换不丢上下文、会话与工具状态。
+
+### 与众不同之处
+
+大多数「AI 编程」工具只让你对话**一个**智能体。Flow Pilot 从设计之初就是为了同时驾驭**多个**——并让它们协作。
+
+- **🧭 Pilot——会编排智能体的 supervisor，而不只是切换。**
+  Pilot 引擎是一个基于 [Mastra](https://mastra.ai) 的 supervisor：它把每个配置好的 ACP 智能体包装成可调用的工具，然后**按各智能体声明的擅长领域，把任务路由给最合适的那个**——还能把相互独立的子任务**并行委派**。用一个便宜的模型做调度，让专业智能体（Claude Code、Codex、OpenCode，或你自己的）干重活。在 `.pilot/config.yaml` 里配置这套阵容——这是别的工具没有的能力。
+
+- **🔀 一个应用，所有智能体。** Claude Code（Anthropic Agent SDK）、Codex（app-server）、以及任意 Agent Client Protocol 智能体并行运行，各自拥有独立的历史与上下文。瞬间切换，什么都不重置。
+
+- **📚 Skills——可复用的「剧本」。** 在 `.pilot/skills/<名字>/` （项目级）或 `~/.pilot/skills`（全局）放一个 `SKILL.md`，supervisor 与智能体会按需加载对应技能、把步骤融进工作里。是纳入版本管理、可分享的经验沉淀，而不是反复粘贴的提示词。
+
+- **🔍 看得见 AI 到底在做什么。** 每一次工具调用都渲染成交互卡片——词级别 diff、语法高亮、内联 bash 输出、嵌套子智能体进度、以及每轮的「改动」面板。而不是一堆原始 JSON。
+
+- **🛒 智能体市场 + 本机检测。** 从社区 [ACP registry](https://agentclientprotocol.com/get-started/registry) 浏览并一键安装智能体；同时 Flow Pilot 会**自动检测你本机已装的智能体**（PATH 里的可执行文件和已知 app），直接在市场顶部列出、一键加入。
+
+- **🖥️ 是工作台，不是聊天框。** 内置多标签终端、内嵌浏览器、完整 git 集成、MCP 服务器——全部按项目隔离，工作时一直挂着不重载。
+
+- **🌏 中英双语，本地优先。** 完整的中文 / English 界面，运行时切换。它是桌面应用：你的项目和会话都在你自己的磁盘上。
+
+### 引擎
+
+| 引擎 | 作用 | 前提 |
+|------|------|------|
+| **Pilot**（Mastra supervisor） | 编排多个 ACP 智能体——按擅长领域路由并委派任务 | 一个 supervisor 模型（如 DeepSeek）+ 至少一个子智能体 |
+| **Claude Code** | 基于 Anthropic Agent SDK 的一对一直连 | Claude 账号（订阅或 API key） |
+| **Codex** | 基于 Codex app-server 的一对一直连 | PATH 里的 Codex CLI + OpenAI/ChatGPT |
+| **ACP 智能体** | 任意 Agent Client Protocol 智能体，可作独立引擎或 Pilot 的子智能体 | 视具体智能体而定 |
+
+Claude Code 与 Codex 内置。ACP 智能体可从应用内市场安装，或手动填写命令定义（**设置 → 智能体**）。Pilot 的子智能体阵容在 `.pilot/config.yaml` 配置。
+
+### 功能一览
+
+- **多引擎会话**并行运行，各自状态隔离
+- **丰富的工具可视化**——diff、语法高亮、嵌套子智能体、改动面板
+- **MCP 服务器**按项目配置（stdio / SSE / HTTP），应用内完成 OAuth
+- **Git**——暂存、提交、推送、分支、worktree、AI 生成 commit 信息
+- **终端与浏览器**面板，按项目挂载
+- **项目与空间（Spaces）**——把文件夹归入带图标配色的命名分组
+- **计划模式与权限**——先问 / 接受编辑 / 全部允许
+- **后台任务智能体**，独立面板追踪
+- **图片附件与标注**、**语音输入**（系统原生或本地 Whisper）
+- **会话全文搜索**；导入并续接 Claude Code CLI 的历史会话
+- **Jira / Confluence** 等 MCP 集成，配有专属 UI
+
+### 快速开始
+
+1. 从 [Releases](https://github.com/summersmile1984/flow-pilot/releases/latest) **下载**对应平台的构建
+2. **打开一个项目**——把 Flow Pilot 指向磁盘上任意文件夹
+3. **选一个引擎**——Pilot、Claude Code、Codex 或任意已装 ACP 智能体——开始工作
+
+> 预构建包**未签名**。macOS 首次启动请右键 app → **打开**（或执行 `xattr -dr com.apple.quarantine "Flow Pilot.app"`）。
+
+### 开发
+
+```bash
+git clone https://github.com/summersmile1984/flow-pilot.git
+cd flow-pilot
+pnpm install
+pnpm dev
+```
+
+构建安装包：
+
+```bash
+pnpm dist:mac      # macOS DMG（arm64 + x64）
+pnpm dist:win      # Windows NSIS 安装包
+pnpm dist:linux    # Linux AppImage + deb
+```
+
+**技术栈：** Electron 40 · React 19 · Vite 7 · TypeScript · [Mastra](https://mastra.ai) · [Agent Client Protocol](https://agentclientprotocol.com) · Tailwind CSS v4 · ShadCN · Zustand · i18next。
 
 ---
 
 ## License
 
 MIT
-
----
 
 <p align="center">
   Built on the <a href="https://agentclientprotocol.com">Agent Client Protocol</a>
